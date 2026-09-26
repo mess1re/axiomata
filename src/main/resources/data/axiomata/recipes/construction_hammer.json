@@ -2,9 +2,9 @@
   "type": "minecraft:crafting_shaped",
   "category": "tools",
   "pattern": [
-    "ii ",
-    "is ",
-    "  s"
+    " ii",
+    " si",
+    "s  "
   ],
   "key": {
     "i": {

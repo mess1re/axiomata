@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - "[0-9]*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -15,19 +21,23 @@ concurrency:
 jobs:
   release:
     runs-on: ubuntu-latest
+    env:
+      RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ env.RELEASE_TAG }}
 
       - name: Set up Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "21"
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Check release version
         shell: bash
@@ -39,20 +49,22 @@ jobs:
             exit 1
           fi
 
-          if [[ "$GITHUB_REF_NAME" != "$version" ]]; then
-            echo "Tag '$GITHUB_REF_NAME' does not match mod.version '$version'"
+          if [[ "$RELEASE_TAG" != "$version" ]]; then
+            echo "Tag '$RELEASE_TAG' does not match mod.version '$version'"
             exit 1
           fi
 
       - name: Build
-        run: ./gradlew clean build
+        run: |
+          chmod +x gradlew
+          ./gradlew clean build
 
       - name: Create GitHub release
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          tag="$GITHUB_REF_NAME"
+          tag="$RELEASE_TAG"
           forge_jar="versions/1.20.1-forge/build/libs/axiomata-forge-${tag}+1.20.1.jar"
           neoforge_jar="versions/1.21.1-neoforge/build/libs/axiomata-neoforge-${tag}+1.21.1.jar"
           release_flags=()

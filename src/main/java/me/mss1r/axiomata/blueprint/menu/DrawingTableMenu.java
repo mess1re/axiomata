@@ -24,6 +24,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
+import java.util.function.Predicate;
+
 public class DrawingTableMenu extends AbstractContainerMenu {
     private final SimpleContainer container;
     private final ContainerData data;
@@ -49,46 +51,38 @@ public class DrawingTableMenu extends AbstractContainerMenu {
         this.level = playerInv.player.level();
         this.tablePos = pos;
 
-        addSlot(new Slot(container, DrawingTableBlockEntity.SLOT_PAPER,
-                DrawingTableLayout.slotX(DrawingTableLayout.PAPER_FRAME_X), DrawingTableLayout.slotY()) {
-            @Override
-            public boolean mayPlace(ItemStack stack) {
-                return stack.is(Items.PAPER);
-            }
+        addSlot(new LockedSlot(container, DrawingTableBlockEntity.SLOT_PAPER,
+                DrawingTableLayout.slotX(DrawingTableLayout.PAPER_FRAME_X), DrawingTableLayout.slotY(),
+                stack -> stack.is(Items.PAPER)));
 
-            @Override
-            public boolean mayPickup(Player player) {
-                return false;
-            }
-        });
+        addSlot(new LockedSlot(container, DrawingTableBlockEntity.SLOT_INK,
+                DrawingTableLayout.slotX(DrawingTableLayout.INK_FRAME_X), DrawingTableLayout.slotY(),
+                stack -> stack.getItem() == BlueprintItems.INK_BLOCK.get()));
 
-        addSlot(new Slot(container, DrawingTableBlockEntity.SLOT_INK,
-                DrawingTableLayout.slotX(DrawingTableLayout.INK_FRAME_X), DrawingTableLayout.slotY()) {
-            @Override
-            public boolean mayPlace(ItemStack stack) {
-                return stack.getItem() == BlueprintItems.INK_BLOCK.get();
-            }
-
-            @Override
-            public boolean mayPickup(Player player) {
-                return false;
-            }
-        });
-
-        addSlot(new Slot(container, DrawingTableBlockEntity.SLOT_RESULT,
-                DrawingTableLayout.slotX(DrawingTableLayout.RESULT_FRAME_X), DrawingTableLayout.slotY()) {
-            @Override
-            public boolean mayPlace(ItemStack stack) {
-                return false;
-            }
-
-            @Override
-            public boolean mayPickup(Player player) {
-                return false;
-            }
-        });
+        addSlot(new LockedSlot(container, DrawingTableBlockEntity.SLOT_RESULT,
+                DrawingTableLayout.slotX(DrawingTableLayout.RESULT_FRAME_X), DrawingTableLayout.slotY(),
+                stack -> false));
 
         addDataSlots(data);
+    }
+
+    private static final class LockedSlot extends Slot {
+        private final Predicate<ItemStack> placementRule;
+
+        private LockedSlot(SimpleContainer container, int index, int x, int y, Predicate<ItemStack> placementRule) {
+            super(container, index, x, y);
+            this.placementRule = placementRule;
+        }
+
+        @Override
+        public boolean mayPlace(ItemStack stack) {
+            return placementRule.test(stack);
+        }
+
+        @Override
+        public boolean mayPickup(Player player) {
+            return false;
+        }
     }
 
     private static SimpleContainer containerAt(Inventory playerInv, BlockPos pos) {

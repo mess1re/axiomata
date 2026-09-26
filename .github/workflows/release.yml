@@ -1,0 +1,70 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "[0-9]*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Check release version
+        shell: bash
+        run: |
+          version=$(sed -n 's/^mod\.version = "\(.*\)"/\1/p' stonecutter.properties.toml)
+
+          if [[ -z "$version" ]]; then
+            echo "Could not read mod.version from stonecutter.properties.toml"
+            exit 1
+          fi
+
+          if [[ "$GITHUB_REF_NAME" != "$version" ]]; then
+            echo "Tag '$GITHUB_REF_NAME' does not match mod.version '$version'"
+            exit 1
+          fi
+
+      - name: Build
+        run: ./gradlew clean build
+
+      - name: Create GitHub release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="$GITHUB_REF_NAME"
+          forge_jar="versions/1.20.1-forge/build/libs/axiomata-forge-${tag}+1.20.1.jar"
+          neoforge_jar="versions/1.21.1-neoforge/build/libs/axiomata-neoforge-${tag}+1.21.1.jar"
+          release_flags=()
+
+          if [[ "$tag" == *-* ]]; then
+            release_flags+=(--prerelease)
+          fi
+
+          gh release create "$tag" \
+            "$forge_jar" \
+            "$neoforge_jar" \
+            --verify-tag \
+            --title "$tag" \
+            --generate-notes \
+            "${release_flags[@]}"

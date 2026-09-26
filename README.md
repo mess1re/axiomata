@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="src/main/resources/axiomata.png" alt="Axiomata" width="192">
+</p>
+
 # Axiomata
 
 Axiomata provides the foundation for complex objects that players build and interact with directly

@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "C C",
+    " C "
+  ],
+  "key": {
+    "C": { "item": "minecraft:copper_ingot" }
+  },
+  "result": {
+    "item": "axiomata:inkwell",
+    "count": 1
+  }
+}

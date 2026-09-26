@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " I ",
+    "PPP",
+    "O O"
+  ],
+  "key": {
+    "P": { "tag": "minecraft:planks" },
+    "O": { "tag": "minecraft:logs" },
+    "I": { "item": "axiomata:ink_block" }
+  },
+  "result": {
+    "item": "axiomata:drawing_table"
+  }
+}

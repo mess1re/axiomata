@@ -1,0 +1,23 @@
+mod.id = "axiomata"
+mod.name = "Axiomata"
+mod.group = "me.mss1r"
+mod.version = "0.1.0-beta.1"
+mod.description = "Blueprint construction and model-based collision for large Minecraft structures."
+mod.authors = "mss1r"
+mod.license = "LGPL-3.0-only"
+
+[forge."1.20.1"]
+mod.minecraft_range = "[1.20.1,1.21)"
+mod.loader_range = "[47,)"
+mod.pack_format = "15"
+deps.forge = "1.20.1-47.4.10"
+deps.architectury = "9.2.14"
+deps.jei = "15.20.0.129"
+
+[neoforge."1.21.1"]
+mod.minecraft_range = "[1.21.1]"
+mod.loader_range = "[1,)"
+mod.pack_format = "34"
+deps.neoforge = "21.1.248"
+deps.architectury = "13.0.11"
+deps.jei = "19.22.0.315"

@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    { "tag": "minecraft:coals" },
+    { "item": "axiomata:inkwell" }
+  ],
+  "result": {
+    "item": "axiomata:ink_block",
+    "count": 1
+  }
+}

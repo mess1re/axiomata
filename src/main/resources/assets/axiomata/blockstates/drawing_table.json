@@ -1,0 +1,12 @@
+{
+  "variants": {
+    "facing=north,model=main": { "model": "axiomata:block/drawing_table" },
+    "facing=east,model=main": { "model": "axiomata:block/drawing_table", "y": 90 },
+    "facing=south,model=main": { "model": "axiomata:block/drawing_table", "y": 180 },
+    "facing=west,model=main": { "model": "axiomata:block/drawing_table", "y": 270 },
+    "facing=north,model=side": { "model": "axiomata:block/drawing_table_side" },
+    "facing=east,model=side": { "model": "axiomata:block/drawing_table_side" },
+    "facing=south,model=side": { "model": "axiomata:block/drawing_table_side" },
+    "facing=west,model=side": { "model": "axiomata:block/drawing_table_side" }
+  }
+}

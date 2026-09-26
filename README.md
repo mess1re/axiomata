@@ -25,12 +25,12 @@ repositories {
 }
 
 dependencies {
-    implementation "com.github.mess1re:axiomata:<version>"
+    implementation "com.github.mess1re.axiomata:${minecraftVersion}-${loader}:${axiomataVersion}"
 }
 ```
 
-Use the release tag as `<version>`. ForgeGradle projects should pass the coordinate through
-`fg.deobf(...)`.
+`minecraftVersion` and `loader` select the matching build; `axiomataVersion` is the release tag.
+ForgeGradle projects should pass the coordinate through `fg.deobf(...)`.
 
 ## Building
 

@@ -80,9 +80,13 @@ java {
 publishing {
     publications {
         create<MavenPublication>("mavenJava") {
-            groupId = System.getenv("GROUP") ?: project.group.toString()
-            artifactId = System.getenv("ARTIFACT") ?: modId
-            version = System.getenv("VERSION") ?: project.version.toString()
+            val jitpackBuild = System.getenv("JITPACK") == "true"
+            groupId = if (jitpackBuild) project.group.toString()
+                else System.getenv("GROUP") ?: project.group.toString()
+            artifactId = if (jitpackBuild) project.name
+                else System.getenv("ARTIFACT") ?: modId
+            version = if (jitpackBuild) project.version.toString()
+                else System.getenv("VERSION") ?: project.version.toString()
             from(components["java"])
         }
     }

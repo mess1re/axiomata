@@ -126,7 +126,6 @@ jobs:
             local display_name="$2"
             local minecraft_version="$3"
             local loader="$4"
-            local java_version="$5"
             local metadata
 
             metadata=$(jq -n \
@@ -134,7 +133,6 @@ jobs:
               --arg display_name "$display_name" \
               --arg minecraft_version "$minecraft_version" \
               --arg loader "$loader" \
-              --arg java_version "$java_version" \
               --arg release_type "$release_type" \
               '{
                 changelog: $changelog,
@@ -143,7 +141,6 @@ jobs:
                 gameVersionNames: [
                   $minecraft_version,
                   $loader,
-                  $java_version,
                   "Client",
                   "Server"
                 ],
@@ -167,12 +164,10 @@ jobs:
             "$forge_jar" \
             "Axiomata ${tag} for Forge 1.20.1" \
             "1.20.1" \
-            "Forge" \
-            "Java 17"
+            "Forge"
 
           upload_file \
             "$neoforge_jar" \
             "Axiomata ${tag} for NeoForge 1.21.1" \
             "1.21.1" \
-            "NeoForge" \
-            "Java 21"
+            "NeoForge"

@@ -10,10 +10,6 @@ on:
         description: Existing release tag
         required: true
         type: string
-      changelog:
-        description: Optional release notes (used by GitHub and CurseForge)
-        required: false
-        type: string
 
 permissions:
   contents: write
@@ -27,7 +23,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
-      RELEASE_CHANGELOG: ${{ inputs.changelog }}
       CURSEFORGE_PROJECT_ID: "1713796"
 
     steps:
@@ -60,6 +55,31 @@ jobs:
             exit 1
           fi
 
+      - name: Read changelog
+        id: changelog
+        shell: bash
+        run: |
+          if ! changelog=$(awk -v version="$RELEASE_TAG" '
+            $0 == "## " version { found = 1; next }
+            found && /^## / { exit }
+            found { print }
+            END { if (!found) exit 1 }
+          ' CHANGELOG.md); then
+            echo "::error::CHANGELOG.md has no section for $RELEASE_TAG"
+            exit 1
+          fi
+
+          if ! grep -q '[^[:space:]]' <<< "$changelog"; then
+            echo "::error::The changelog section for $RELEASE_TAG is empty"
+            exit 1
+          fi
+
+          {
+            echo 'body<<CHANGELOG_EOF'
+            printf '%s\n' "$changelog"
+            echo 'CHANGELOG_EOF'
+          } >> "$GITHUB_OUTPUT"
+
       - name: Build
         run: |
           chmod +x gradlew
@@ -69,6 +89,7 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_CHANGELOG: ${{ steps.changelog.outputs.body }}
         run: |
           tag="$RELEASE_TAG"
           forge_jar="versions/1.20.1-forge/build/libs/axiomata-forge-${tag}+1.20.1.jar"
@@ -84,23 +105,14 @@ jobs:
               "$forge_jar" \
               "$neoforge_jar" \
               --clobber
-
-            if [[ -n "$RELEASE_CHANGELOG" ]]; then
-              gh release edit "$tag" --notes "$RELEASE_CHANGELOG"
-            fi
+            gh release edit "$tag" --notes "$RELEASE_CHANGELOG"
           else
-            notes_flags=(--generate-notes)
-
-            if [[ -n "$RELEASE_CHANGELOG" ]]; then
-              notes_flags=(--notes "$RELEASE_CHANGELOG")
-            fi
-
             gh release create "$tag" \
               "$forge_jar" \
               "$neoforge_jar" \
               --verify-tag \
               --title "$tag" \
-              "${notes_flags[@]}" \
+              --notes "$RELEASE_CHANGELOG" \
               "${release_flags[@]}"
           fi
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.0-beta.2
+
+### Fixed
+
+- Fixed a client crash on NeoForge 1.21.1 caused by an incompatible renderer mixin signature.
+
 ## 0.1.0-beta.1
 
 ### Added

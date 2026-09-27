@@ -15,7 +15,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class LivingEntityRendererMixin<T extends LivingEntity> {
     @Inject(method = "setupRotations", at = @At("TAIL"))
     private void axiomata$faceClimbedStructure(T entity, PoseStack poseStack, float ageInTicks,
-                                               float rotationYaw, float partialTicks, CallbackInfo callbackInfo) {
+                                               float rotationYaw, float partialTicks,
+                                               //? if neoforge {
+                                               float scale,
+                                               //?}
+                                               CallbackInfo callbackInfo) {
         if (entity.getVehicle() != null) {
             return;
         }

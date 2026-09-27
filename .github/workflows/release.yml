@@ -121,12 +121,6 @@ jobs:
           changelog=$(gh release view "$tag" --json body --jq '.body // ""')
           release_type="release"
 
-          if [[ "$tag" == *alpha* ]]; then
-            release_type="alpha"
-          elif [[ "$tag" == *-* ]]; then
-            release_type="beta"
-          fi
-
           upload_file() {
             local file="$1"
             local display_name="$2"

@@ -10,6 +10,10 @@ on:
         description: Existing release tag
         required: true
         type: string
+      changelog:
+        description: Optional release notes (used by GitHub and CurseForge)
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -23,6 +27,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+      RELEASE_CHANGELOG: ${{ inputs.changelog }}
+      CURSEFORGE_PROJECT_ID: "1713796"
 
     steps:
       - name: Check out repository
@@ -73,10 +79,100 @@ jobs:
             release_flags+=(--prerelease)
           fi
 
-          gh release create "$tag" \
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" \
+              "$forge_jar" \
+              "$neoforge_jar" \
+              --clobber
+
+            if [[ -n "$RELEASE_CHANGELOG" ]]; then
+              gh release edit "$tag" --notes "$RELEASE_CHANGELOG"
+            fi
+          else
+            notes_flags=(--generate-notes)
+
+            if [[ -n "$RELEASE_CHANGELOG" ]]; then
+              notes_flags=(--notes "$RELEASE_CHANGELOG")
+            fi
+
+            gh release create "$tag" \
+              "$forge_jar" \
+              "$neoforge_jar" \
+              --verify-tag \
+              --title "$tag" \
+              "${notes_flags[@]}" \
+              "${release_flags[@]}"
+          fi
+
+      - name: Publish to CurseForge
+        shell: bash
+        env:
+          CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [[ -z "$CURSEFORGE_TOKEN" ]]; then
+            echo "::error::Add CURSEFORGE_TOKEN to the repository Actions secrets."
+            exit 1
+          fi
+
+          tag="$RELEASE_TAG"
+          forge_jar="versions/1.20.1-forge/build/libs/axiomata-forge-${tag}+1.20.1.jar"
+          neoforge_jar="versions/1.21.1-neoforge/build/libs/axiomata-neoforge-${tag}+1.21.1.jar"
+          changelog=$(gh release view "$tag" --json body --jq '.body // ""')
+          release_type="release"
+
+          if [[ "$tag" == *alpha* ]]; then
+            release_type="alpha"
+          elif [[ "$tag" == *-* ]]; then
+            release_type="beta"
+          fi
+
+          upload_file() {
+            local file="$1"
+            local display_name="$2"
+            local minecraft_version="$3"
+            local loader="$4"
+            local java_version="$5"
+            local metadata
+
+            metadata=$(jq -n \
+              --arg changelog "$changelog" \
+              --arg display_name "$display_name" \
+              --arg minecraft_version "$minecraft_version" \
+              --arg loader "$loader" \
+              --arg java_version "$java_version" \
+              --arg release_type "$release_type" \
+              '{
+                changelog: $changelog,
+                changelogType: "markdown",
+                displayName: $display_name,
+                gameVersionNames: [$minecraft_version, $loader, $java_version],
+                releaseType: $release_type,
+                relations: {
+                  projects: [
+                    {slug: "architectury-api", type: "requiredDependency"}
+                  ]
+                }
+              }')
+
+            curl --fail-with-body \
+              --request POST \
+              --header "X-Api-Token: $CURSEFORGE_TOKEN" \
+              --form-string "metadata=$metadata" \
+              --form "file=@$file" \
+              "https://minecraft.curseforge.com/api/projects/${CURSEFORGE_PROJECT_ID}/upload-file"
+          }
+
+          upload_file \
             "$forge_jar" \
+            "Axiomata ${tag} for Forge 1.20.1" \
+            "1.20.1" \
+            "Forge" \
+            "Java 17"
+
+          upload_file \
             "$neoforge_jar" \
-            --verify-tag \
-            --title "$tag" \
-            --generate-notes \
-            "${release_flags[@]}"
+            "Axiomata ${tag} for NeoForge 1.21.1" \
+            "1.21.1" \
+            "NeoForge" \
+            "Java 21"

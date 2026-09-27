@@ -140,7 +140,13 @@ jobs:
                 changelog: $changelog,
                 changelogType: "markdown",
                 displayName: $display_name,
-                gameVersionNames: [$minecraft_version, $loader, $java_version],
+                gameVersionNames: [
+                  $minecraft_version,
+                  $loader,
+                  $java_version,
+                  "Client",
+                  "Server"
+                ],
                 releaseType: $release_type,
                 relations: {
                   projects: [

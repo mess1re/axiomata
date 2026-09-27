@@ -123,21 +123,18 @@ jobs:
 
           upload_file() {
             local file="$1"
-            local display_name="$2"
-            local minecraft_version="$3"
-            local loader="$4"
+            local minecraft_version="$2"
+            local loader="$3"
             local metadata
 
             metadata=$(jq -n \
               --arg changelog "$changelog" \
-              --arg display_name "$display_name" \
               --arg minecraft_version "$minecraft_version" \
               --arg loader "$loader" \
               --arg release_type "$release_type" \
               '{
                 changelog: $changelog,
                 changelogType: "markdown",
-                displayName: $display_name,
                 gameVersionNames: [
                   $minecraft_version,
                   $loader,
@@ -162,12 +159,10 @@ jobs:
 
           upload_file \
             "$forge_jar" \
-            "Axiomata ${tag} for Forge 1.20.1" \
             "1.20.1" \
             "Forge"
 
           upload_file \
             "$neoforge_jar" \
-            "Axiomata ${tag} for NeoForge 1.21.1" \
             "1.21.1" \
             "NeoForge"

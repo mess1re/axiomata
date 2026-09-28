@@ -10,6 +10,14 @@ on:
         description: Existing release tag
         required: true
         type: string
+      target:
+        description: Where to publish
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - modrinth
 
 permissions:
   contents: write
@@ -24,6 +32,8 @@ jobs:
     env:
       RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
       CURSEFORGE_PROJECT_ID: "1713796"
+      MODRINTH_PROJECT_ID: "axiomata"
+      PUBLISH_TARGET: ${{ inputs.target || 'all' }}
 
     steps:
       - name: Check out repository
@@ -86,6 +96,7 @@ jobs:
           ./gradlew clean build
 
       - name: Create GitHub release
+        if: env.PUBLISH_TARGET != 'modrinth'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -117,6 +128,7 @@ jobs:
           fi
 
       - name: Publish to CurseForge
+        if: env.PUBLISH_TARGET != 'modrinth'
         shell: bash
         env:
           CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
@@ -178,3 +190,91 @@ jobs:
             "$neoforge_jar" \
             "1.21.1" \
             "NeoForge"
+
+      - name: Publish to Modrinth
+        shell: bash
+        env:
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+          RELEASE_CHANGELOG: ${{ steps.changelog.outputs.body }}
+        run: |
+          if [[ -z "$MODRINTH_TOKEN" ]]; then
+            echo "::error::Add MODRINTH_TOKEN to the repository Actions secrets."
+            exit 1
+          fi
+
+          tag="$RELEASE_TAG"
+          forge_jar="versions/1.20.1-forge/build/libs/axiomata-forge-${tag}+1.20.1.jar"
+          neoforge_jar="versions/1.21.1-neoforge/build/libs/axiomata-neoforge-${tag}+1.21.1.jar"
+          version_type="release"
+
+          if [[ "$tag" == *-alpha* ]]; then
+            version_type="alpha"
+          elif [[ "$tag" == *-beta* ]]; then
+            version_type="beta"
+          fi
+
+          existing_versions=$(curl --fail-with-body --silent --show-error \
+            --header "Authorization: $MODRINTH_TOKEN" \
+            --header "User-Agent: mess1re/axiomata-release-workflow (github.com/mess1re/axiomata)" \
+            "https://api.modrinth.com/v2/project/${MODRINTH_PROJECT_ID}/version")
+
+          upload_file() {
+            local file="$1"
+            local minecraft_version="$2"
+            local loader="$3"
+            local loader_id="$4"
+            local version_number="${tag}+${loader_id}.${minecraft_version}"
+            local metadata
+
+            if jq -e --arg version "$version_number" \
+              '.[] | select(.version_number == $version)' \
+              <<< "$existing_versions" >/dev/null; then
+              echo "Modrinth version $version_number already exists; skipping."
+              return
+            fi
+
+            metadata=$(jq -n \
+              --arg name "Axiomata ${tag} — ${loader} ${minecraft_version}" \
+              --arg version_number "$version_number" \
+              --arg changelog "$RELEASE_CHANGELOG" \
+              --arg game_version "$minecraft_version" \
+              --arg loader "$loader_id" \
+              --arg version_type "$version_type" \
+              --arg project_id "$MODRINTH_PROJECT_ID" \
+              '{
+                name: $name,
+                version_number: $version_number,
+                changelog: $changelog,
+                dependencies: [
+                  {project_id: "lhGA9TYQ", dependency_type: "required"}
+                ],
+                game_versions: [$game_version],
+                version_type: $version_type,
+                loaders: [$loader],
+                status: "listed",
+                project_id: $project_id,
+                file_parts: ["file"],
+                primary_file: "file",
+                environment: "client_and_server"
+              }')
+
+            curl --fail-with-body \
+              --request POST \
+              --header "Authorization: $MODRINTH_TOKEN" \
+              --header "User-Agent: mess1re/axiomata-release-workflow (github.com/mess1re/axiomata)" \
+              --form-string "data=$metadata" \
+              --form "file=@$file" \
+              "https://api.modrinth.com/v2/version"
+          }
+
+          upload_file \
+            "$forge_jar" \
+            "1.20.1" \
+            "Forge" \
+            "forge"
+
+          upload_file \
+            "$neoforge_jar" \
+            "1.21.1" \
+            "NeoForge" \
+            "neoforge"

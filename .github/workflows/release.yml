@@ -32,7 +32,7 @@ jobs:
     env:
       RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
       CURSEFORGE_PROJECT_ID: "1713796"
-      MODRINTH_PROJECT_ID: "axiomata"
+      MODRINTH_PROJECT_ID: "VHAvNpmA"
       PUBLISH_TARGET: ${{ inputs.target || 'all' }}
 
     steps:

@@ -255,6 +255,7 @@ jobs:
                 game_versions: [$game_version],
                 version_type: $version_type,
                 loaders: [$loader],
+                featured: true,
                 status: "listed",
                 project_id: $project_id,
                 file_parts: ["file"],

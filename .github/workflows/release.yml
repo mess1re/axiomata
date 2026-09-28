@@ -213,10 +213,14 @@ jobs:
             version_type="beta"
           fi
 
-          existing_versions=$(curl --fail-with-body --silent --show-error \
+          existing_versions=$(curl --silent --show-error \
             --header "Authorization: $MODRINTH_TOKEN" \
             --header "User-Agent: mess1re/axiomata-release-workflow (github.com/mess1re/axiomata)" \
             "https://api.modrinth.com/v2/project/${MODRINTH_PROJECT_ID}/version")
+
+          if ! jq -e 'type == "array"' <<< "$existing_versions" >/dev/null; then
+            existing_versions='[]'
+          fi
 
           upload_file() {
             local file="$1"

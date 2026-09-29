@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.0-beta.4
+
+### Added
+
+- `BlueprintUsedEvent.placed()` returns the construction site a player placed in the world, so integrations can tell who started building it.
+
 ## 0.1.0-beta.3
 
 ### Fixed

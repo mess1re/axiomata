@@ -168,7 +168,7 @@ public record C2SUseBlueprintPacket(String recipeId) implements CustomPacketPayl
             }
 
             BlueprintEvents.USED.invoker().used(new BlueprintUsedEvent(
-                    player, packet.recipeId, recipe, result, buildsInWorld));
+                    player, packet.recipeId, recipe, result, buildsInWorld, machine));
 
             if (machine != null) {
                 player.displayClientMessage(

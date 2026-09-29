@@ -22,6 +22,7 @@ import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
+import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.event.RegisterShadersEvent;
 //?}
 
@@ -33,10 +34,19 @@ public class BlueprintClientModEvents {
     public static void clientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
             ItemBlockRenderTypes.setRenderLayer(BlueprintBlocks.DRAWING_TABLE.get(), RenderType.cutout());
-            MenuRegistry.registerScreenFactory(BlueprintMenus.DRAWING_TABLE_MENU.get(), DrawingTableScreen::new);
+            //? if forge {
+            /*MenuRegistry.registerScreenFactory(BlueprintMenus.DRAWING_TABLE_MENU.get(), DrawingTableScreen::new);
             MenuRegistry.registerScreenFactory(BlueprintMenus.BLUEPRINT_USE_MENU.get(), BlueprintUseScreen::new);
+            *///?}
         });
     }
+
+    //? if neoforge {
+    public static void registerMenuScreens(RegisterMenuScreensEvent event) {
+        event.register(BlueprintMenus.DRAWING_TABLE_MENU.get(), DrawingTableScreen::new);
+        event.register(BlueprintMenus.BLUEPRINT_USE_MENU.get(), BlueprintUseScreen::new);
+    }
+    //?}
 
     @SubscribeEvent
     public static void registerReloadListeners(RegisterClientReloadListenersEvent event) {

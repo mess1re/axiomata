@@ -64,6 +64,9 @@ public final class BlueprintModule {
 
         if (FMLEnvironment.dist == Dist.CLIENT) {
             modEventBus.addListener(me.mss1r.axiomata.blueprint.client.events.BlueprintClientModEvents::clientSetup);
+            //? if neoforge {
+            modEventBus.addListener(me.mss1r.axiomata.blueprint.client.events.BlueprintClientModEvents::registerMenuScreens);
+            //?}
             modEventBus.addListener(me.mss1r.axiomata.blueprint.client.events.BlueprintClientModEvents::registerReloadListeners);
             modEventBus.addListener(me.mss1r.axiomata.blueprint.client.events.BlueprintClientModEvents::registerShaders);
             gameEventBus.addListener(me.mss1r.axiomata.blueprint.client.events.BlueprintClientGameEvents::onRenderLevelStage);

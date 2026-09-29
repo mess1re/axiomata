@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.0-beta.3
+
+### Fixed
+
+- Fixed the Drawing Table screen not opening on NeoForge 1.21.1.
+
 ## 0.1.0-beta.2
 
 ### Fixed

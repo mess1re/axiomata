@@ -78,6 +78,8 @@ public final class HammerWork {
         player.level().playSound(null, target.blockPosition(), BlueprintSounds.HAMMER_HIT.get(),
                 SoundSource.BLOCKS, 0.65F, 0.95F + player.level().random.nextFloat() * 0.1F);
         if (result.advanced()) {
+            player.level().playSound(null, target.blockPosition(), SoundEvents.WOOD_PLACE,
+                    SoundSource.BLOCKS, 1.0F, 1.1F);
             announceStage(player, progress);
         }
     }

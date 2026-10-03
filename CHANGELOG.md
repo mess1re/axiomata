@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.0-beta.5
+
+### Added
+
+- A clickable update notice when entering a world, shown once per game launch. It can be disabled in the client config.
+- Config layout versions. Existing settings are preserved when missing fields are added.
+
+### Changed
+
+- Construction hammer strikes now use wooden impact sounds. The section-completion sound is unchanged.
+
 ## 0.1.0-beta.4
 
 ### Added

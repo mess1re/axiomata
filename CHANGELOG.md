@@ -4,8 +4,8 @@
 
 ### Added
 
-- A clickable update notice when entering a world, shown once per game launch. It can be disabled in the client config.
-- Config layout versions. Existing settings are preserved when missing fields are added.
+- A clickable update notice when entering a world, shown once per game launch. Disable it with `updates.showNotice` in the client config.
+- Client and server configs now include `configVersion = 1`. Missing settings are added while valid existing values are kept; deleting the configs is not needed.
 
 ### Changed
 

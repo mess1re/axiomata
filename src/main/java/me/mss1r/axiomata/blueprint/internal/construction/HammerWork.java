@@ -7,6 +7,7 @@ import me.mss1r.axiomata.blueprint.api.construction.ConstructionWork;
 import me.mss1r.axiomata.blueprint.api.construction.UnderConstruction;
 import me.mss1r.axiomata.blueprint.config.BlueprintServerConfig;
 import me.mss1r.axiomata.blueprint.item.ConstructionHammerItem;
+import me.mss1r.axiomata.blueprint.registry.BlueprintSounds;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
@@ -74,11 +75,9 @@ public final class HammerWork {
         }
 
         player.getCooldowns().addCooldown(player.getMainHandItem().getItem(), BlueprintServerConfig.getHitCooldownTicks());
-        player.level().playSound(null, target.blockPosition(), SoundEvents.WOOD_HIT,
-                SoundSource.BLOCKS, 0.9F, 0.9F + player.level().random.nextFloat() * 0.2F);
+        player.level().playSound(null, target.blockPosition(), BlueprintSounds.HAMMER_HIT.get(),
+                SoundSource.BLOCKS, 0.65F, 0.95F + player.level().random.nextFloat() * 0.1F);
         if (result.advanced()) {
-            player.level().playSound(null, target.blockPosition(), SoundEvents.WOOD_PLACE,
-                    SoundSource.BLOCKS, 1.0F, 1.1F);
             announceStage(player, progress);
         }
     }

@@ -46,6 +46,7 @@ public final class BlueprintModule {
     private static void initializeCommon(IEventBus modEventBus, IEventBus gameEventBus) {
         BlueprintBlocks.register();
         BlueprintItems.register();
+        BlueprintSounds.register();
         BlueprintBlockEntities.register();
         BlueprintEntityTypes.register();
         BlueprintMenus.register();

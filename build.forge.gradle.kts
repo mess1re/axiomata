@@ -49,6 +49,12 @@ configurations.matching { it.name == "reobfRuntimeElements" }.configureEach {
     extendsFrom(configurations.implementation.get())
 }
 
+// LegacyForge does not add the mapped game and loader to the JUnit source set.
+sourceSets.test {
+    compileClasspath += sourceSets.main.get().compileClasspath
+    runtimeClasspath += sourceSets.main.get().runtimeClasspath
+}
+
 legacyForge {
     version = project.property("deps.forge") as String
 

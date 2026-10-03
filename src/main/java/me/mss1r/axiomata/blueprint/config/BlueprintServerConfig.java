@@ -1,5 +1,7 @@
 package me.mss1r.axiomata.blueprint.config;
 
+import me.mss1r.axiomata.Axiomata;
+
 //? if forge {
 /*import net.minecraftforge.common.ForgeConfigSpec;
 *///?} else {
@@ -27,6 +29,9 @@ public final class BlueprintServerConfig {
         *///?} else {
         ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
         //?}
+        builder.comment("Config layout version, not the mod version. Leave this unchanged.",
+                        "Adding settings does not change the layout version.")
+                .defineInRange("configVersion", Axiomata.CONFIG_FORMAT_VERSION, 1, Integer.MAX_VALUE);
         builder.push("construction");
 
         HITS_PER_ITEM = builder

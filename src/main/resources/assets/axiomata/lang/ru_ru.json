@@ -1,4 +1,6 @@
 {
+  "message.axiomata.update.available": "Axiomata: доступна версия %s.",
+  "message.axiomata.update.open": "[Открыть страницу]",
   "block.axiomata.drawing_table": "Чертежный стол",
   "block.axiomata.ink_block": "Чернила",
   "block.axiomata.inkwell": "Чернильница",

@@ -1,4 +1,6 @@
 {
+  "message.axiomata.update.available": "Axiomata: version %s is available.",
+  "message.axiomata.update.open": "[Open page]",
   "block.axiomata.drawing_table": "Drawing Table",
   "block.axiomata.ink_block": "Ink",
   "block.axiomata.inkwell": "Inkwell",

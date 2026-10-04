@@ -21,7 +21,6 @@ import me.mss1r.axiomata.blueprint.network.NetworkHandler;
 import me.mss1r.axiomata.blueprint.registry.BlueprintItems;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;

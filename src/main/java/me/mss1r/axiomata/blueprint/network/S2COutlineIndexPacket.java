@@ -1,6 +1,7 @@
 package me.mss1r.axiomata.blueprint.network;
 
 import dev.architectury.networking.NetworkManager;
+import me.mss1r.axiomata.ResourceIds;
 import me.mss1r.axiomata.blueprint.tracing.OutlineCatalog;
 import net.minecraft.network.FriendlyByteBuf;
 //? if neoforge {
@@ -19,7 +20,7 @@ import java.util.List;
 *///?} else {
 public record S2COutlineIndexPacket(List<String> blueprintIds) implements CustomPacketPayload {
     public static final Type<S2COutlineIndexPacket> TYPE = new Type<>(
-            ResourceLocation.fromNamespaceAndPath(BlueprintModule.MOD_ID, "outline_index"));
+            ResourceIds.id(BlueprintModule.MOD_ID, "outline_index"));
     public static final StreamCodec<RegistryFriendlyByteBuf, S2COutlineIndexPacket> STREAM_CODEC =
             StreamCodec.ofMember(S2COutlineIndexPacket::write, S2COutlineIndexPacket::decode);
 

@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import com.mojang.logging.LogUtils;
+import me.mss1r.axiomata.ResourceIds;
 import me.mss1r.axiomata.blueprint.network.NetworkHandler;
 import me.mss1r.axiomata.blueprint.network.S2COutlineIndexPacket;
 import net.minecraft.resources.ResourceLocation;
@@ -144,6 +145,6 @@ public final class OutlineCatalog extends SimplePreparableReloadListener<Map<Str
         }
         String name = path.substring(OUTLINE_PREFIX.length(), path.length() - ".json".length());
         return name.isBlank() ? null
-                : ResourceLocation.fromNamespaceAndPath(location.getNamespace(), name).toString();
+                : ResourceIds.id(location.getNamespace(), name).toString();
     }
 }

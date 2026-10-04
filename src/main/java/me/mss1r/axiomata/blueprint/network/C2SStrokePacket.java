@@ -1,6 +1,7 @@
 package me.mss1r.axiomata.blueprint.network;
 
 import dev.architectury.networking.NetworkManager;
+import me.mss1r.axiomata.ResourceIds;
 import me.mss1r.axiomata.blueprint.blockentity.DrawingTableBlockEntity;
 import me.mss1r.axiomata.blueprint.tracing.TracingRules;
 import me.mss1r.axiomata.blueprint.menu.DrawingTableMenu;
@@ -19,7 +20,7 @@ import me.mss1r.axiomata.blueprint.BlueprintModule;
 *///?} else {
 public record C2SStrokePacket(boolean lift, byte[] points) implements CustomPacketPayload {
     public static final Type<C2SStrokePacket> TYPE = new Type<>(
-            ResourceLocation.fromNamespaceAndPath(BlueprintModule.MOD_ID, "stroke"));
+            ResourceIds.id(BlueprintModule.MOD_ID, "stroke"));
     public static final StreamCodec<RegistryFriendlyByteBuf, C2SStrokePacket> STREAM_CODEC =
             StreamCodec.ofMember(C2SStrokePacket::write, C2SStrokePacket::decode);
 

@@ -2,6 +2,7 @@ package me.mss1r.axiomata.collision.network;
 
 import dev.architectury.networking.NetworkManager;
 import me.mss1r.axiomata.Axiomata;
+import me.mss1r.axiomata.ResourceIds;
 import net.minecraft.network.FriendlyByteBuf;
 //? if neoforge {
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -15,7 +16,7 @@ import net.minecraft.resources.ResourceLocation;
 *///?} else {
 public record SetCollisionDebugS2CPacket(boolean enabled) implements CustomPacketPayload {
     public static final Type<SetCollisionDebugS2CPacket> TYPE = new Type<>(
-            ResourceLocation.fromNamespaceAndPath(Axiomata.MOD_ID, "set_collision_debug"));
+            ResourceIds.id(Axiomata.MOD_ID, "set_collision_debug"));
     public static final StreamCodec<RegistryFriendlyByteBuf, SetCollisionDebugS2CPacket> STREAM_CODEC =
             StreamCodec.ofMember(SetCollisionDebugS2CPacket::write, SetCollisionDebugS2CPacket::decode);
 

@@ -1,6 +1,7 @@
 package me.mss1r.axiomata.blueprint.network;
 
 import dev.architectury.networking.NetworkManager;
+import me.mss1r.axiomata.ResourceIds;
 import me.mss1r.axiomata.blueprint.internal.definition.BlueprintDefinitionCatalog;
 import net.minecraft.network.FriendlyByteBuf;
 //? if neoforge {
@@ -16,7 +17,7 @@ import me.mss1r.axiomata.blueprint.BlueprintModule;
 *///?} else {
 public record S2CBlueprintCatalogPacket(String catalogJson) implements CustomPacketPayload {
     public static final Type<S2CBlueprintCatalogPacket> TYPE = new Type<>(
-            ResourceLocation.fromNamespaceAndPath(BlueprintModule.MOD_ID, "blueprint_catalog"));
+            ResourceIds.id(BlueprintModule.MOD_ID, "blueprint_catalog"));
     public static final StreamCodec<RegistryFriendlyByteBuf, S2CBlueprintCatalogPacket> STREAM_CODEC =
             StreamCodec.ofMember(S2CBlueprintCatalogPacket::write, S2CBlueprintCatalogPacket::decode);
 

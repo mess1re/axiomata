@@ -7,6 +7,7 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import com.mojang.logging.LogUtils;
+import me.mss1r.axiomata.ResourceIds;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition;
 import me.mss1r.axiomata.blueprint.network.S2CBlueprintCatalogPacket;
 import me.mss1r.axiomata.blueprint.network.NetworkHandler;
@@ -140,7 +141,7 @@ public final class BlueprintDefinitionCatalog extends SimplePreparableReloadList
         }
         String recipePath = path.substring(BLUEPRINT_PREFIX.length(), path.length() - ".json".length());
         return recipePath.isBlank() ? null
-                : ResourceLocation.fromNamespaceAndPath(location.getNamespace(), recipePath).toString();
+                : ResourceIds.id(location.getNamespace(), recipePath).toString();
     }
 
     private static boolean isValidDefinition(String id, BlueprintDefinition definition) {

@@ -1,5 +1,6 @@
 package me.mss1r.axiomata.blueprint;
 
+import me.mss1r.axiomata.ResourceIds;
 import me.mss1r.axiomata.blueprint.command.BlueprintCommands;
 import me.mss1r.axiomata.blueprint.tracing.OutlineCatalog;
 import me.mss1r.axiomata.blueprint.internal.construction.HammerWork;
@@ -53,11 +54,11 @@ public final class BlueprintModule {
         BlueprintCreativeTab.register();
         NetworkHandler.register();
         ReloadListenerRegistry.register(PackType.SERVER_DATA, new BlueprintDefinitionCatalog(),
-                ResourceLocation.fromNamespaceAndPath(MOD_ID, "blueprints"));
+                ResourceIds.id(MOD_ID, "blueprints"));
         ReloadListenerRegistry.register(PackType.SERVER_DATA, new OutlineCatalog(),
-                ResourceLocation.fromNamespaceAndPath(MOD_ID, "blueprint_outlines"));
+                ResourceIds.id(MOD_ID, "blueprint_outlines"));
         ReloadListenerRegistry.register(PackType.SERVER_DATA, new SectionBoundsCatalog(),
-                ResourceLocation.fromNamespaceAndPath(MOD_ID, "construction_bounds"));
+                ResourceIds.id(MOD_ID, "construction_bounds"));
         InteractionEvent.INTERACT_ENTITY.register(HammerWork::onEntityInteract);
         CommandRegistrationEvent.EVENT.register(BlueprintCommands::register);
         gameEventBus.addListener(BlueprintDefinitionCatalog::syncToClients);

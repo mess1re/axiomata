@@ -1,6 +1,7 @@
 package me.mss1r.axiomata.blueprint.network;
 
 import dev.architectury.networking.NetworkManager;
+import me.mss1r.axiomata.ResourceIds;
 import me.mss1r.axiomata.blueprint.api.BlueprintPermissions;
 import me.mss1r.axiomata.blueprint.api.BlueprintTags;
 import me.mss1r.axiomata.blueprint.internal.construction.ConstructionPlacementHelper;
@@ -42,7 +43,7 @@ import java.util.Optional;
 *///?} else {
 public record C2SUseBlueprintPacket(String recipeId) implements CustomPacketPayload {
     public static final Type<C2SUseBlueprintPacket> TYPE = new Type<>(
-            ResourceLocation.fromNamespaceAndPath(BlueprintModule.MOD_ID, "use_blueprint"));
+            ResourceIds.id(BlueprintModule.MOD_ID, "use_blueprint"));
     public static final StreamCodec<RegistryFriendlyByteBuf, C2SUseBlueprintPacket> STREAM_CODEC =
             StreamCodec.ofMember(C2SUseBlueprintPacket::write, C2SUseBlueprintPacket::decode);
 

@@ -2,6 +2,7 @@ package me.mss1r.axiomata.blueprint.client.events;
 
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import me.mss1r.axiomata.Axiomata;
+import me.mss1r.axiomata.ResourceIds;
 import me.mss1r.axiomata.blueprint.client.renderer.ConstructionHighlightRenderType;
 import me.mss1r.axiomata.blueprint.internal.construction.BuildSectionCatalog;
 import me.mss1r.axiomata.blueprint.registry.BlueprintBlocks;
@@ -59,7 +60,7 @@ public class BlueprintClientModEvents {
             event.registerShader(
                     new ShaderInstance(
                             event.getResourceProvider(),
-                            ResourceLocation.fromNamespaceAndPath(Axiomata.MOD_ID, "construction_highlight"),
+                            ResourceIds.id(Axiomata.MOD_ID, "construction_highlight"),
                             DefaultVertexFormat.NEW_ENTITY
                     ),
                     ConstructionHighlightRenderType::setShader

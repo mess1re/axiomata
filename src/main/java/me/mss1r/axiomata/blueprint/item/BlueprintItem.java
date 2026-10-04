@@ -2,6 +2,7 @@ package me.mss1r.axiomata.blueprint.item;
 
 import dev.architectury.registry.menu.ExtendedMenuProvider;
 import dev.architectury.registry.menu.MenuRegistry;
+import me.mss1r.axiomata.ResourceIds;
 import me.mss1r.axiomata.blueprint.api.BlueprintTags;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinitions;
@@ -210,7 +211,7 @@ public class BlueprintItem extends Item {
     }
 
     private static Component getResultName(BlueprintDefinition recipe) {
-        Item resultItem = BuiltInRegistries.ITEM.get(ResourceLocation.parse(recipe.result.item));
+        Item resultItem = BuiltInRegistries.ITEM.get(ResourceIds.parse(recipe.result.item));
         Component resultName = resultItem != null
                 ? new ItemStack(resultItem).getHoverName()
                 : Component.literal(recipe.result.item);

@@ -1,5 +1,6 @@
 package me.mss1r.axiomata.blueprint.integration.jei;
 
+import me.mss1r.axiomata.ResourceIds;
 import me.mss1r.axiomata.blueprint.BlueprintModule;
 import me.mss1r.axiomata.blueprint.client.screen.DrawingTableScreen;
 import mezz.jei.api.IModPlugin;
@@ -10,7 +11,7 @@ import net.minecraft.resources.ResourceLocation;
 @JeiPlugin
 public class BlueprintJeiPlugin implements IModPlugin {
     private static final ResourceLocation UID =
-            ResourceLocation.fromNamespaceAndPath(BlueprintModule.MOD_ID, "jei_plugin");
+            ResourceIds.id(BlueprintModule.MOD_ID, "jei_plugin");
 
     @Override
     public ResourceLocation getPluginUid() {

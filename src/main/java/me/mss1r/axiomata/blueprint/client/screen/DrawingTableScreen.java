@@ -1,6 +1,7 @@
 package me.mss1r.axiomata.blueprint.client.screen;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import me.mss1r.axiomata.ResourceIds;
 import me.mss1r.axiomata.blueprint.BlueprintModule;
 import me.mss1r.axiomata.blueprint.blockentity.DrawingTableBlockEntity;
 import me.mss1r.axiomata.blueprint.tracing.BlueprintOutline;
@@ -36,25 +37,25 @@ import java.util.Map;
 // converted back into that space as well; vanilla slot coordinates are intentionally not used.
 public class DrawingTableScreen extends AbstractContainerScreen<DrawingTableMenu> {
     private static final ResourceLocation BACKGROUND =
-            ResourceLocation.fromNamespaceAndPath(BlueprintModule.MOD_ID, "textures/gui/background.png");
+            ResourceIds.id(BlueprintModule.MOD_ID, "textures/gui/background.png");
     private static final ResourceLocation PAPER =
-            ResourceLocation.fromNamespaceAndPath(BlueprintModule.MOD_ID, "textures/gui/paper.png");
+            ResourceIds.id(BlueprintModule.MOD_ID, "textures/gui/paper.png");
     private static final ResourceLocation SLOT =
-            ResourceLocation.fromNamespaceAndPath(BlueprintModule.MOD_ID, "textures/gui/slot.png");
+            ResourceIds.id(BlueprintModule.MOD_ID, "textures/gui/slot.png");
     private static final ResourceLocation QUILL =
-            ResourceLocation.fromNamespaceAndPath(BlueprintModule.MOD_ID, "textures/gui/quill.png");
+            ResourceIds.id(BlueprintModule.MOD_ID, "textures/gui/quill.png");
     private static final ResourceLocation PANEL_LIST =
-            ResourceLocation.fromNamespaceAndPath(BlueprintModule.MOD_ID, "textures/gui/panel_list.png");
+            ResourceIds.id(BlueprintModule.MOD_ID, "textures/gui/panel_list.png");
     private static final ResourceLocation PANEL_MATERIALS =
-            ResourceLocation.fromNamespaceAndPath(BlueprintModule.MOD_ID, "textures/gui/panel_materials.png");
+            ResourceIds.id(BlueprintModule.MOD_ID, "textures/gui/panel_materials.png");
     private static final ResourceLocation GROOVE =
-            ResourceLocation.fromNamespaceAndPath(BlueprintModule.MOD_ID, "textures/gui/groove.png");
+            ResourceIds.id(BlueprintModule.MOD_ID, "textures/gui/groove.png");
     private static final ResourceLocation FILL_PROGRESS =
-            ResourceLocation.fromNamespaceAndPath(BlueprintModule.MOD_ID, "textures/gui/fill_progress.png");
+            ResourceIds.id(BlueprintModule.MOD_ID, "textures/gui/fill_progress.png");
     private static final ResourceLocation FILL_WANDER =
-            ResourceLocation.fromNamespaceAndPath(BlueprintModule.MOD_ID, "textures/gui/fill_wander.png");
+            ResourceIds.id(BlueprintModule.MOD_ID, "textures/gui/fill_wander.png");
     private static final ResourceLocation ARROW =
-            ResourceLocation.fromNamespaceAndPath(BlueprintModule.MOD_ID, "textures/gui/arrow.png");
+            ResourceIds.id(BlueprintModule.MOD_ID, "textures/gui/arrow.png");
 
     private static final int QUILL_NIB_X = 1;
     private static final int QUILL_NIB_Y = 14;

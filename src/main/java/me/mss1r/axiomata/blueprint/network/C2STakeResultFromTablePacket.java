@@ -1,6 +1,7 @@
 package me.mss1r.axiomata.blueprint.network;
 
 import dev.architectury.networking.NetworkManager;
+import me.mss1r.axiomata.ResourceIds;
 import me.mss1r.axiomata.blueprint.menu.DrawingTableMenu;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
@@ -20,7 +21,7 @@ import me.mss1r.axiomata.blueprint.BlueprintModule;
 *///?} else {
 public record C2STakeResultFromTablePacket() implements CustomPacketPayload {
     public static final Type<C2STakeResultFromTablePacket> TYPE = new Type<>(
-            ResourceLocation.fromNamespaceAndPath(BlueprintModule.MOD_ID, "take_table_result"));
+            ResourceIds.id(BlueprintModule.MOD_ID, "take_table_result"));
     public static final StreamCodec<RegistryFriendlyByteBuf, C2STakeResultFromTablePacket> STREAM_CODEC =
             StreamCodec.ofMember(C2STakeResultFromTablePacket::write, C2STakeResultFromTablePacket::decode);
 

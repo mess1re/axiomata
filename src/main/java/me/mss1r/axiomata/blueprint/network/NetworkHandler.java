@@ -4,6 +4,7 @@ import dev.architectury.networking.NetworkManager;
 import dev.architectury.utils.Env;
 import dev.architectury.utils.EnvExecutor;
 import io.netty.buffer.Unpooled;
+import me.mss1r.axiomata.ResourceIds;
 import me.mss1r.axiomata.blueprint.BlueprintModule;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
@@ -144,7 +145,7 @@ public final class NetworkHandler {
     }
 
     private static ResourceLocation id(String path) {
-        return ResourceLocation.fromNamespaceAndPath(BlueprintModule.MOD_ID, path);
+        return ResourceIds.id(BlueprintModule.MOD_ID, path);
     }
 
     @FunctionalInterface

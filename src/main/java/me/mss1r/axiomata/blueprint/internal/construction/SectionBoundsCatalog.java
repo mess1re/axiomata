@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import com.mojang.logging.LogUtils;
+import me.mss1r.axiomata.ResourceIds;
 import me.mss1r.axiomata.geometry.LocalBox;
 import me.mss1r.axiomata.structure.SectionBounds;
 import net.minecraft.resources.ResourceLocation;
@@ -56,7 +57,7 @@ public final class SectionBoundsCatalog extends SimplePreparableReloadListener<M
             return;
         }
         String name = path.substring(PREFIX.length(), path.length() - ".json".length());
-        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(location.getNamespace(), name);
+        ResourceLocation id = ResourceIds.id(location.getNamespace(), name);
 
         try (Reader reader = resource.openAsReader()) {
             JsonElement root = JsonParser.parseReader(reader);

@@ -3,6 +3,7 @@ package me.mss1r.axiomata.blueprint.network;
 import dev.architectury.networking.NetworkManager;
 import dev.architectury.utils.Env;
 import dev.architectury.utils.EnvExecutor;
+import me.mss1r.axiomata.ResourceIds;
 import me.mss1r.axiomata.blueprint.blockentity.DrawingTableBlockEntity;
 import me.mss1r.axiomata.blueprint.tracing.BlueprintOutline;
 import me.mss1r.axiomata.blueprint.tracing.TracingSession;
@@ -25,7 +26,7 @@ import me.mss1r.axiomata.blueprint.BlueprintModule;
 public record S2CTracingStatePacket(String blueprintId, ResourceLocation texture, int resolution,
                                     byte[] mask, byte[] covered, int wandered) implements CustomPacketPayload {
     public static final Type<S2CTracingStatePacket> TYPE = new Type<>(
-            ResourceLocation.fromNamespaceAndPath(BlueprintModule.MOD_ID, "tracing_state"));
+            ResourceIds.id(BlueprintModule.MOD_ID, "tracing_state"));
     public static final StreamCodec<RegistryFriendlyByteBuf, S2CTracingStatePacket> STREAM_CODEC =
             StreamCodec.ofMember(S2CTracingStatePacket::write, S2CTracingStatePacket::decode);
 

@@ -133,18 +133,18 @@ public class BlueprintItem extends Item {
     }
 
     public static ItemStack createResultStack(BlueprintDefinition recipe) {
-        if (recipe == null || recipe.result == null) {
+        if (recipe == null) {
             return ItemStack.EMPTY;
         }
-        ResourceLocation itemId = ResourceLocation.tryParse(recipe.result.item);
-        if (itemId == null || !BuiltInRegistries.ITEM.containsKey(itemId)) {
+        ResourceLocation itemId = recipe.result().item();
+        if (!BuiltInRegistries.ITEM.containsKey(itemId)) {
             return ItemStack.EMPTY;
         }
 
-        ItemStack result = new ItemStack(BuiltInRegistries.ITEM.get(itemId), recipe.result.count);
-        if (recipe.result.custom_data != null && !recipe.result.custom_data.isEmpty()) {
+        ItemStack result = new ItemStack(BuiltInRegistries.ITEM.get(itemId), recipe.result().count());
+        if (!recipe.result().data().isEmpty()) {
             CompoundTag tag = new CompoundTag();
-            recipe.result.custom_data.forEach(tag::putInt);
+            recipe.result().data().forEach(tag::putInt);
             //? if forge {
             /*result.setTag(tag);
             *///?} else {
@@ -220,12 +220,12 @@ public class BlueprintItem extends Item {
     }
 
     private static Component getResultName(BlueprintDefinition recipe) {
-        Item resultItem = BuiltInRegistries.ITEM.get(ResourceIds.parse(recipe.result.item));
+        Item resultItem = BuiltInRegistries.ITEM.get(recipe.result().item());
         Component resultName = resultItem != null
                 ? new ItemStack(resultItem).getHoverName()
-                : Component.literal(recipe.result.item);
+                : Component.literal(recipe.result().item().toString());
 
-        Integer sections = recipe.result.custom_data == null ? null : recipe.result.custom_data.get("Sections");
+        Integer sections = recipe.result().data().get("Sections");
         return sections != null
                 ? Component.translatable("item.axiomata.result_with_sections", resultName, sections)
                 : resultName;

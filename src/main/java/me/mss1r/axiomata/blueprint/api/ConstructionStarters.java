@@ -32,8 +32,8 @@ public final class ConstructionStarters {
         }
         String itemId = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
         for (Map.Entry<String, BlueprintDefinition> entry : BlueprintDefinitions.allById().entrySet()) {
-            BlueprintDefinition.StarterSpec starter = entry.getValue().starter;
-            if (starter != null && itemId.equals(starter.item)) {
+            BlueprintDefinition.Starter starter = entry.getValue().starter();
+            if (starter != null && itemId.equals(starter.item().toString())) {
                 return entry.getKey();
             }
         }
@@ -56,19 +56,19 @@ public final class ConstructionStarters {
      * its own data already holds, so a finished build taken up again carries on from where it stopped.
      */
     public static int builtStages(BlueprintDefinition definition, ItemStack starter) {
-        if (definition.starter == null || definition.construction == null) {
+        if (definition.starter() == null) {
             return 0;
         }
-        int stages = definition.construction.size();
-        int built = Math.max(0, Math.min(definition.starter.built_stages, stages));
+        int stages = definition.stageCount();
+        int built = Math.max(0, Math.min(definition.starter().builtStages(), stages));
         Map<String, Integer> added = new HashMap<>();
         for (int index = 0; index < built; index++) {
-            add(added, definition.construction.get(index));
+            add(added, definition.stages().get(index));
         }
         CompoundTag data = customData(starter);
         while (built < stages) {
-            BlueprintDefinition.StageSpec next = definition.construction.get(built);
-            if (next == null || next.adds == null || next.adds.isEmpty() || !holds(data, added, next.adds)) {
+            BlueprintDefinition.Stage next = definition.stages().get(built);
+            if (next.adds().isEmpty() || !holds(data, added, next.adds())) {
                 break;
             }
             add(added, next);
@@ -86,10 +86,8 @@ public final class ConstructionStarters {
         return true;
     }
 
-    private static void add(Map<String, Integer> added, @Nullable BlueprintDefinition.StageSpec stage) {
-        if (stage != null && stage.adds != null) {
-            stage.adds.forEach((key, value) -> added.merge(key, value, Integer::sum));
-        }
+    private static void add(Map<String, Integer> added, BlueprintDefinition.Stage stage) {
+        stage.adds().forEach((key, value) -> added.merge(key, value, Integer::sum));
     }
 
     private static CompoundTag customData(ItemStack stack) {

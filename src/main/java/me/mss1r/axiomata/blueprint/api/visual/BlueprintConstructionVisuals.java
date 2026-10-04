@@ -36,30 +36,27 @@ public final class BlueprintConstructionVisuals {
 
     public static State state(String blueprintId, int completedStages) {
         BlueprintDefinition definition = BlueprintDefinitions.get(blueprintId);
-        if (definition == null || definition.construction == null || definition.construction.isEmpty()) {
+        if (definition == null || definition.stages().isEmpty()) {
             return new State(Set.of(), "", 0, 0);
         }
 
-        int completed = Math.max(0, Math.min(completedStages, definition.construction.size()));
+        int completed = Math.max(0, Math.min(completedStages, definition.stageCount()));
         Set<String> built = new LinkedHashSet<>();
         for (int index = 0; index < completed; index++) {
-            String section = sectionName(definition.construction.get(index));
+            String section = definition.stages().get(index).section();
             if (!section.isEmpty()) {
                 built.add(section);
             }
         }
 
-        String active = completed < definition.construction.size()
-                ? sectionName(definition.construction.get(completed))
+        String active = completed < definition.stageCount()
+                ? definition.stages().get(completed).section()
                 : "";
         return new State(
                 Collections.unmodifiableSet(built),
                 active,
                 completed,
-                definition.construction.size());
+                definition.stageCount());
     }
 
-    private static String sectionName(BlueprintDefinition.StageSpec stage) {
-        return stage == null || stage.section == null ? "" : stage.section;
-    }
 }

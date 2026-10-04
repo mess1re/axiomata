@@ -88,17 +88,16 @@ public final class BuildProgress {
     @Nullable
     public String sectionNeededToEnd() {
         BlueprintDefinition definition = definition();
-        if (definition == null || !definition.isExtendable() || stage() >= definition.min_stages) {
+        if (definition == null || !definition.isExtendable() || stage() >= definition.minStages()) {
             return null;
         }
-        BlueprintDefinition.StageSpec needed = definition.construction.get(definition.min_stages - 1);
-        return needed == null ? null : needed.section;
+        return definition.stages().get(definition.minStages() - 1).section();
     }
 
     /** Whether the build may be ended now, short of its last stage: it is extendable and has its minimum. */
     public boolean canEndHere() {
         BlueprintDefinition definition = definition();
-        return definition != null && definition.isExtendable() && !complete() && stage() >= definition.min_stages;
+        return definition != null && definition.isExtendable() && !complete() && stage() >= definition.minStages();
     }
 
     /** Ends the build at the stage it has reached. The caller refunds any work on the current stage first. */
@@ -115,15 +114,12 @@ public final class BuildProgress {
     public Map<String, Integer> builtData() {
         BlueprintDefinition definition = definition();
         Map<String, Integer> data = new LinkedHashMap<>();
-        if (definition == null || definition.construction == null) {
+        if (definition == null) {
             return data;
         }
-        int built = Math.min(stage(), definition.construction.size());
+        int built = Math.min(stage(), definition.stageCount());
         for (int index = 0; index < built; index++) {
-            BlueprintDefinition.StageSpec spec = definition.construction.get(index);
-            if (spec != null && spec.adds != null) {
-                spec.adds.forEach((key, value) -> data.merge(key, value, Integer::sum));
-            }
+            definition.stages().get(index).adds().forEach((key, value) -> data.merge(key, value, Integer::sum));
         }
         return data;
     }

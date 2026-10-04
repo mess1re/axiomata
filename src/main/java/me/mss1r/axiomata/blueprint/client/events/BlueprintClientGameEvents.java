@@ -8,6 +8,7 @@ import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinitions;
 import me.mss1r.axiomata.blueprint.internal.construction.ConstructionPlacementHelper;
 import me.mss1r.axiomata.blueprint.api.ConstructionStarters;
+import me.mss1r.axiomata.blueprint.item.BlueprintItem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
@@ -50,13 +51,11 @@ public class BlueprintClientGameEvents {
             return;
         }
 
-        ResourceLocation resultId = ResourceLocation.tryParse(recipe.result.item);
-        if (resultId == null || !BuiltInRegistries.ITEM.containsKey(resultId)) {
+        // The result with its data, so the preview takes the room the finished build will.
+        ItemStack previewStack = BlueprintItem.createResultStack(recipe);
+        if (previewStack.isEmpty()) {
             return;
         }
-
-        Item previewItem = BuiltInRegistries.ITEM.get(resultId);
-        ItemStack previewStack = new ItemStack(previewItem, recipe.result.count);
         //? if forge {
         /*float partialTick = event.getPartialTick();
         *///?} else {

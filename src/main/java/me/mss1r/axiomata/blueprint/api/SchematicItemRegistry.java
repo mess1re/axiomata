@@ -2,7 +2,8 @@ package me.mss1r.axiomata.blueprint.api;
 
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinitions;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 
 import java.util.Collections;
@@ -15,10 +16,12 @@ public final class SchematicItemRegistry {
 
     public static Set<Item> getItems() {
         Set<Item> items = new LinkedHashSet<>();
-        BlueprintDefinitions.all().forEach(recipe -> recipe.key.values().forEach(spec -> {
-            ResourceLocation id = ResourceLocation.tryParse(spec.item);
-            if (id != null && BuiltInRegistries.ITEM.containsKey(id)) {
-                items.add(BuiltInRegistries.ITEM.get(id));
+        BlueprintDefinitions.all().forEach(recipe -> recipe.totals().forEach(material -> {
+            if (material.item() != null && BuiltInRegistries.ITEM.containsKey(material.item())) {
+                items.add(BuiltInRegistries.ITEM.get(material.item()));
+            } else if (material.tag() != null) {
+                BuiltInRegistries.ITEM.getTag(TagKey.create(Registries.ITEM, material.tag()))
+                        .ifPresent(tag -> tag.forEach(holder -> items.add(holder.value())));
             }
         }));
         return Collections.unmodifiableSet(items);

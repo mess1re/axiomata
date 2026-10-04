@@ -1,7 +1,9 @@
 package me.mss1r.axiomata.blueprint.api.construction;
 
 import net.minecraft.world.Container;
+import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition.Material;
 import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.Nullable;
 
 public final class ConstructionWork {
     public enum Status {
@@ -12,7 +14,8 @@ public final class ConstructionWork {
         CANNOT_END
     }
 
-    public record Result(Status status, ItemStack missing) {
+    /** {@code missing} is the material a stage lacks, when that is what stopped it. */
+    public record Result(Status status, @Nullable Material missing) {
         public boolean advanced() {
             return status == Status.ADVANCED;
         }
@@ -22,7 +25,7 @@ public final class ConstructionWork {
         }
     }
 
-    private static final Result DONE = new Result(Status.DONE, ItemStack.EMPTY);
+    private static final Result DONE = new Result(Status.DONE, null);
 
     private ConstructionWork() {
     }
@@ -35,8 +38,8 @@ public final class ConstructionWork {
         }
 
         if (!progress.materialsCommitted() && materials != null) {
-            for (ItemStack material : stage.materials()) {
-                if (!material.isEmpty() && count(materials, material) < material.getCount()) {
+            for (Material material : stage.materials()) {
+                if (count(materials, material) < material.count()) {
                     return new Result(Status.MISSING_MATERIAL, material);
                 }
             }
@@ -46,7 +49,7 @@ public final class ConstructionWork {
             // Commit the whole stage on its first hit and persist that fact. Reloading halfway
             // through a stage must not consume the same parts again.
             if (materials != null) {
-                for (ItemStack material : stage.materials()) {
+                for (Material material : stage.materials()) {
                     take(materials, material);
                 }
             }
@@ -55,10 +58,10 @@ public final class ConstructionWork {
 
         if (!progress.strike()) {
             machine.onBuildProgressChanged();
-            return new Result(Status.PROGRESSED, ItemStack.EMPTY);
+            return new Result(Status.PROGRESSED, null);
         }
         machine.onBuildProgressChanged();
-        return new Result(Status.ADVANCED, ItemStack.EMPTY);
+        return new Result(Status.ADVANCED, null);
     }
 
     /**
@@ -68,12 +71,12 @@ public final class ConstructionWork {
     public static Result endHere(UnderConstruction machine, Container materials) {
         BuildProgress progress = machine.buildProgress();
         if (!progress.canEndHere()) {
-            return new Result(Status.CANNOT_END, ItemStack.EMPTY);
+            return new Result(Status.CANNOT_END, null);
         }
         BlueprintConstructionPlan.Stage current = progress.currentStage();
         if (current != null && progress.materialsCommitted() && materials != null) {
-            for (ItemStack material : current.materials()) {
-                give(materials, material.copy());
+            for (Material material : current.materials()) {
+                give(materials, material.displayStack());
             }
         }
         progress.endHere();
@@ -89,12 +92,12 @@ public final class ConstructionWork {
             boolean refund = progress.materialsCommitted();
             progress.cancelCurrentStage();
             if (refund && materials != null) {
-                for (ItemStack material : current.materials()) {
-                    give(materials, material.copy());
+                for (Material material : current.materials()) {
+                    give(materials, material.displayStack());
                 }
             }
             machine.onBuildProgressChanged();
-            return new Result(Status.ADVANCED, ItemStack.EMPTY);
+            return new Result(Status.ADVANCED, null);
         }
 
         int undone = progress.dismantle();
@@ -103,30 +106,30 @@ public final class ConstructionWork {
         }
         BlueprintConstructionPlan.Stage stage = progress.plan().stage(undone);
         if (stage != null && materials != null) {
-            for (ItemStack material : stage.materials()) {
-                give(materials, material.copy());
+            for (Material material : stage.materials()) {
+                give(materials, material.displayStack());
             }
         }
         machine.onBuildProgressChanged();
-        return new Result(Status.ADVANCED, ItemStack.EMPTY);
+        return new Result(Status.ADVANCED, null);
     }
 
-    private static int count(Container container, ItemStack material) {
+    private static int count(Container container, Material material) {
         int found = 0;
         for (int slot = 0; slot < container.getContainerSize(); slot++) {
             ItemStack stack = container.getItem(slot);
-            if (stack.getItem() == material.getItem()) {
+            if (material.matches(stack)) {
                 found += stack.getCount();
             }
         }
         return found;
     }
 
-    private static void take(Container container, ItemStack material) {
-        int remaining = material.getCount();
+    private static void take(Container container, Material material) {
+        int remaining = material.count();
         for (int slot = 0; slot < container.getContainerSize() && remaining > 0; slot++) {
             ItemStack stack = container.getItem(slot);
-            if (stack.getItem() != material.getItem()) {
+            if (!material.matches(stack)) {
                 continue;
             }
             int taken = Math.min(remaining, stack.getCount());
@@ -139,6 +142,7 @@ public final class ConstructionWork {
         container.setChanged();
     }
 
+    /** Hands back a material; one taken by a tag comes back as the item that shows that tag. */
     private static void give(Container container, ItemStack material) {
         for (int slot = 0; slot < container.getContainerSize() && !material.isEmpty(); slot++) {
             ItemStack stack = container.getItem(slot);

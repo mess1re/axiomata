@@ -2,6 +2,7 @@ package me.mss1r.axiomata.blueprint.internal.construction;
 
 import dev.architectury.event.EventResult;
 import me.mss1r.axiomata.blueprint.api.construction.BlueprintConstructionPlan;
+import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition;
 import me.mss1r.axiomata.blueprint.api.construction.BuildProgress;
 import me.mss1r.axiomata.blueprint.api.construction.ConstructionWork;
 import me.mss1r.axiomata.blueprint.api.construction.UnderConstruction;
@@ -106,7 +107,7 @@ public final class HammerWork {
                 serverPlayer.displayClientMessage(Component.translatable(
                         "message.axiomata.construction.missing",
                         StageNames.of(progress.blueprintId(), stage.section()),
-                        result.missing().getCount(), result.missing().getHoverName()), true);
+                        result.missing().count(), result.missing().displayName()), true);
             }
             return;
         }
@@ -160,11 +161,11 @@ public final class HammerWork {
             return;
         }
         MutableComponent needs = Component.empty();
-        for (ItemStack material : next.materials()) {
+        for (BlueprintDefinition.Material material : next.materials()) {
             if (!needs.getSiblings().isEmpty()) {
                 needs.append(", ");
             }
-            needs.append(material.getHoverName()).append(" x" + material.getCount());
+            needs.append(material.displayName()).append(" x" + material.count());
         }
         serverPlayer.displayClientMessage(Component.translatable(
                 progress.canEndHere() ? "message.axiomata.construction.next_or_end"

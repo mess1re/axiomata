@@ -2,7 +2,9 @@ package me.mss1r.axiomata.blueprint.client.screen;
 
 import me.mss1r.axiomata.blueprint.client.PlacementTargetHelper;
 import me.mss1r.axiomata.blueprint.internal.construction.ConstructionPlacementHelper;
+import me.mss1r.axiomata.blueprint.api.ConstructionStarters;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition;
+import me.mss1r.axiomata.blueprint.item.BlueprintItem;
 import me.mss1r.axiomata.blueprint.menu.BlueprintUseMenu;
 import me.mss1r.axiomata.blueprint.network.C2SUseBlueprintPacket;
 import me.mss1r.axiomata.blueprint.network.NetworkHandler;
@@ -43,17 +45,12 @@ public class BlueprintUseScreen extends AbstractContainerScreen<BlueprintUseMenu
         this.imageWidth = 0;
         this.imageHeight = 0;
 
-        if (recipe != null && recipe.key != null) {
-            Map<Item, Integer> aggregated = new LinkedHashMap<>();
-            for (BlueprintDefinition.IngredientSpec spec : recipe.key.values()) {
-                Item item = getRegisteredItem(spec.item);
-                if (item != null) {
-                    aggregated.merge(item, Math.max(1, spec.count), Integer::sum);
-                }
-            }
-
-            for (Map.Entry<Item, Integer> entry : aggregated.entrySet()) {
-                ingredientsDisplay.add(Map.entry(new ItemStack(entry.getKey()), entry.getValue()));
+        if (recipe != null) {
+            // What is left to build: a starter brings its own stages already made.
+            ItemStack held = playerInv.player.getOffhandItem();
+            int from = ConstructionStarters.isStarter(held) ? ConstructionStarters.builtStages(recipe, held) : 0;
+            for (BlueprintDefinition.Material material : recipe.materialsFrom(from)) {
+                ingredientsDisplay.add(Map.entry(material.displayStack(), material.count()));
             }
         }
     }
@@ -221,12 +218,7 @@ public class BlueprintUseScreen extends AbstractContainerScreen<BlueprintUseMenu
     }
 
     private ItemStack getResultStack() {
-        if (recipe == null || recipe.result == null || recipe.result.item == null) {
-            return ItemStack.EMPTY;
-        }
-
-        Item item = getRegisteredItem(recipe.result.item);
-        return item == null ? ItemStack.EMPTY : new ItemStack(item, recipe.result.count);
+        return recipe == null ? ItemStack.EMPTY : BlueprintItem.createResultStack(recipe);
     }
 
     @Nullable

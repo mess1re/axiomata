@@ -99,7 +99,7 @@ public class DrawingTableScreen extends AbstractContainerScreen<DrawingTableMenu
     private void rebuildEntries() {
         entries.clear();
         for (Map.Entry<String, BlueprintDefinition> entry : BlueprintDefinitions.allById().entrySet()) {
-            if (!OutlineCatalog.isDrawable(entry.getKey())) {
+            if (!OutlineCatalog.isDrawable(entry.getValue().outlineId(entry.getKey()))) {
                 continue;
             }
             ItemStack icon = BlueprintItem.createResultStack(entry.getValue());
@@ -304,21 +304,18 @@ public class DrawingTableScreen extends AbstractContainerScreen<DrawingTableMenu
 
     private void renderMaterials(GuiGraphics guiGraphics) {
         BlueprintDefinition recipe = BlueprintDefinitions.get(ClientTracing.blueprintId());
-        if (recipe == null || recipe.key == null) {
+        if (recipe == null) {
             return;
         }
         int index = 0;
-        for (BlueprintDefinition.IngredientSpec spec : recipe.key.values()) {
-            Item item = BuiltInRegistries.ITEM.get(ResourceLocation.tryParse(spec.item));
-            if (item == null) {
-                continue;
-            }
+        for (BlueprintDefinition.Material material : recipe.totals()) {
             int column = index % DrawingTableLayout.MATERIALS_COLUMNS;
             int row = index / DrawingTableLayout.MATERIALS_COLUMNS;
             int x = DrawingTableLayout.MATERIALS_PANEL_X + DrawingTableLayout.PANEL_BORDER
                     + column * DrawingTableLayout.MATERIALS_SPACING;
             int y = DrawingTableLayout.MATERIALS_PANEL_Y + 18 + row * DrawingTableLayout.MATERIALS_SPACING;
-            ItemStack stack = new ItemStack(item, spec.count);
+            ItemStack stack = material.displayStack();
+            stack.setCount(material.count());
             guiGraphics.renderItem(stack, x, y);
             guiGraphics.renderItemDecorations(this.font, stack, x, y);
             index++;
@@ -327,12 +324,12 @@ public class DrawingTableScreen extends AbstractContainerScreen<DrawingTableMenu
     }
 
     private void renderStageCount(GuiGraphics guiGraphics, BlueprintDefinition recipe, int materials) {
-        if (recipe.construction == null || recipe.construction.isEmpty()) {
+        if (recipe.stages().isEmpty()) {
             return;
         }
         int rows = (materials + DrawingTableLayout.MATERIALS_COLUMNS - 1) / DrawingTableLayout.MATERIALS_COLUMNS;
         guiGraphics.drawString(this.font,
-                Component.translatable("gui.axiomata.drawing_table.stages", recipe.construction.size()),
+                Component.translatable("gui.axiomata.drawing_table.stages", recipe.stageCount()),
                 DrawingTableLayout.MATERIALS_PANEL_X + DrawingTableLayout.PANEL_BORDER + 1,
                 DrawingTableLayout.MATERIALS_PANEL_Y + 22 + rows * DrawingTableLayout.MATERIALS_SPACING,
                 COLOUR_TEXT_DIM, false);

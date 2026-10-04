@@ -19,6 +19,7 @@
   "gui.axiomata.builds_in_world": "Размещает стройплощадку и создает результат в мире.",
   "gui.axiomata.invalid_recipe": "Чертеж недоступен или содержит ошибку.",
   "gui.axiomata.not_enough": "Не хватает материалов.",
+  "gui.axiomata.any_of": "любые: %s",
   "gui.axiomata.no_permission": "Здесь нельзя использовать этот чертеж.",
   "gui.axiomata.preview_target_ready": "Превью привязано к блоку под прицелом.",
   "gui.axiomata.preview_target_invalid": "Здесь нельзя разместить стройплощадку.",

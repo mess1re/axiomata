@@ -7,6 +7,7 @@ import me.mss1r.axiomata.blueprint.api.BlueprintTags;
 import me.mss1r.axiomata.blueprint.api.ConstructionStarters;
 import me.mss1r.axiomata.blueprint.internal.construction.ConstructionPlacementHelper;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition;
+import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition.Material;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinitions;
 import me.mss1r.axiomata.blueprint.api.construction.ConstructionDeployer;
 import me.mss1r.axiomata.blueprint.api.event.BlueprintUsedEvent;
@@ -100,26 +101,17 @@ public record C2SUseBlueprintPacket(String recipeId) implements CustomPacketPayl
             }
 
             boolean buildsInWorld = recipe.buildsInWorld();
-            Map<Item, Integer> needed = buildsInWorld ? Map.of() : collectNeededItems(recipe);
-            if (!buildsInWorld) {
-                Map<Item, Integer> missing = new HashMap<>();
-                boolean hasAll = true;
-                for (Map.Entry<Item, Integer> entry : needed.entrySet()) {
-                    int found = countItems(player.getInventory(), entry.getKey());
-                    if (found < entry.getValue()) {
-                        missing.put(entry.getKey(), entry.getValue() - found);
-                        hasAll = false;
+            List<Material> needed = buildsInWorld ? List.of() : recipe.totals();
+            if (!buildsInWorld && !hasMaterials(player.getInventory(), needed)) {
+                player.displayClientMessage(Component.translatable("gui.axiomata.not_enough"), false);
+                for (Material material : needed) {
+                    int missing = material.count() - count(player.getInventory(), material);
+                    if (missing > 0) {
+                        player.displayClientMessage(Component.literal("- ").append(material.displayName())
+                                .append(": " + missing), false);
                     }
                 }
-
-                if (!hasAll) {
-                    player.displayClientMessage(Component.translatable("gui.axiomata.not_enough"), false);
-                    for (Map.Entry<Item, Integer> entry : missing.entrySet()) {
-                        player.displayClientMessage(Component.literal("- " +
-                                BuiltInRegistries.ITEM.getKey(entry.getKey()) + ": " + entry.getValue()), false);
-                    }
-                    return;
-                }
+                return;
             }
 
             net.minecraft.world.entity.Entity machine = null;
@@ -160,8 +152,8 @@ public record C2SUseBlueprintPacket(String recipeId) implements CustomPacketPayl
             }
 
             if (!buildsInWorld) {
-                for (Map.Entry<Item, Integer> entry : needed.entrySet()) {
-                    removeItems(player, entry.getKey(), entry.getValue());
+                for (Material material : needed) {
+                    take(player.getInventory(), material);
                 }
             }
 
@@ -186,58 +178,41 @@ public record C2SUseBlueprintPacket(String recipeId) implements CustomPacketPayl
         });
     }
 
-    private static Map<Item, Integer> collectNeededItems(BlueprintDefinition recipe) {
-        Map<Item, Integer> needed = new LinkedHashMap<>();
-        for (BlueprintDefinition.IngredientSpec spec : recipe.key.values()) {
-            Item item = getRegisteredItem(spec.item);
-            if (item != null) {
-                needed.merge(item, Math.max(1, spec.count), Integer::sum);
+    private static boolean hasMaterials(Inventory inventory, List<Material> materials) {
+        for (Material material : materials) {
+            if (count(inventory, material) < material.count()) {
+                return false;
             }
         }
-        return needed;
+        return true;
     }
 
-    @Nullable
-    private static Item getRegisteredItem(String itemId) {
-        ResourceLocation resourceLocation = ResourceLocation.tryParse(itemId);
-        return resourceLocation != null && BuiltInRegistries.ITEM.containsKey(resourceLocation)
-                ? BuiltInRegistries.ITEM.get(resourceLocation)
-                : null;
-    }
-
-    private static int countItems(Inventory inventory, Item item) {
-        return countItems(inventory.items, item) + countItems(inventory.offhand, item);
-    }
-
-    private static int countItems(List<ItemStack> stacks, Item item) {
-        int count = 0;
-        for (ItemStack stack : stacks) {
-            if (!stack.isEmpty() && stack.getItem() == item) {
-                count += stack.getCount();
-            }
-        }
-        return count;
-    }
-
-    private static void removeItems(ServerPlayer player, Item item, int count) {
-        count = removeItems(player.getInventory().items, item, count);
-        if (count > 0) {
-            removeItems(player.getInventory().offhand, item, count);
-        }
-    }
-
-    private static int removeItems(List<ItemStack> stacks, Item item, int count) {
-        for (ItemStack stack : stacks) {
-            if (!stack.isEmpty() && stack.getItem() == item) {
-                int toRemove = Math.min(stack.getCount(), count);
-                stack.shrink(toRemove);
-                count -= toRemove;
-                if (count <= 0) {
-                    break;
+    private static int count(Inventory inventory, Material material) {
+        int found = 0;
+        for (List<ItemStack> stacks : List.of(inventory.items, inventory.offhand)) {
+            for (ItemStack stack : stacks) {
+                if (material.matches(stack)) {
+                    found += stack.getCount();
                 }
             }
         }
-        return count;
+        return found;
+    }
+
+    private static void take(Inventory inventory, Material material) {
+        int remaining = material.count();
+        for (List<ItemStack> stacks : List.of(inventory.items, inventory.offhand)) {
+            for (ItemStack stack : stacks) {
+                if (remaining <= 0) {
+                    return;
+                }
+                if (material.matches(stack)) {
+                    int taken = Math.min(stack.getCount(), remaining);
+                    stack.shrink(taken);
+                    remaining -= taken;
+                }
+            }
+        }
     }
 
     private static boolean hasConstructionTools(ServerPlayer player, String recipeId) {

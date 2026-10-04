@@ -19,6 +19,7 @@
   "gui.axiomata.builds_in_world": "Places a construction site and builds the result in the world.",
   "gui.axiomata.invalid_recipe": "This blueprint is unavailable or invalid.",
   "gui.axiomata.not_enough": "You do not have the required materials.",
+  "gui.axiomata.any_of": "any %s",
   "gui.axiomata.no_permission": "You cannot use this blueprint here.",
   "gui.axiomata.preview_target_ready": "Preview locked to the block under your crosshair.",
   "gui.axiomata.preview_target_invalid": "The construction cannot be placed here.",

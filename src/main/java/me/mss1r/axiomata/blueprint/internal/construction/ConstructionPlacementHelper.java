@@ -51,8 +51,8 @@ public final class ConstructionPlacementHelper {
     }
 
     public static boolean requiresFluidTargeting(Level level, ItemStack stack, @Nullable BlueprintDefinition recipe) {
-        if (recipe != null && recipe.result != null && recipe.result.deployment != null) {
-            return recipe.result.deployment.isWater();
+        if (recipe != null && recipe.buildsInWorld()) {
+            return recipe.result().placement() == BlueprintDefinition.Placement.WATER;
         }
         Entity previewEntity = createPreviewEntity(level, stack, Vec3.ZERO, 0.0F, 0, null);
         return previewEntity instanceof Boat;
@@ -74,7 +74,7 @@ public final class ConstructionPlacementHelper {
                                                 @Nullable BlueprintDefinition recipe) {
         Entity previewEntity = createPreviewEntity(level, stack, getProbePos(targetPos, hitLocation), yaw, 0, recipe);
         boolean groundBlockResult = isGroundBlockResult(stack);
-        boolean explicitDeployment = recipe != null && recipe.result != null && recipe.result.deployment != null;
+        boolean explicitDeployment = recipe != null && recipe.buildsInWorld();
         if (previewEntity == null && !groundBlockResult && !explicitDeployment) {
             return null;
         }
@@ -94,7 +94,7 @@ public final class ConstructionPlacementHelper {
                                                        float yaw, @Nullable BlueprintDefinition recipe) {
         Entity previewEntity = createPreviewEntity(level, stack, getAnchorProbePos(level, anchorPos, mode), yaw, 0, recipe);
         boolean groundBlockResult = isGroundBlockResult(stack);
-        boolean explicitDeployment = recipe != null && recipe.result != null && recipe.result.deployment != null;
+        boolean explicitDeployment = recipe != null && recipe.buildsInWorld();
         if (previewEntity == null && !(groundBlockResult && mode == PlacementMode.GROUND) && !explicitDeployment) {
             return null;
         }
@@ -152,10 +152,8 @@ public final class ConstructionPlacementHelper {
 
     @Nullable
     public static EntityType<?> resolveEntityType(ItemStack stack, @Nullable BlueprintDefinition recipe) {
-        if (recipe != null && recipe.result != null && recipe.result.deployment != null
-                && recipe.result.deployment.preview_entity != null) {
-            ResourceLocation configuredId = ResourceLocation.tryParse(recipe.result.deployment.preview_entity);
-            return configuredId == null ? null : BuiltInRegistries.ENTITY_TYPE.getOptional(configuredId).orElse(null);
+        if (recipe != null && recipe.result().entity() != null) {
+            return BuiltInRegistries.ENTITY_TYPE.getOptional(recipe.result().entity()).orElse(null);
         }
 
         ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(stack.getItem());

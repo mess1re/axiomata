@@ -41,9 +41,9 @@ public final class ConstructionDeployer {
 
         if (machine instanceof UnderConstruction underConstruction) {
             boolean started = recipe != null && ConstructionStarters.isStarter(blueprint);
-            // Nobody drew a starter, so nothing was drawn badly: its build wastes nothing.
+            // Nobody drew a starter, so no drawing shapes its build: it takes exactly what its stages say.
             underConstruction.buildProgress().begin(blueprintId,
-                    started ? BuildQuality.CLEAN : BlueprintItem.getQuality(blueprint));
+                    started ? BuildQuality.EXACT : BlueprintItem.getQuality(blueprint));
             if (started) {
                 // The starter is those stages, made already.
                 underConstruction.buildProgress().skipBuilt(ConstructionStarters.builtStages(recipe, blueprint));

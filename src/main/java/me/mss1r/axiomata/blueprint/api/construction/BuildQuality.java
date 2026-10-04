@@ -7,7 +7,10 @@ public enum BuildQuality {
     CLEAN("clean", 0.10F, 1.00F, 0.85F, ChatFormatting.AQUA),
     PLAIN("plain", 0.40F, 1.15F, 1.00F, ChatFormatting.GRAY),
     HASTY("hasty", 0.70F, 1.35F, 1.45F, ChatFormatting.YELLOW),
-    SLOPPY("sloppy", Float.MAX_VALUE, 1.60F, 1.80F, ChatFormatting.RED);
+    SLOPPY("sloppy", Float.MAX_VALUE, 1.60F, 1.80F, ChatFormatting.RED),
+    // A build nobody drew, started from a part made elsewhere: it takes exactly what its stages say. No tracing
+    // ever earns it, as its wander limit is below any share.
+    EXACT("exact", -1.0F, 1.00F, 1.00F, ChatFormatting.GRAY);
 
     private static final BuildQuality[] VALUES = values();
 

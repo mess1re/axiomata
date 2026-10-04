@@ -53,5 +53,37 @@ class ConstructionProgressTest {
         assertEquals(0, progress.rollBackStage());
         assertEquals(0, progress.stage());
     }
-}
 
+    @Test
+    void endingEarlyCompletesTheBuildAndRollingBackReopensIt() {
+        ConstructionProgress progress = new ConstructionProgress();
+        progress.begin("example:structure", "plain");
+        progress.applyWork(PLAN);
+        progress.applyWork(PLAN);
+        progress.commitMaterials();
+
+        progress.endHere();
+        assertTrue(progress.complete(PLAN));
+        assertEquals(1, progress.stage());
+        assertFalse(progress.hasCurrentStageWork());
+
+        ConstructionProgress restored = new ConstructionProgress();
+        restored.restore(progress.snapshot());
+        assertTrue(restored.complete(PLAN));
+
+        assertEquals(0, progress.rollBackStage());
+        assertFalse(progress.complete(PLAN));
+    }
+
+    @Test
+    void startingFromABuiltPartSkipsItsStages() {
+        ConstructionProgress progress = new ConstructionProgress();
+        progress.begin("example:structure", "plain");
+        progress.advanceTo(1);
+
+        assertEquals(1, progress.stage());
+        assertFalse(progress.complete(PLAN));
+        progress.advanceTo(2);
+        assertTrue(progress.complete(PLAN));
+    }
+}

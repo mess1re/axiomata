@@ -191,6 +191,29 @@ public final class BlueprintDefinitionCatalog extends SimplePreparableReloadList
                 }
             }
         }
+        if (definition.min_stages < 0 || definition.min_stages >= Math.max(1, definition.stageCount())) {
+            if (definition.min_stages != 0) {
+                LOGGER.warn("Blueprint {} may end after {} stages but has {}; every stage is required instead",
+                        id, definition.min_stages, definition.stageCount());
+            }
+            definition.min_stages = 0;
+        }
+        if (definition.construction != null) {
+            for (BlueprintDefinition.StageSpec stage : definition.construction) {
+                if (stage != null && stage.adds != null
+                        && stage.adds.values().stream().anyMatch(value -> value == null || value < 0)) {
+                    LOGGER.warn("Blueprint {} stage {} adds a negative value; it adds nothing instead",
+                            id, stage.section);
+                    stage.adds = null;
+                }
+            }
+        }
+        if (definition.starter != null && (!isRegisteredItem(definition.starter.item)
+                || definition.starter.built_stages < 0
+                || definition.starter.built_stages > definition.stageCount())) {
+            LOGGER.warn("Blueprint {} has a starter that is unavailable or stands for stages it does not have", id);
+            definition.starter = null;
+        }
         if (definition.result.deployment != null && !definition.result.deployment.isValid()) {
             LOGGER.warn("Skipping blueprint {} because its deployment data is invalid", id);
             return false;

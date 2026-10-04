@@ -12,9 +12,32 @@ public final class BlueprintDefinition {
     public Map<String, IngredientSpec> key = new LinkedHashMap<>();
     public ResultSpec result;
     public List<StageSpec> construction;
+    /**
+     * How many stages must stand before the build may be ended where it is, leaving the later stages unbuilt; zero
+     * when every stage must be built.
+     */
+    public int min_stages;
+    /** An item that stands in for a drawn blueprint, being itself the first stages already built. */
+    public StarterSpec starter;
 
     public boolean buildsInWorld() {
         return result != null && result.deployment != null;
+    }
+
+    public int stageCount() {
+        return construction == null ? 0 : construction.size();
+    }
+
+    /** Whether the build may end before its last stage, at any stage from {@link #min_stages} on. */
+    public boolean isExtendable() {
+        return min_stages > 0 && min_stages < stageCount();
+    }
+
+    public static final class StarterSpec {
+        public String item;
+        // The leading stages the starter item itself is. Stages beyond them count as built too when the item's
+        // data already holds what they add, so a finished build taken up again carries on where it stopped.
+        public int built_stages = 1;
     }
 
     public static final class StagePartSpec {
@@ -30,6 +53,8 @@ public final class BlueprintDefinition {
         public List<StagePartSpec> materials;
         // Zero lets the construction plan derive work from the stage's material count.
         public int hits;
+        // What building this stage adds to the result's data, for a build that may end before its last stage.
+        public Map<String, Integer> adds;
 
         public List<StagePartSpec> parts() {
             if (materials != null && !materials.isEmpty()) {

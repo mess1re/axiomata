@@ -7,7 +7,7 @@ import me.mss1r.axiomata.blueprint.client.renderer.ConstructionPreviewRenderer;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinitions;
 import me.mss1r.axiomata.blueprint.internal.construction.ConstructionPlacementHelper;
-import me.mss1r.axiomata.blueprint.registry.BlueprintItems;
+import me.mss1r.axiomata.blueprint.api.ConstructionStarters;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
@@ -15,11 +15,6 @@ import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.nbt.CompoundTag;
-//? if neoforge {
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.world.item.component.CustomData;
-//?}
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -49,8 +44,8 @@ public class BlueprintClientGameEvents {
             return;
         }
 
-        String recipeId = getRecipeId(blueprint);
-        BlueprintDefinition recipe = BlueprintDefinitions.get(recipeId);
+        String recipeId = ConstructionStarters.definitionOf(blueprint);
+        BlueprintDefinition recipe = recipeId == null ? null : BlueprintDefinitions.get(recipeId);
         if (recipe == null || !recipe.buildsInWorld()) {
             return;
         }
@@ -127,27 +122,6 @@ public class BlueprintClientGameEvents {
         }
 
         ItemStack offHand = player.getOffhandItem();
-        if (isBlueprintWithRecipe(offHand)) {
-            return offHand;
-        }
-
-        return ItemStack.EMPTY;
+        return ConstructionStarters.definitionOf(offHand) != null ? offHand : ItemStack.EMPTY;
     }
-
-    private static boolean isBlueprintWithRecipe(ItemStack stack) {
-        return stack.getItem() == BlueprintItems.BLUEPRINT.get() && !getRecipeId(stack).isBlank();
-    }
-
-    private static String getRecipeId(ItemStack stack) {
-        //? if forge {
-        /*CompoundTag tag = stack.getTag();
-        if (tag == null) {
-            return "";
-        }
-        *///?} else {
-        CompoundTag tag = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
-        //?}
-        return tag.getString("RecipeId");
-    }
-
 }

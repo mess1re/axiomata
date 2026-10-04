@@ -11,6 +11,7 @@ import me.mss1r.axiomata.blueprint.network.NetworkHandler;
 import me.mss1r.axiomata.blueprint.registry.*;
 import dev.architectury.event.events.common.CommandRegistrationEvent;
 import dev.architectury.event.events.common.InteractionEvent;
+import dev.architectury.event.events.common.PlayerEvent;
 import dev.architectury.registry.ReloadListenerRegistry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
@@ -60,6 +61,7 @@ public final class BlueprintModule {
         ReloadListenerRegistry.register(PackType.SERVER_DATA, new SectionBoundsCatalog(),
                 ResourceIds.id(MOD_ID, "construction_bounds"));
         InteractionEvent.INTERACT_ENTITY.register(HammerWork::onEntityInteract);
+        PlayerEvent.ATTACK_ENTITY.register(HammerWork::onEntityAttack);
         CommandRegistrationEvent.EVENT.register(BlueprintCommands::register);
         gameEventBus.addListener(BlueprintDefinitionCatalog::syncToClients);
         gameEventBus.addListener(OutlineCatalog::syncToClients);

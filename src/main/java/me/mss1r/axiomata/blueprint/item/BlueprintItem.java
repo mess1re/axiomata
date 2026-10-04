@@ -165,7 +165,17 @@ public class BlueprintItem extends Item {
         }
 
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
-            String recipeId = readTag(stack).getString("RecipeId");
+            openUseMenu(serverPlayer, readTag(stack).getString("RecipeId"), stack);
+        }
+        return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
+    }
+
+    /**
+     * Opens the build menu for a blueprint, the drawn one held or the item standing in for it, held in the off hand
+     * with a construction hammer.
+     */
+    public static void openUseMenu(ServerPlayer serverPlayer, String recipeId, ItemStack stack) {
+        {
             BlueprintDefinition recipe = BlueprintDefinitions.get(recipeId);
             if (recipe != null) {
                 MenuRegistry.openExtendedMenu(serverPlayer, new ExtendedMenuProvider() {
@@ -184,7 +194,6 @@ public class BlueprintItem extends Item {
                 });
             }
         }
-        return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
     }
 
     private boolean canOpenBlueprint(Player player, InteractionHand hand) {

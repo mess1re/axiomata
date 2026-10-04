@@ -19,6 +19,9 @@ import net.minecraft.world.Container;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.EntityHitResult;
+import org.jetbrains.annotations.Nullable;
 
 public final class HammerWork {
     private HammerWork() {
@@ -44,6 +47,43 @@ public final class HammerWork {
             strike(player, target, machine);
         }
         return EventResult.interruptTrue();
+    }
+
+    /**
+     * A shift-blow of the hammer on an extendable build ends it where it stands. The client lets the blow through so
+     * the server hears of it; the server ends the build and keeps the blow from landing as an attack.
+     */
+    public static EventResult onEntityAttack(Player player, Level level, Entity target, InteractionHand hand,
+                                             @Nullable EntityHitResult hit) {
+        if (!player.isShiftKeyDown() || !(player.getMainHandItem().getItem() instanceof ConstructionHammerItem)
+                || !(target instanceof UnderConstruction machine) || machine.isFullyBuilt()
+                || !machine.buildProgress().isExtendable()) {
+            return EventResult.pass();
+        }
+        if (level.isClientSide()) {
+            return EventResult.pass();
+        }
+        endHere(player, target, machine);
+        return EventResult.interruptFalse();
+    }
+
+    private static void endHere(Player player, Entity target, UnderConstruction machine) {
+        BuildProgress progress = machine.buildProgress();
+        String needed = progress.sectionNeededToEnd();
+        ConstructionWork.Result result = ConstructionWork.endHere(machine, source(player));
+        if (!(player instanceof ServerPlayer serverPlayer)) {
+            return;
+        }
+        if (result.status() == ConstructionWork.Status.CANNOT_END) {
+            if (needed != null) {
+                serverPlayer.displayClientMessage(Component.translatable("message.axiomata.construction.end_after",
+                        StageNames.of(progress.blueprintId(), needed)), true);
+            }
+            return;
+        }
+        player.level().playSound(null, target.blockPosition(), SoundEvents.WOOD_PLACE,
+                SoundSource.BLOCKS, 1.0F, 0.9F);
+        serverPlayer.displayClientMessage(Component.translatable("message.axiomata.construction.ended"), true);
     }
 
     private static void strike(Player player, Entity target, UnderConstruction machine) {
@@ -127,7 +167,8 @@ public final class HammerWork {
             needs.append(material.getHoverName()).append(" x" + material.getCount());
         }
         serverPlayer.displayClientMessage(Component.translatable(
-                "message.axiomata.construction.next",
+                progress.canEndHere() ? "message.axiomata.construction.next_or_end"
+                        : "message.axiomata.construction.next",
                 StageNames.of(progress.blueprintId(), next.section()), needs), true);
     }
 }

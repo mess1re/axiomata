@@ -1,6 +1,7 @@
 package me.mss1r.axiomata.blueprint.api.construction;
 
 import com.mojang.logging.LogUtils;
+import me.mss1r.axiomata.blueprint.api.ConstructionStarters;
 import me.mss1r.axiomata.blueprint.internal.construction.ConstructionPlacementHelper;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinitions;
@@ -40,6 +41,10 @@ public final class ConstructionDeployer {
 
         if (machine instanceof UnderConstruction underConstruction) {
             underConstruction.buildProgress().begin(blueprintId, BlueprintItem.getQuality(blueprint));
+            if (recipe != null && ConstructionStarters.isStarter(blueprint)) {
+                // The starter is those stages, made already.
+                underConstruction.buildProgress().skipBuilt(ConstructionStarters.builtStages(recipe, blueprint));
+            }
             underConstruction.onDeployed(yaw);
             underConstruction.onBuildProgressChanged();
         } else {

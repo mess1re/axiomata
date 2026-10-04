@@ -8,7 +8,8 @@ public final class ConstructionWork {
         PROGRESSED,
         ADVANCED,
         DONE,
-        MISSING_MATERIAL
+        MISSING_MATERIAL,
+        CANNOT_END
     }
 
     public record Result(Status status, ItemStack missing) {
@@ -58,6 +59,27 @@ public final class ConstructionWork {
         }
         machine.onBuildProgressChanged();
         return new Result(Status.ADVANCED, ItemStack.EMPTY);
+    }
+
+    /**
+     * Ends an extendable build at the stage it has reached, handing back whatever the unfinished stage had already
+     * taken. A null material source takes nothing back, as for creative players.
+     */
+    public static Result endHere(UnderConstruction machine, Container materials) {
+        BuildProgress progress = machine.buildProgress();
+        if (!progress.canEndHere()) {
+            return new Result(Status.CANNOT_END, ItemStack.EMPTY);
+        }
+        BlueprintConstructionPlan.Stage current = progress.currentStage();
+        if (current != null && progress.materialsCommitted() && materials != null) {
+            for (ItemStack material : current.materials()) {
+                give(materials, material.copy());
+            }
+        }
+        progress.endHere();
+        machine.applyBuiltData(progress.builtData());
+        machine.onBuildProgressChanged();
+        return DONE;
     }
 
     public static Result dismantle(UnderConstruction machine, Container materials) {

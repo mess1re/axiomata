@@ -89,7 +89,7 @@ public final class BlueprintDefinitionCatalog extends SimplePreparableReloadList
                 }
                 if (parsed.legacy()) {
                     LOGGER.info("{} uses the old blueprint format with lettered ingredients; it still loads, "
-                            + "see docs/BLUEPRINTS.md for the current one", source);
+                            + "see https://github.com/mess1re/axiomata/wiki/Blueprint-Data for the current one", source);
                 }
                 if (index < stack.size() - 1) {
                     LOGGER.error("Using {} instead of the broken file above it", source);

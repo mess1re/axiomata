@@ -17,7 +17,7 @@ import java.util.Map;
 
 /**
  * A blueprint: what it builds, and the stages it is built in, each taking its own materials and blows of the hammer.
- * See {@code docs/BLUEPRINTS.md} for the file format.
+ * See https://github.com/mess1re/axiomata/wiki/Blueprint-Data for the file format.
  */
 public final class BlueprintDefinition {
     public static final int FORMAT_VERSION = 3;

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.0-beta.6
+
+### Fixed
+
+- Fixed a crash on startup with Forge 1.20.1 when OptiFine is installed, or when Forge is older than 47.3.
+
 ## 0.1.0-beta.5
 
 ### Added

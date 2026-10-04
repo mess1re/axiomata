@@ -15,10 +15,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * A blueprint: what it builds, and the stages it is built in, each taking its own materials and blows of the hammer.
- * See https://github.com/mess1re/axiomata/wiki/Blueprint-Data for the file format.
- */
+/** Immutable blueprint definition. File format: https://github.com/mess1re/axiomata/wiki/Blueprint-Data */
 public final class BlueprintDefinition {
     public static final int FORMAT_VERSION = 3;
 
@@ -47,7 +44,7 @@ public final class BlueprintDefinition {
         return stages;
     }
 
-    /** How many stages must stand before the build may end where it is; zero when every stage must be built. */
+    /** Stages required before the build can be ended early; 0 means every stage is required. */
     public int minStages() {
         return minStages;
     }
@@ -57,7 +54,7 @@ public final class BlueprintDefinition {
         return starter;
     }
 
-    /** The drawing this blueprint is traced from: its own, or another blueprint's it names. */
+    /** Outline id for the drawing table: {@code outline} if set, otherwise the blueprint id. */
     public String outlineId(String blueprintId) {
         return outline != null ? outline.toString() : blueprintId;
     }
@@ -75,12 +72,12 @@ public final class BlueprintDefinition {
         return stages.size();
     }
 
-    /** Whether the build may end before its last stage, at any stage from {@link #minStages()} on. */
+    /** True when the build can be ended early, from {@link #minStages()} on. */
     public boolean isExtendable() {
         return minStages > 0 && minStages < stageCount();
     }
 
-    /** Everything the build takes from stage {@code from} on, each material once with its whole count. */
+    /** Total materials of the stages from {@code from} onward, merged by key. */
     public List<Material> materialsFrom(int from) {
         Map<String, Material> totals = new LinkedHashMap<>();
         for (int index = Math.max(0, from); index < stages.size(); index++) {
@@ -100,8 +97,8 @@ public final class BlueprintDefinition {
     }
 
     /**
-     * What a blueprint makes: an item, which a build in the world places as {@code entity} or as whatever the item
-     * itself places; {@code data} is written into the item as whole numbers.
+     * {@code entity} and {@code placement} are set for builds placed in the world. {@code data} is written to the item
+     * as integers.
      */
     public record Result(ResourceLocation item, int count, Map<String, Integer> data, @Nullable Placement placement,
                          @Nullable ResourceLocation entity) {
@@ -110,7 +107,6 @@ public final class BlueprintDefinition {
         }
     }
 
-    /** One stage of a build: the part of the model it raises, the blows it takes, and its materials. */
     public record Stage(String section, int hits, List<Material> materials, Map<String, Integer> adds) {
         public Stage {
             materials = List.copyOf(materials);
@@ -118,11 +114,11 @@ public final class BlueprintDefinition {
         }
     }
 
-    /** An item that stands in for a drawn blueprint, being itself the first {@code builtStages} stages. */
+    /** Item that starts this build and counts as its first {@code builtStages} stages. */
     public record Starter(ResourceLocation item, int builtStages) {
     }
 
-    /** A material: one item, or any item of a tag, and how many of it. */
+    /** An item or an item tag, with a count. */
     public record Material(@Nullable ResourceLocation item, @Nullable ResourceLocation tag, int count) {
         public static Material ofItem(ResourceLocation item, int count) {
             return new Material(item, null, count);
@@ -132,7 +128,7 @@ public final class BlueprintDefinition {
             return new Material(null, tag, count);
         }
 
-        /** How the material is written in a blueprint: an item id, or a tag id after {@code #}. */
+        /** Key as written in the file: an item id, or a tag id prefixed with {@code #}. */
         public String key() {
             return item != null ? item.toString() : "#" + tag;
         }
@@ -151,7 +147,7 @@ public final class BlueprintDefinition {
             return tag != null && stack.is(TagKey.create(Registries.ITEM, tag));
         }
 
-        /** The item that shows this material: itself, or the first item of its tag. */
+        /** Item used for display and refunds: the item itself, or the first item of the tag. */
         public ItemStack displayStack() {
             Item shown = Items.BARRIER;
             if (item != null) {
@@ -165,7 +161,7 @@ public final class BlueprintDefinition {
             return new ItemStack(shown, Math.max(1, count));
         }
 
-        /** Its name for a message: the item's, or for a tag "any" of the item that shows it. */
+        /** Display name: the item's name, or "any of" for a tag. */
         public Component displayName() {
             Component shown = displayStack().getHoverName();
             return item != null ? shown : Component.translatable("gui.axiomata.any_of", shown);

@@ -8,8 +8,8 @@ public enum BuildQuality {
     PLAIN("plain", 0.40F, 1.15F, 1.00F, ChatFormatting.GRAY),
     HASTY("hasty", 0.70F, 1.35F, 1.45F, ChatFormatting.YELLOW),
     SLOPPY("sloppy", Float.MAX_VALUE, 1.60F, 1.80F, ChatFormatting.RED),
-    // A build nobody drew, started from a part made elsewhere: it takes exactly what its stages say. No tracing
-    // ever earns it, as its wander limit is below any share.
+    // Builds started from a starter item: no material or work multiplier. The negative wander limit means the drawing
+    // table never awards it.
     EXACT("exact", -1.0F, 1.00F, 1.00F, ChatFormatting.GRAY);
 
     private static final BuildQuality[] VALUES = values();

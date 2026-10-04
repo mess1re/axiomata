@@ -165,7 +165,7 @@ public record C2SUseBlueprintPacket(String recipeId) implements CustomPacketPayl
         });
     }
 
-    /** What a player carries to pay with: the main inventory and the off hand. */
+    /** Main inventory plus off hand. */
     private static List<ItemStack> carried(Inventory inventory) {
         List<ItemStack> stacks = new ArrayList<>(inventory.items);
         stacks.addAll(inventory.offhand);

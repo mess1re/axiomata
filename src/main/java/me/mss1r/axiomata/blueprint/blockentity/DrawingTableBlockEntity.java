@@ -114,7 +114,7 @@ public class DrawingTableBlockEntity extends BlockEntity implements ExtendedMenu
         return blueprintId.isEmpty() ? null : OutlineCatalog.get(outlineId(blueprintId));
     }
 
-    /** The drawing a blueprint is traced from, which it may borrow from another blueprint. */
+    /** Outline id for a blueprint, which may point at another blueprint's outline. */
     private static String outlineId(String blueprintId) {
         var definition = BlueprintDefinitions.get(blueprintId);
         return definition == null ? blueprintId : definition.outlineId(blueprintId);

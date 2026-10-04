@@ -16,15 +16,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Items that start a build in place of a drawn blueprint. Such an item is the first stages of what it starts, made
- * elsewhere: held with a construction hammer it opens the build as a blueprint would, and the build begins with those
- * stages standing.
+ * Items that can start a build instead of a drawn blueprint. Held in the off hand with a construction hammer, a starter
+ * opens its blueprint's build with its first {@code builtStages} stages already done.
  */
 public final class ConstructionStarters {
     private ConstructionStarters() {
     }
 
-    /** The blueprint an item starts as a starter, or null when it starts none. */
+    /** Id of the blueprint this item is a starter for, or null. */
     @Nullable
     public static String definitionFor(ItemStack stack) {
         if (stack.isEmpty()) {
@@ -40,7 +39,7 @@ public final class ConstructionStarters {
         return null;
     }
 
-    /** The blueprint an item held in a blueprint's place stands for: a drawn blueprint's own, or the one it starts. */
+    /** Blueprint id of a drawn blueprint or a starter item, or null. */
     @Nullable
     public static String definitionOf(ItemStack stack) {
         String drawn = BlueprintItem.getRecipeId(stack);
@@ -52,8 +51,8 @@ public final class ConstructionStarters {
     }
 
     /**
-     * How many leading stages a starter already is: the ones it stands for, and after them each stage whose additions
-     * its own data already holds, so a finished build taken up again carries on from where it stopped.
+     * Number of leading stages a starter covers: {@code builtStages}, plus each following stage whose {@code adds} are
+     * already in the item's data. A finished result picked up again continues where it stopped.
      */
     public static int builtStages(BlueprintDefinition definition, ItemStack starter) {
         if (definition.starter() == null) {

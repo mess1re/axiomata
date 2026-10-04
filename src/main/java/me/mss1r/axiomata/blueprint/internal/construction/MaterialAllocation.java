@@ -10,14 +10,14 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Takes several materials out of one store together. Each item counts towards one material only, and materials named
- * by an item are served before those named by a tag, so a tag does not use up what only that item could fill.
+ * Takes several materials from one inventory at once. Each stack counts toward one material only, and item materials
+ * are matched before tag materials so a tag cannot use up items an exact material needs.
  */
 public final class MaterialAllocation {
     private MaterialAllocation() {
     }
 
-    /** How many of each material the stacks fall short of, in the order given; empty when they hold everything. */
+    /** Missing count per material, in the given order. Empty when everything is available. */
     public static Map<Material, Integer> shortfall(List<ItemStack> stacks, List<Material> materials) {
         int[] left = counts(stacks);
         Map<Material, Integer> drawn = new LinkedHashMap<>();
@@ -34,7 +34,7 @@ public final class MaterialAllocation {
         return missing;
     }
 
-    /** Takes the materials out of the stacks, as {@link #shortfall} counts them. */
+    /** Removes the materials, allocated the same way as {@link #shortfall}. */
     public static void take(List<ItemStack> stacks, List<Material> materials) {
         int[] left = counts(stacks);
         for (Material material : servingOrder(materials)) {
@@ -54,7 +54,7 @@ public final class MaterialAllocation {
         return counts;
     }
 
-    /** Sets aside as much of a material as is left in the stacks, and says how much that was. */
+    /** Reserves up to the material's count from {@code left} and returns how much was reserved. */
     private static int draw(List<ItemStack> stacks, int[] left, Material material) {
         int wanted = material.count();
         for (int slot = 0; slot < stacks.size() && wanted > 0; slot++) {

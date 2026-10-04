@@ -44,7 +44,7 @@ public class BlueprintUseScreen extends AbstractContainerScreen<BlueprintUseMenu
         this.imageHeight = 0;
 
         if (recipe != null) {
-            // What is left to build: a starter brings its own stages already made.
+            // A starter already covers its first stages, so only the remaining materials are listed.
             ItemStack held = playerInv.player.getOffhandItem();
             int from = ConstructionStarters.isStarter(held) ? ConstructionStarters.builtStages(recipe, held) : 0;
             ingredientsDisplay.addAll(recipe.materialsFrom(from));

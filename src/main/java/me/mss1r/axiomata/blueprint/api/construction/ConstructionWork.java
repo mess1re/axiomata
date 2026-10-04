@@ -19,7 +19,7 @@ public final class ConstructionWork {
         CANNOT_END
     }
 
-    /** {@code missing} is the material a stage lacks, when that is what stopped it. */
+    /** {@code missing} is the material that stopped the stage, or null. */
     public record Result(Status status, @Nullable Material missing) {
         public boolean advanced() {
             return status == Status.ADVANCED;
@@ -67,8 +67,8 @@ public final class ConstructionWork {
     }
 
     /**
-     * Ends an extendable build at the stage it has reached, handing back whatever the unfinished stage had already
-     * taken. A null material source takes nothing back, as for creative players.
+     * Ends an extendable build at its current stage and refunds materials already committed to that stage. A null
+     * container skips the refund, as for creative players.
      */
     public static Result endHere(UnderConstruction machine, Container materials) {
         BuildProgress progress = machine.buildProgress();
@@ -139,7 +139,7 @@ public final class ConstructionWork {
         container.setChanged();
     }
 
-    /** Hands back a material; one taken by a tag comes back as the item that shows that tag. */
+    /** Tag materials are refunded as the tag's first item. */
     private static void give(Container container, ItemStack material) {
         for (int slot = 0; slot < container.getContainerSize() && !material.isEmpty(); slot++) {
             ItemStack stack = container.getItem(slot);

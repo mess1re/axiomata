@@ -78,13 +78,12 @@ public final class BuildProgress {
         return complete() ? Integer.MAX_VALUE : stage();
     }
 
-    /** Whether this build may end before its last stage at all. */
     public boolean isExtendable() {
         BlueprintDefinition definition = definition();
         return definition != null && definition.isExtendable();
     }
 
-    /** The section that has to stand before an extendable build may be ended, or null when it may end already. */
+    /** Section that must be built before the build can be ended early, or null if it can be ended now. */
     @Nullable
     public String sectionNeededToEnd() {
         BlueprintDefinition definition = definition();
@@ -94,23 +93,25 @@ public final class BuildProgress {
         return definition.stages().get(definition.minStages() - 1).section();
     }
 
-    /** Whether the build may be ended now, short of its last stage: it is extendable and has its minimum. */
+    /** True if the build is extendable, not complete, and has at least {@code minStages} stages built. */
     public boolean canEndHere() {
         BlueprintDefinition definition = definition();
         return definition != null && definition.isExtendable() && !complete() && stage() >= definition.minStages();
     }
 
-    /** Ends the build at the stage it has reached. The caller refunds any work on the current stage first. */
+    /**
+     * Marks the build finished at the current stage. The caller must refund materials committed to that stage first.
+     */
     public void endHere() {
         core.endHere();
     }
 
-    /** Counts the first {@code stages} stages as built already. */
+    /** Marks the first {@code stages} stages as built without doing their work. */
     public void skipBuilt(int stages) {
         core.advanceTo(stages);
     }
 
-    /** What the stages built so far add up to, by each value they add to the result's data. */
+    /** Sum of the {@code adds} values of all built stages. */
     public Map<String, Integer> builtData() {
         BlueprintDefinition definition = definition();
         Map<String, Integer> data = new LinkedHashMap<>();

@@ -3,8 +3,8 @@ package me.mss1r.axiomata;
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * Builds resource locations the way each game version provides. Forge 1.20.1 only gained the 1.21 factories in
- * 47.3, and OptiFine replaces the class without them, so 1.20.1 builds use the constructor every 1.20.1 has.
+ * Creates resource locations in a way every supported version accepts. Forge only added the 1.21 factories in 47.3, and
+ * OptiFine replaces the class without them, so 1.20.1 uses the constructor.
  */
 public final class ResourceIds {
     private ResourceIds() {

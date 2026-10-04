@@ -22,9 +22,8 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 /**
- * Reads and writes blueprint files. The current format lists each stage's materials by item or tag; the first one,
- * with lettered ingredients in a {@code key}, is still read and turned into the current one. Every mistake is
- * reported with where it is in the file, so a pack author can find it.
+ * Reads and writes blueprint JSON. Reads format 3 and converts the legacy keyed format. Errors include the JSON path of
+ * the problem.
  */
 public final class BlueprintFormat {
     private static final Set<String> ROOT_FIELDS = Set.of("formatVersion", "result", "stages", "minStages",
@@ -36,14 +35,14 @@ public final class BlueprintFormat {
     private BlueprintFormat() {
     }
 
-    /** What reading a file came to: the blueprint, or why it could not be read. */
+    /** Either a definition or the errors that prevented it. */
     public record Parsed(@Nullable BlueprintDefinition definition, List<String> errors, boolean legacy) {
         public boolean valid() {
             return definition != null && errors.isEmpty();
         }
     }
 
-    /** Which ids exist, so that a misspelt item or entity is caught when the file is read. */
+    /** Registry checks used to validate item and entity ids. */
     public record Ids(Predicate<ResourceLocation> item, Predicate<ResourceLocation> entity) {
     }
 
@@ -262,7 +261,7 @@ public final class BlueprintFormat {
         return adds;
     }
 
-    /** The first format: ingredients under letters in {@code key}, which the stages spend by letter. */
+    /** Legacy format: lettered ingredients in {@code key}, which stages refer to by letter. */
     private static Parsed legacy(JsonObject root, Ids ids, List<String> errors) {
         Map<String, Material> key = new LinkedHashMap<>();
         JsonObject keyJson = object(root, "key", "", true, errors);
@@ -393,7 +392,6 @@ public final class BlueprintFormat {
         return parts;
     }
 
-    /** Writes a blueprint in the current format. */
     public static JsonObject write(BlueprintDefinition definition) {
         JsonObject root = new JsonObject();
         root.addProperty("formatVersion", BlueprintDefinition.FORMAT_VERSION);

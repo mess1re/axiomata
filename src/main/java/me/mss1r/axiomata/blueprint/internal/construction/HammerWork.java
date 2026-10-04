@@ -50,8 +50,8 @@ public final class HammerWork {
     }
 
     /**
-     * A shift-blow of the hammer on an extendable build ends it where it stands. The client lets the blow through so
-     * the server hears of it; the server ends the build and keeps the blow from landing as an attack.
+     * Shift-attack with a hammer ends an extendable build early. The client lets the attack through so the server
+     * receives it; the server handles it and cancels the attack.
      */
     public static EventResult onEntityAttack(Player player, Level level, Entity target, InteractionHand hand,
                                              @Nullable EntityHitResult hit) {

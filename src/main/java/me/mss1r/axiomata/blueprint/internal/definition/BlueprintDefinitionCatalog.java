@@ -30,9 +30,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Loads blueprints from {@code data/<namespace>/blueprints/<name>.json}. A pack's file replaces the one beneath it
- * whole. A file that cannot be read is reported with its pack and what is wrong in it, and the blueprint comes from
- * the next pack down that has a good one, or stays as it was before the reload.
+ * Loads blueprints from {@code data/<namespace>/blueprints/<name>.json}. A higher pack replaces the whole file. Invalid
+ * files are logged with their pack and errors, and the next valid file below is used; on reload the previous definition
+ * is kept if none is valid.
  */
 public final class BlueprintDefinitionCatalog extends SimplePreparableReloadListener<Map<String, BlueprintDefinition>> {
     private static final Logger LOGGER = LogUtils.getLogger();
@@ -76,7 +76,7 @@ public final class BlueprintDefinitionCatalog extends SimplePreparableReloadList
         return loaded;
     }
 
-    /** The highest pack's good file for a blueprint, trying the packs beneath when it is broken. */
+    /** Top-most valid file in the stack, falling back to lower packs. */
     private static BlueprintDefinition loadStack(String id, List<Resource> stack) {
         for (int index = stack.size() - 1; index >= 0; index--) {
             Resource resource = stack.get(index);
@@ -120,7 +120,7 @@ public final class BlueprintDefinitionCatalog extends SimplePreparableReloadList
         return new ArrayList<>(definitions.values());
     }
 
-    /** The catalog as the client receives it: every blueprint written in the current format. */
+    /** All definitions written in the current format, for syncing to clients. */
     public static String toNetworkJson() {
         JsonObject catalog = new JsonObject();
         definitions.forEach((id, definition) -> catalog.add(id, BlueprintFormat.write(definition)));

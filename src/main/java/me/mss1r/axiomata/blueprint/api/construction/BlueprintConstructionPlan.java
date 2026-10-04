@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 public record BlueprintConstructionPlan(List<Stage> stages) {
-    /** A stage as it is built at some quality: the materials it takes and the blows it needs. */
+    /** A stage with the quality multipliers applied. */
     public record Stage(String section, List<Material> materials, int hits) {
     }
 

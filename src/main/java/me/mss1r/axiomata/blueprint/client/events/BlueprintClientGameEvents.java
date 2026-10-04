@@ -48,7 +48,7 @@ public class BlueprintClientGameEvents {
             return;
         }
 
-        // The result with its data, so the preview takes the room the finished build will.
+        // Include the result data so the preview has the finished size, e.g. a ladder's sections.
         ItemStack previewStack = BlueprintItem.createResultStack(recipe);
         if (previewStack.isEmpty()) {
             return;

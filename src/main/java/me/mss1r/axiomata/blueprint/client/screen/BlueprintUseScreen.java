@@ -22,9 +22,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 public class BlueprintUseScreen extends AbstractContainerScreen<BlueprintUseMenu> {
     private static final int ITEM_SIZE = 16;
@@ -32,7 +30,7 @@ public class BlueprintUseScreen extends AbstractContainerScreen<BlueprintUseMenu
     private static final int COL_SPACING = 32;
     private static final int ROW_SPACING = 22;
     private final BlueprintDefinition recipe;
-    private final List<Map.Entry<ItemStack, Integer>> ingredientsDisplay = new ArrayList<>();
+    private final List<BlueprintDefinition.Material> ingredientsDisplay = new ArrayList<>();
     private int centerX;
     private int centerY;
     private int btnY;
@@ -49,9 +47,7 @@ public class BlueprintUseScreen extends AbstractContainerScreen<BlueprintUseMenu
             // What is left to build: a starter brings its own stages already made.
             ItemStack held = playerInv.player.getOffhandItem();
             int from = ConstructionStarters.isStarter(held) ? ConstructionStarters.builtStages(recipe, held) : 0;
-            for (BlueprintDefinition.Material material : recipe.materialsFrom(from)) {
-                ingredientsDisplay.add(Map.entry(material.displayStack(), material.count()));
-            }
+            ingredientsDisplay.addAll(recipe.materialsFrom(from));
         }
     }
 
@@ -104,15 +100,19 @@ public class BlueprintUseScreen extends AbstractContainerScreen<BlueprintUseMenu
             int itemX = gridStartX + col * COL_SPACING;
             int itemY = gridStartY + row * ROW_SPACING;
 
-            Map.Entry<ItemStack, Integer> entry = ingredientsDisplay.get(i);
-            ItemStack stack = entry.getKey();
-            int count = entry.getValue();
+            BlueprintDefinition.Material material = ingredientsDisplay.get(i);
+            ItemStack stack = material.displayStack();
+            int count = material.count();
 
             guiGraphics.renderItem(stack, itemX, itemY);
             guiGraphics.drawString(this.font, String.valueOf(count), itemX + ITEM_SIZE + 4, itemY + 6, 0xFFFFFF, false);
 
             if (isHovering(itemX, itemY, ITEM_SIZE, ITEM_SIZE, mouseX, mouseY)) {
-                guiGraphics.renderTooltip(this.font, stack, mouseX, mouseY);
+                if (material.item() != null) {
+                    guiGraphics.renderTooltip(this.font, stack, mouseX, mouseY);
+                } else {
+                    guiGraphics.renderTooltip(this.font, material.displayName(), mouseX, mouseY);
+                }
             }
         }
 

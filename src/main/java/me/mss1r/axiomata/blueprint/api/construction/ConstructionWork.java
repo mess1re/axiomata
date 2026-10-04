@@ -1,9 +1,14 @@
 package me.mss1r.axiomata.blueprint.api.construction;
 
+import me.mss1r.axiomata.blueprint.internal.construction.MaterialAllocation;
 import net.minecraft.world.Container;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition.Material;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public final class ConstructionWork {
     public enum Status {
@@ -38,10 +43,9 @@ public final class ConstructionWork {
         }
 
         if (!progress.materialsCommitted() && materials != null) {
-            for (Material material : stage.materials()) {
-                if (count(materials, material) < material.count()) {
-                    return new Result(Status.MISSING_MATERIAL, material);
-                }
+            Map<Material, Integer> missing = MaterialAllocation.shortfall(slots(materials), stage.materials());
+            if (!missing.isEmpty()) {
+                return new Result(Status.MISSING_MATERIAL, missing.keySet().iterator().next());
             }
         }
 
@@ -49,9 +53,7 @@ public final class ConstructionWork {
             // Commit the whole stage on its first hit and persist that fact. Reloading halfway
             // through a stage must not consume the same parts again.
             if (materials != null) {
-                for (Material material : stage.materials()) {
-                    take(materials, material);
-                }
+                take(materials, stage.materials());
             }
             progress.commitMaterials();
         }
@@ -114,28 +116,23 @@ public final class ConstructionWork {
         return new Result(Status.ADVANCED, null);
     }
 
-    private static int count(Container container, Material material) {
-        int found = 0;
+    private static List<ItemStack> slots(Container container) {
+        List<ItemStack> stacks = new ArrayList<>(container.getContainerSize());
         for (int slot = 0; slot < container.getContainerSize(); slot++) {
-            ItemStack stack = container.getItem(slot);
-            if (material.matches(stack)) {
-                found += stack.getCount();
-            }
+            stacks.add(container.getItem(slot));
         }
-        return found;
+        return stacks;
     }
 
-    private static void take(Container container, Material material) {
-        int remaining = material.count();
-        for (int slot = 0; slot < container.getContainerSize() && remaining > 0; slot++) {
-            ItemStack stack = container.getItem(slot);
-            if (!material.matches(stack)) {
-                continue;
-            }
-            int taken = Math.min(remaining, stack.getCount());
-            stack.shrink(taken);
-            remaining -= taken;
-            if (stack.isEmpty()) {
+    private static void take(Container container, List<Material> materials) {
+        List<ItemStack> stacks = slots(container);
+        boolean[] held = new boolean[stacks.size()];
+        for (int slot = 0; slot < stacks.size(); slot++) {
+            held[slot] = !stacks.get(slot).isEmpty();
+        }
+        MaterialAllocation.take(stacks, materials);
+        for (int slot = 0; slot < stacks.size(); slot++) {
+            if (held[slot] && stacks.get(slot).isEmpty()) {
                 container.setItem(slot, ItemStack.EMPTY);
             }
         }

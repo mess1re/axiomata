@@ -6,6 +6,7 @@ import me.mss1r.axiomata.blueprint.api.BlueprintPermissions;
 import me.mss1r.axiomata.blueprint.api.BlueprintTags;
 import me.mss1r.axiomata.blueprint.api.ConstructionStarters;
 import me.mss1r.axiomata.blueprint.internal.construction.ConstructionPlacementHelper;
+import me.mss1r.axiomata.blueprint.internal.construction.MaterialAllocation;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition.Material;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinitions;
@@ -13,17 +14,13 @@ import me.mss1r.axiomata.blueprint.api.construction.ConstructionDeployer;
 import me.mss1r.axiomata.blueprint.api.event.BlueprintUsedEvent;
 import me.mss1r.axiomata.blueprint.api.event.BlueprintEvents;
 import me.mss1r.axiomata.blueprint.item.BlueprintItem;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
-import org.jetbrains.annotations.Nullable;
 //? if forge {
 /*import net.minecraftforge.common.ForgeMod;
 *///?}
@@ -34,11 +31,9 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import me.mss1r.axiomata.blueprint.BlueprintModule;
 //?}
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 //? if forge {
 /*public record C2SUseBlueprintPacket(String recipeId) {
@@ -102,15 +97,11 @@ public record C2SUseBlueprintPacket(String recipeId) implements CustomPacketPayl
 
             boolean buildsInWorld = recipe.buildsInWorld();
             List<Material> needed = buildsInWorld ? List.of() : recipe.totals();
-            if (!buildsInWorld && !hasMaterials(player.getInventory(), needed)) {
+            Map<Material, Integer> missing = MaterialAllocation.shortfall(carried(player.getInventory()), needed);
+            if (!missing.isEmpty()) {
                 player.displayClientMessage(Component.translatable("gui.axiomata.not_enough"), false);
-                for (Material material : needed) {
-                    int missing = material.count() - count(player.getInventory(), material);
-                    if (missing > 0) {
-                        player.displayClientMessage(Component.literal("- ").append(material.displayName())
-                                .append(": " + missing), false);
-                    }
-                }
+                missing.forEach((material, count) -> player.displayClientMessage(
+                        Component.literal("- ").append(material.displayName()).append(": " + count), false));
                 return;
             }
 
@@ -151,11 +142,7 @@ public record C2SUseBlueprintPacket(String recipeId) implements CustomPacketPayl
                 }
             }
 
-            if (!buildsInWorld) {
-                for (Material material : needed) {
-                    take(player.getInventory(), material);
-                }
-            }
+            MaterialAllocation.take(carried(player.getInventory()), needed);
 
             if (!player.getAbilities().instabuild) {
                 blueprint.shrink(1);
@@ -178,41 +165,11 @@ public record C2SUseBlueprintPacket(String recipeId) implements CustomPacketPayl
         });
     }
 
-    private static boolean hasMaterials(Inventory inventory, List<Material> materials) {
-        for (Material material : materials) {
-            if (count(inventory, material) < material.count()) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private static int count(Inventory inventory, Material material) {
-        int found = 0;
-        for (List<ItemStack> stacks : List.of(inventory.items, inventory.offhand)) {
-            for (ItemStack stack : stacks) {
-                if (material.matches(stack)) {
-                    found += stack.getCount();
-                }
-            }
-        }
-        return found;
-    }
-
-    private static void take(Inventory inventory, Material material) {
-        int remaining = material.count();
-        for (List<ItemStack> stacks : List.of(inventory.items, inventory.offhand)) {
-            for (ItemStack stack : stacks) {
-                if (remaining <= 0) {
-                    return;
-                }
-                if (material.matches(stack)) {
-                    int taken = Math.min(stack.getCount(), remaining);
-                    stack.shrink(taken);
-                    remaining -= taken;
-                }
-            }
-        }
+    /** What a player carries to pay with: the main inventory and the off hand. */
+    private static List<ItemStack> carried(Inventory inventory) {
+        List<ItemStack> stacks = new ArrayList<>(inventory.items);
+        stacks.addAll(inventory.offhand);
+        return stacks;
     }
 
     private static boolean hasConstructionTools(ServerPlayer player, String recipeId) {

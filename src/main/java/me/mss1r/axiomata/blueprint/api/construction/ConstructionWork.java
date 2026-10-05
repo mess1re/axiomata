@@ -62,6 +62,9 @@ public final class ConstructionWork {
             machine.onBuildProgressChanged();
             return new Result(Status.PROGRESSED, null);
         }
+        if (progress.complete()) {
+            machine.applyBuiltData(progress.builtData());
+        }
         machine.onBuildProgressChanged();
         return new Result(Status.ADVANCED, null);
     }

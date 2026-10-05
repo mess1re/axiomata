@@ -36,8 +36,8 @@ public interface UnderConstruction {
     }
 
     /**
-     * Called when a build is ended early, with the summed {@code adds} of the built stages. Override to adjust the
-     * entity, e.g. a ladder's section count.
+     * Called when a build is finished, whether every stage was built or it was ended early, with the summed
+     * {@code adds} of the built stages. Override to adjust the entity, e.g. a ladder's section count.
      */
     default void applyBuiltData(Map<String, Integer> data) {
     }

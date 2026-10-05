@@ -53,6 +53,9 @@ public final class ConstructionDeployer {
                 started ? BuildQuality.EXACT : BlueprintItem.getQuality(blueprint));
         if (started) {
             underConstruction.buildProgress().skipBuilt(ConstructionStarters.builtStages(recipe, blueprint));
+            if (underConstruction.buildProgress().complete()) {
+                underConstruction.applyBuiltData(underConstruction.buildProgress().builtData());
+            }
         }
         underConstruction.onDeployed(yaw);
         underConstruction.onBuildProgressChanged();

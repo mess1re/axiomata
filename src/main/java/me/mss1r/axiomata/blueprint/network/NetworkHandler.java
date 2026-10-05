@@ -21,6 +21,7 @@ public final class NetworkHandler {
 
     //? if forge {
     /*private static final ResourceLocation BLUEPRINT_CATALOG = id("blueprint_catalog");
+    private static final ResourceLocation CONSTRUCTION_BOUNDS = id("construction_bounds");
     private static final ResourceLocation USE_BLUEPRINT = id("use_blueprint");
     private static final ResourceLocation SET_TABLE_SLOT = id("set_table_slot");
     private static final ResourceLocation SELECT_BLUEPRINT = id("select_blueprint");
@@ -63,6 +64,8 @@ public final class NetworkHandler {
                     S2CTracingStatePacket.STREAM_CODEC);
             NetworkManager.registerS2CPayloadType(S2COutlineIndexPacket.TYPE,
                     S2COutlineIndexPacket.STREAM_CODEC);
+            NetworkManager.registerS2CPayloadType(S2CConstructionBoundsPacket.TYPE,
+                    S2CConstructionBoundsPacket.STREAM_CODEC);
         });
         //?}
         EnvExecutor.runInEnv(Env.CLIENT, () -> NetworkHandler::registerClientReceivers);
@@ -76,6 +79,8 @@ public final class NetworkHandler {
                 S2CTracingStatePacket::decode, S2CTracingStatePacket::handle);
         register(NetworkManager.s2c(), OUTLINE_INDEX,
                 S2COutlineIndexPacket::decode, S2COutlineIndexPacket::handle);
+        register(NetworkManager.s2c(), CONSTRUCTION_BOUNDS,
+                S2CConstructionBoundsPacket::decode, S2CConstructionBoundsPacket::handle);
         *///?} else {
         NetworkManager.registerReceiver(NetworkManager.s2c(), S2CBlueprintCatalogPacket.TYPE,
                 S2CBlueprintCatalogPacket.STREAM_CODEC, S2CBlueprintCatalogPacket::handle);
@@ -83,6 +88,8 @@ public final class NetworkHandler {
                 S2CTracingStatePacket.STREAM_CODEC, S2CTracingStatePacket::handle);
         NetworkManager.registerReceiver(NetworkManager.s2c(), S2COutlineIndexPacket.TYPE,
                 S2COutlineIndexPacket.STREAM_CODEC, S2COutlineIndexPacket::handle);
+        NetworkManager.registerReceiver(NetworkManager.s2c(), S2CConstructionBoundsPacket.TYPE,
+                S2CConstructionBoundsPacket.STREAM_CODEC, S2CConstructionBoundsPacket::handle);
         //?}
     }
 
@@ -135,6 +142,9 @@ public final class NetworkHandler {
         } else if (packet instanceof S2COutlineIndexPacket value) {
             S2COutlineIndexPacket.encode(value, buffer);
             id = OUTLINE_INDEX;
+        } else if (packet instanceof S2CConstructionBoundsPacket value) {
+            S2CConstructionBoundsPacket.encode(value, buffer);
+            id = CONSTRUCTION_BOUNDS;
         } else {
             throw new IllegalArgumentException("Unsupported server packet: " + packet.getClass().getName());
         }

@@ -4,7 +4,6 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import me.mss1r.axiomata.Axiomata;
 import me.mss1r.axiomata.ResourceIds;
 import me.mss1r.axiomata.blueprint.client.renderer.ConstructionHighlightRenderType;
-import me.mss1r.axiomata.blueprint.internal.construction.BuildSectionCatalog;
 import me.mss1r.axiomata.blueprint.registry.BlueprintBlocks;
 import me.mss1r.axiomata.blueprint.client.screen.BlueprintUseScreen;
 import me.mss1r.axiomata.blueprint.registry.BlueprintMenus;
@@ -15,14 +14,12 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
 //? if forge {
-/*import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
-import net.minecraftforge.client.event.RegisterShadersEvent;
+/*import net.minecraftforge.client.event.RegisterShadersEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 *///?} else {
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
-import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.event.RegisterShadersEvent;
 //?}
@@ -48,11 +45,6 @@ public class BlueprintClientModEvents {
         event.register(BlueprintMenus.BLUEPRINT_USE_MENU.get(), BlueprintUseScreen::new);
     }
     //?}
-
-    @SubscribeEvent
-    public static void registerReloadListeners(RegisterClientReloadListenersEvent event) {
-        event.registerReloadListener(new BuildSectionCatalog());
-    }
 
     @SubscribeEvent
     public static void registerShaders(RegisterShadersEvent event) {

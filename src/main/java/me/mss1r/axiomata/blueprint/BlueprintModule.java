@@ -4,7 +4,7 @@ import me.mss1r.axiomata.ResourceIds;
 import me.mss1r.axiomata.blueprint.command.BlueprintCommands;
 import me.mss1r.axiomata.blueprint.tracing.OutlineCatalog;
 import me.mss1r.axiomata.blueprint.internal.construction.HammerWork;
-import me.mss1r.axiomata.blueprint.internal.construction.SectionBoundsCatalog;
+import me.mss1r.axiomata.blueprint.internal.construction.ConstructionMarkupCatalog;
 import me.mss1r.axiomata.blueprint.internal.definition.BlueprintDefinitionCatalog;
 import me.mss1r.axiomata.blueprint.config.BlueprintServerConfig;
 import me.mss1r.axiomata.blueprint.network.NetworkHandler;
@@ -59,22 +59,21 @@ public final class BlueprintModule {
                 ResourceIds.id(MOD_ID, "blueprints"));
         ReloadListenerRegistry.register(PackType.SERVER_DATA, new OutlineCatalog(),
                 ResourceIds.id(MOD_ID, "blueprint_outlines"));
-        ReloadListenerRegistry.register(PackType.SERVER_DATA, new SectionBoundsCatalog(),
-                ResourceIds.id(MOD_ID, "construction_bounds"));
+        ReloadListenerRegistry.register(PackType.SERVER_DATA, new ConstructionMarkupCatalog(),
+                ResourceIds.id(MOD_ID, "construction_markup"));
         InteractionEvent.INTERACT_ENTITY.register(HammerWork::onEntityInteract);
         PlayerEvent.ATTACK_ENTITY.register(HammerWork::onEntityAttack);
         CommandRegistrationEvent.EVENT.register(BlueprintCommands::register);
         LifecycleEvent.SERVER_STARTED.register(BlueprintDefinitionCatalog::validate);
         gameEventBus.addListener(BlueprintDefinitionCatalog::syncToClients);
         gameEventBus.addListener(OutlineCatalog::syncToClients);
-        gameEventBus.addListener(SectionBoundsCatalog::syncToClients);
+        gameEventBus.addListener(ConstructionMarkupCatalog::syncToClients);
 
         if (FMLEnvironment.dist == Dist.CLIENT) {
             modEventBus.addListener(me.mss1r.axiomata.blueprint.client.events.BlueprintClientModEvents::clientSetup);
             //? if neoforge {
             modEventBus.addListener(me.mss1r.axiomata.blueprint.client.events.BlueprintClientModEvents::registerMenuScreens);
             //?}
-            modEventBus.addListener(me.mss1r.axiomata.blueprint.client.events.BlueprintClientModEvents::registerReloadListeners);
             modEventBus.addListener(me.mss1r.axiomata.blueprint.client.events.BlueprintClientModEvents::registerShaders);
             gameEventBus.addListener(me.mss1r.axiomata.blueprint.client.events.BlueprintClientGameEvents::onRenderLevelStage);
         }

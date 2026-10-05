@@ -64,8 +64,8 @@ public final class NetworkHandler {
                     S2CTracingStatePacket.STREAM_CODEC);
             NetworkManager.registerS2CPayloadType(S2COutlineIndexPacket.TYPE,
                     S2COutlineIndexPacket.STREAM_CODEC);
-            NetworkManager.registerS2CPayloadType(S2CConstructionBoundsPacket.TYPE,
-                    S2CConstructionBoundsPacket.STREAM_CODEC);
+            NetworkManager.registerS2CPayloadType(S2CConstructionMarkupPacket.TYPE,
+                    S2CConstructionMarkupPacket.STREAM_CODEC);
         });
         //?}
         EnvExecutor.runInEnv(Env.CLIENT, () -> NetworkHandler::registerClientReceivers);
@@ -80,7 +80,7 @@ public final class NetworkHandler {
         register(NetworkManager.s2c(), OUTLINE_INDEX,
                 S2COutlineIndexPacket::decode, S2COutlineIndexPacket::handle);
         register(NetworkManager.s2c(), CONSTRUCTION_BOUNDS,
-                S2CConstructionBoundsPacket::decode, S2CConstructionBoundsPacket::handle);
+                S2CConstructionMarkupPacket::decode, S2CConstructionMarkupPacket::handle);
         *///?} else {
         NetworkManager.registerReceiver(NetworkManager.s2c(), S2CBlueprintCatalogPacket.TYPE,
                 S2CBlueprintCatalogPacket.STREAM_CODEC, S2CBlueprintCatalogPacket::handle);
@@ -88,8 +88,8 @@ public final class NetworkHandler {
                 S2CTracingStatePacket.STREAM_CODEC, S2CTracingStatePacket::handle);
         NetworkManager.registerReceiver(NetworkManager.s2c(), S2COutlineIndexPacket.TYPE,
                 S2COutlineIndexPacket.STREAM_CODEC, S2COutlineIndexPacket::handle);
-        NetworkManager.registerReceiver(NetworkManager.s2c(), S2CConstructionBoundsPacket.TYPE,
-                S2CConstructionBoundsPacket.STREAM_CODEC, S2CConstructionBoundsPacket::handle);
+        NetworkManager.registerReceiver(NetworkManager.s2c(), S2CConstructionMarkupPacket.TYPE,
+                S2CConstructionMarkupPacket.STREAM_CODEC, S2CConstructionMarkupPacket::handle);
         //?}
     }
 
@@ -142,8 +142,8 @@ public final class NetworkHandler {
         } else if (packet instanceof S2COutlineIndexPacket value) {
             S2COutlineIndexPacket.encode(value, buffer);
             id = OUTLINE_INDEX;
-        } else if (packet instanceof S2CConstructionBoundsPacket value) {
-            S2CConstructionBoundsPacket.encode(value, buffer);
+        } else if (packet instanceof S2CConstructionMarkupPacket value) {
+            S2CConstructionMarkupPacket.encode(value, buffer);
             id = CONSTRUCTION_BOUNDS;
         } else {
             throw new IllegalArgumentException("Unsupported server packet: " + packet.getClass().getName());

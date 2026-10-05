@@ -1,10 +1,10 @@
 package me.mss1r.axiomata.blueprint.api.visual;
 
-import me.mss1r.axiomata.blueprint.internal.construction.BuildSectionCatalog;
-import me.mss1r.axiomata.blueprint.internal.construction.SectionBoundsCatalog;
+import me.mss1r.axiomata.blueprint.internal.construction.ConstructionMarkupCatalog;
 import me.mss1r.axiomata.blueprint.internal.construction.StageNames;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinitions;
+import me.mss1r.axiomata.structure.ConstructionMarkup;
 import me.mss1r.axiomata.structure.SectionBounds;
 import me.mss1r.axiomata.structure.StructureSections;
 import net.minecraft.network.chat.Component;
@@ -23,11 +23,13 @@ public final class BlueprintConstructionVisuals {
     }
 
     public static StructureSections sections(ResourceLocation model) {
-        return BuildSectionCatalog.get(model);
+        ConstructionMarkup markup = ConstructionMarkupCatalog.get(model);
+        return markup == null ? null : markup.cubes();
     }
 
     public static SectionBounds bounds(ResourceLocation model) {
-        return SectionBoundsCatalog.get(model);
+        ConstructionMarkup markup = ConstructionMarkupCatalog.get(model);
+        return markup == null ? null : markup.bounds();
     }
 
     public static Component stageName(String blueprintId, String section) {

@@ -98,7 +98,7 @@ public final class BlueprintDefinitionCatalog extends SimplePreparableReloadList
                     continue;
                 }
                 BlueprintFormat.warnings(parsed.definition())
-                        .forEach(warning -> LOGGER.warn("Blueprint {}: {}", source, warning));
+                        .forEach(warning -> LOGGER.warn("In {}: {}", source, warning));
                 if (parsed.legacy()) {
                     LOGGER.info("{} uses the old blueprint format with lettered ingredients; it still loads, "
                             + "see https://github.com/mess1re/axiomata/wiki/Blueprint-Data for the current one", source);

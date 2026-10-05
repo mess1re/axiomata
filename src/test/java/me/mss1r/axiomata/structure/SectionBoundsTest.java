@@ -67,6 +67,20 @@ class SectionBoundsTest {
         assertFalse(section.clip(new Vec3(-1.5, 0.5, -2), new Vec3(-1.5, 0.5, 2), 0).isPresent());
     }
 
+    @Test
+    void aBlowBetweenTheRungsCountsForTheirSection() {
+        var rails = section("upper", box(-1, 2, 0), box(1, 2, 0));
+        var bounds = new SectionBounds(List.of(rails, section("lower", box(-1, 0, 0), box(1, 0, 0))));
+        Set<String> visible = Set.of("upper", "lower");
+        assertEquals("upper", bounds.firstHit(new Vec3(0, 2, -4), new Vec3(0, 2, 4), visible, 0)
+                .orElseThrow().name());
+        assertFalse(bounds.firstHit(new Vec3(3, 2, -4), new Vec3(3, 2, 4), visible, 0).isPresent());
+        // A cube of another section is still hit before the gaps of this one.
+        var blocked = new SectionBounds(List.of(rails, section("brace", box(0, 2, -2))));
+        assertEquals("brace", blocked.firstHit(new Vec3(0, 2, -4), new Vec3(0, 2, 4), Set.of("upper", "brace"), 0)
+                .orElseThrow().name());
+    }
+
     private static SectionBounds.Section section(String name, OrientedBox... parts) {
         return new SectionBounds.Section(name, new LocalBox(-32, -32, -32, 32, 32, 32), List.of(parts));
     }

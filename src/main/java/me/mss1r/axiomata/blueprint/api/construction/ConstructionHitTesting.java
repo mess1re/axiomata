@@ -72,7 +72,7 @@ public final class ConstructionHitTesting {
         Vec3 from = transform.toLocal(start);
         Vec3 to = transform.toLocal(end);
         return bounds.firstHit(from, to, visible, DEFAULT_MARGIN_PIXELS)
-                .map(section -> start.lerp(end, Math.sqrt(section.clip(from, to, DEFAULT_MARGIN_PIXELS).orElseThrow())));
+                .map(hit -> start.lerp(end, Math.sqrt(hit.distance())));
     }
 
     private static double interactionRange(Player player) {

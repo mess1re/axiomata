@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.Set;
+import java.util.function.Function;
 
 public record SectionBounds(List<Section> sections) {
     public SectionBounds {
@@ -19,20 +20,34 @@ public record SectionBounds(List<Section> sections) {
         return sections.stream().filter(section -> section.name().equals(name)).findFirst();
     }
 
-    public Optional<Section> firstHit(Vec3 start, Vec3 end, Set<String> visible, double marginPixels) {
-        Section closest = null;
-        double distance = Double.POSITIVE_INFINITY;
+    /**
+     * The visible section a segment hits first, with how far along: by its cubes, or, when it passes between every
+     * cube, by the box around a section's cubes, so that the gaps of an open frame such as a ladder still count.
+     */
+    public Optional<Hit> firstHit(Vec3 start, Vec3 end, Set<String> visible, double marginPixels) {
+        Optional<Hit> cube = closest(visible, section -> section.clip(start, end, marginPixels));
+        return cube.isPresent() ? cube : closest(visible, section -> section.clipEnvelope(start, end, marginPixels));
+    }
+
+    private Optional<Hit> closest(Set<String> visible, Function<Section, OptionalDouble> clip) {
+        Hit closest = null;
         for (Section section : sections) {
             if (!visible.contains(section.name())) {
                 continue;
             }
-            OptionalDouble hit = section.clip(start, end, marginPixels);
-            if (hit.isPresent() && hit.getAsDouble() < distance) {
-                closest = section;
-                distance = hit.getAsDouble();
+            OptionalDouble hit = clip.apply(section);
+            if (hit.isPresent() && (closest == null || hit.getAsDouble() < closest.distance())) {
+                closest = new Hit(section, hit.getAsDouble());
             }
         }
         return Optional.ofNullable(closest);
+    }
+
+    /** {@code distance} is the squared fraction of the segment before the hit. */
+    public record Hit(Section section, double distance) {
+        public String name() {
+            return section.name();
+        }
     }
 
     public record Section(String name, LocalBox bounds, List<OrientedBox> parts) {
@@ -67,6 +82,18 @@ public record SectionBounds(List<Section> sections) {
                 }
             }
             return Double.isFinite(closest) ? OptionalDouble.of(closest) : OptionalDouble.empty();
+        }
+
+        /** Like {@link #clip}, against one box around all the section's cubes. */
+        public OptionalDouble clipEnvelope(Vec3 start, Vec3 end, double marginPixels) {
+            if (parts.isEmpty()) {
+                return clip(start, end, marginPixels);
+            }
+            AABB envelope = parts.get(0).enclosingBounds();
+            for (OrientedBox part : parts) {
+                envelope = envelope.minmax(part.enclosingBounds());
+            }
+            return clipBox(envelope.inflate(Math.max(0, marginPixels) / 16), start, end);
         }
 
         private static OptionalDouble clipBox(AABB box, Vec3 start, Vec3 end) {

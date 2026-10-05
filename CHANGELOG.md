@@ -23,7 +23,7 @@
 
 - Undoing a stage that was paid for but not finished gives back the items that were taken for it.
 - A stage's materials are taken together, so an item material and a tag material can no longer be paid with the same stack.
-- A hammer blow counts only when it lands on the highlighted section; hits are checked against its cubes instead of a box around them.
+- A hammer blow counts only when it lands on the highlighted section; hits are checked against its cubes, and a blow through the gaps of an open frame, such as between ladder rungs, counts for the section around them.
 
 ## 0.1.0-beta.6
 

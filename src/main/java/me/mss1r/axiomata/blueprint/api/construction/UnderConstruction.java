@@ -15,7 +15,7 @@ import java.util.Map;
 public interface UnderConstruction {
     BuildProgress buildProgress();
 
-    /** Override if the section resource has a different ID from the entity type. */
+    /** Override if the construction markup has a different ID from the entity type. */
     default ResourceLocation constructionModel() {
         return this instanceof Entity entity ? BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()) : null;
     }

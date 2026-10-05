@@ -42,7 +42,8 @@ def update_files(root: Path, version: str) -> None:
             promos = advance(promos, minecraft_version, version)
         minecraft_version = next(iter(properties[loader]))
         data = {
-            "homepage": f"https://modrinth.com/mod/{project}/versions?g={minecraft_version}&l={loader}",
+            "homepage": data.get("homepage")
+            or f"https://modrinth.com/mod/{project}/versions?g={minecraft_version}&l={loader}",
             "promos": promos,
         }
         content = json.dumps(data, indent=2) + "\n"

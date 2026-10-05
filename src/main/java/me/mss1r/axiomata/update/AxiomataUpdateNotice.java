@@ -47,6 +47,6 @@ public final class AxiomataUpdateNotice {
             } catch (IllegalArgumentException ignored) {
             }
         }
-        return "https://modrinth.com/mod/axiomata/versions";
+        return "https://www.curseforge.com/projects/1713796";
     }
 }

@@ -62,7 +62,7 @@ class UpdateNoticeTest {
         for (String url : new String[] {"file:///etc/passwd", "javascript:alert(1)", "broken url"}) {
             var message = new AxiomataUpdateNotice().take(result(VersionChecker.Status.OUTDATED, url)).orElseThrow();
             ClickEvent click = message.getSiblings().get(1).getStyle().getClickEvent();
-            assertEquals("https://modrinth.com/mod/axiomata/versions", click.getValue());
+            assertEquals("https://www.curseforge.com/projects/1713796", click.getValue());
         }
     }
 

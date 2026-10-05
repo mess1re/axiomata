@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import com.mojang.logging.LogUtils;
+import me.mss1r.axiomata.PackPriority;
 import me.mss1r.axiomata.ResourceIds;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition;
 import me.mss1r.axiomata.blueprint.network.S2CBlueprintCatalogPacket;
@@ -30,9 +31,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Loads blueprints from {@code data/<namespace>/blueprints/<name>.json}. A higher pack replaces the whole file. Invalid
- * files are logged with their pack and errors, and the next valid file below is used; on reload the previous definition
- * is kept if none is valid.
+ * Loads blueprints from {@code data/<namespace>/blueprints/<name>.json}. A higher pack replaces the whole file, and any
+ * datapack ranks above files shipped in mod jars (see {@link PackPriority}). Invalid files are logged with their pack
+ * and errors, and the next valid file below is used; on reload the previous definition is kept if none is valid.
  */
 public final class BlueprintDefinitionCatalog extends SimplePreparableReloadListener<Map<String, BlueprintDefinition>> {
     private static final Logger LOGGER = LogUtils.getLogger();
@@ -64,7 +65,7 @@ public final class BlueprintDefinitionCatalog extends SimplePreparableReloadList
                     if (id == null) {
                         return;
                     }
-                    BlueprintDefinition definition = loadStack(id, entry.getValue());
+                    BlueprintDefinition definition = loadStack(id, PackPriority.datapacksOverMods(entry.getValue()));
                     if (definition == null && previous.containsKey(id)) {
                         LOGGER.error("Blueprint {} has no good file; keeping the one loaded before", id);
                         definition = previous.get(id);

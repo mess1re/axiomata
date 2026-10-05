@@ -25,7 +25,7 @@ public final class PlacementTargetHelper {
         }
 
         HitResult hitResult = player.pick(getPickRange(player), partialTick,
-                ConstructionPlacementHelper.requiresFluidTargeting(minecraft.level, resultStack, recipe));
+                ConstructionPlacementHelper.requiresFluidTargeting(recipe));
         return hitResult instanceof BlockHitResult blockHitResult && hitResult.getType() == HitResult.Type.BLOCK
                 ? blockHitResult
                 : null;

@@ -163,8 +163,9 @@ public final class BlueprintFormat {
                 }
             }
         }
-        if (placement == Placement.WATER && entity == null) {
-            errors.add("result.entity: a build placed on water needs the entity it places");
+        if (placement != null && entity == null) {
+            errors.add("result.entity: placing in the world needs the entity it places; leave out placement to give"
+                    + " the item instead");
         }
         return item == null ? null : new Result(item, count, data, placement, entity);
     }
@@ -310,6 +311,8 @@ public final class BlueprintFormat {
                     if (entity != null && !ids.entity().test(entity)) {
                         errors.add("result.deployment.preview_entity: there is no entity '" + entity + "'");
                     }
+                } else {
+                    errors.add("result.deployment.preview_entity: placing in the world needs the entity it places");
                 }
             }
             if (item != null && count >= 1) {
@@ -390,6 +393,20 @@ public final class BlueprintFormat {
             parts.put(stage.get("key").getAsString(), 0);
         }
         return parts;
+    }
+
+    /** Fields that do nothing for this blueprint, for a warning: early ends only exist for builds in the world. */
+    public static List<String> warnings(BlueprintDefinition definition) {
+        List<String> warnings = new ArrayList<>();
+        if (!definition.buildsInWorld()) {
+            if (definition.minStages() > 0) {
+                warnings.add("minStages has no effect: only builds placed in the world can end early");
+            }
+            if (definition.stages().stream().anyMatch(stage -> !stage.adds().isEmpty())) {
+                warnings.add("adds has no effect: only builds placed in the world can end early");
+            }
+        }
+        return warnings;
     }
 
     public static JsonObject write(BlueprintDefinition definition) {

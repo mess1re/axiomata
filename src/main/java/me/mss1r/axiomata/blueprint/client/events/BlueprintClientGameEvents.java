@@ -94,8 +94,7 @@ public class BlueprintClientGameEvents {
                 ),
                 player.getYRot(),
                 partialTick,
-                plan.valid() ? 0.45F : 0.30F,
-                0
+                plan.valid() ? 0.45F : 0.30F
         );
 
         VertexConsumer lineConsumer = bufferSource.getBuffer(RenderType.lines());

@@ -114,7 +114,7 @@ public record C2SUseBlueprintPacket(String recipeId) implements CustomPacketPayl
                         player.blockInteractionRange(),
                         //?}
                         0.0F,
-                        ConstructionPlacementHelper.requiresFluidTargeting(player.level(), result, recipe)
+                        ConstructionPlacementHelper.requiresFluidTargeting(recipe)
                 );
                 if (!(target instanceof BlockHitResult blockTarget) || target.getType() != HitResult.Type.BLOCK) {
                     player.displayClientMessage(Component.translatable("message.axiomata.construction_target_missing"), false);

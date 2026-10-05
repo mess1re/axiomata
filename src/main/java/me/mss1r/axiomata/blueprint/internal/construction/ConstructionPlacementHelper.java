@@ -14,12 +14,9 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.vehicle.Boat;
-import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -46,73 +43,29 @@ public final class ConstructionPlacementHelper {
     public record PlacementPlan(PlacementMode mode, BlockPos anchorPos, Vec3 worldPos, AABB bounds, boolean valid) {
     }
 
-    public static boolean requiresFluidTargeting(Level level, ItemStack stack) {
-        return requiresFluidTargeting(level, stack, null);
-    }
-
-    public static boolean requiresFluidTargeting(Level level, ItemStack stack, @Nullable BlueprintDefinition recipe) {
-        if (recipe != null && recipe.buildsInWorld()) {
-            return recipe.result().placement() == BlueprintDefinition.Placement.WATER;
-        }
-        Entity previewEntity = createPreviewEntity(level, stack, Vec3.ZERO, 0.0F, 0, null);
-        return previewEntity instanceof Boat;
-    }
-
-    @Nullable
-    public static PlacementPlan findPlacement(Level level, ItemStack stack, BlockPos targetPos, Direction targetFace, float yaw) {
-        return findPlacement(level, stack, targetPos, targetFace, Vec3.atCenterOf(targetPos), yaw, null);
-    }
-
-    @Nullable
-    public static PlacementPlan findPlacement(Level level, ItemStack stack, BlockPos targetPos, Direction targetFace, @Nullable Vec3 hitLocation, float yaw) {
-        return findPlacement(level, stack, targetPos, targetFace, hitLocation, yaw, null);
+    /** Whether the blueprint is placed on water rather than on the ground. */
+    public static boolean requiresFluidTargeting(BlueprintDefinition recipe) {
+        return recipe.result().placement() == BlueprintDefinition.Placement.WATER;
     }
 
     @Nullable
     public static PlacementPlan findPlacement(Level level, ItemStack stack, BlockPos targetPos, Direction targetFace,
                                                 @Nullable Vec3 hitLocation, float yaw,
-                                                @Nullable BlueprintDefinition recipe) {
-        Entity previewEntity = createPreviewEntity(level, stack, getProbePos(targetPos, hitLocation), yaw, 0, recipe);
-        boolean groundBlockResult = isGroundBlockResult(stack);
-        boolean explicitDeployment = recipe != null && recipe.buildsInWorld();
-        if (previewEntity == null && !groundBlockResult && !explicitDeployment) {
+                                                BlueprintDefinition recipe) {
+        if (!recipe.buildsInWorld()) {
             return null;
         }
-
-        return requiresFluidTargeting(level, stack, recipe)
+        return requiresFluidTargeting(recipe)
                 ? findWaterPlacement(level, stack, targetPos, targetFace, hitLocation, yaw, recipe)
                 : findGroundPlacement(level, stack, targetPos, targetFace, yaw, recipe);
     }
 
     @Nullable
-    public static PlacementPlan findPlacementAtAnchor(Level level, ItemStack stack, BlockPos anchorPos, PlacementMode mode, float yaw) {
-        return findPlacementAtAnchor(level, stack, anchorPos, mode, yaw, null);
-    }
-
-    @Nullable
-    public static PlacementPlan findPlacementAtAnchor(Level level, ItemStack stack, BlockPos anchorPos, PlacementMode mode,
-                                                       float yaw, @Nullable BlueprintDefinition recipe) {
-        Entity previewEntity = createPreviewEntity(level, stack, getAnchorProbePos(level, anchorPos, mode), yaw, 0, recipe);
-        boolean groundBlockResult = isGroundBlockResult(stack);
-        boolean explicitDeployment = recipe != null && recipe.buildsInWorld();
-        if (previewEntity == null && !(groundBlockResult && mode == PlacementMode.GROUND) && !explicitDeployment) {
-            return null;
-        }
-
-        return mode == PlacementMode.WATER
-                ? createWaterPlan(level, stack, anchorPos, getWaterSurfacePos(level, anchorPos), yaw, recipe)
-                : createGroundPlan(level, stack, anchorPos, yaw, recipe);
-    }
-
-    @Nullable
-    public static Entity createPreviewEntity(Level level, ItemStack stack, Vec3 worldPos, float yaw, int tickCount) {
-        return createPreviewEntity(level, stack, worldPos, yaw, tickCount, null);
-    }
-
-    @Nullable
     public static Entity createPreviewEntity(Level level, ItemStack stack, Vec3 worldPos, float yaw, int tickCount,
-                                              @Nullable BlueprintDefinition recipe) {
-        EntityType<?> entityType = resolveEntityType(stack, recipe);
+                                              BlueprintDefinition recipe) {
+        ResourceLocation entityId = recipe.result().entity();
+        EntityType<?> entityType = entityId == null ? null
+                : BuiltInRegistries.ENTITY_TYPE.getOptional(entityId).orElse(null);
         if (entityType == null) {
             return null;
         }
@@ -126,98 +79,11 @@ public final class ConstructionPlacementHelper {
         return entity;
     }
 
-    public static AABB getPlannedBounds(Level level, ItemStack stack, Vec3 worldPos, float yaw,
-                                        @Nullable BlueprintDefinition recipe) {
-        Entity previewEntity = createPreviewEntity(level, stack, worldPos, yaw, 0, recipe);
-        if (previewEntity != null) {
-            return previewEntity.getBoundingBox();
-        }
-
-        BlockState previewBlockState = createPreviewBlockState(stack, yaw);
-        if (previewBlockState != null) {
-            BlockPos blockPos = BlockPos.containing(worldPos.x, worldPos.y - 0.05D, worldPos.z);
-            return getBlockPreviewBounds(level, blockPos, previewBlockState);
-        }
-
-        return new AABB(
-                worldPos.x - 0.5D, worldPos.y, worldPos.z - 0.5D,
-                worldPos.x + 0.5D, worldPos.y + 1.0D, worldPos.z + 0.5D
-        );
-    }
-
-    @Nullable
-    public static EntityType<?> resolveEntityType(ItemStack stack) {
-        return resolveEntityType(stack, null);
-    }
-
-    @Nullable
-    public static EntityType<?> resolveEntityType(ItemStack stack, @Nullable BlueprintDefinition recipe) {
-        if (recipe != null && recipe.result().entity() != null) {
-            return BuiltInRegistries.ENTITY_TYPE.getOptional(recipe.result().entity()).orElse(null);
-        }
-
-        ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
-        if (itemId == null) {
-            return null;
-        }
-
-        EntityType<?> direct = BuiltInRegistries.ENTITY_TYPE.getOptional(itemId).orElse(null);
-        if (direct != null) return direct;
-
-        String itemPath = itemId.getPath();
-        String normalizedItemPath = itemPath.endsWith("_spawner")
-                ? itemPath.substring(0, itemPath.length() - "_spawner".length())
-                : itemPath;
-        EntityType<?> bestMatch = null;
-        int bestMatchLength = -1;
-        for (ResourceLocation entityId : BuiltInRegistries.ENTITY_TYPE.keySet()) {
-            if (!entityId.getNamespace().equals(itemId.getNamespace())) {
-                continue;
-            }
-
-            String entityPath = entityId.getPath();
-            if ((itemPath.equals(entityPath)
-                    || itemPath.endsWith("_" + entityPath)
-                    || normalizedItemPath.equals(entityPath)
-                    || normalizedItemPath.endsWith("_" + entityPath))
-                    && entityPath.length() > bestMatchLength) {
-                bestMatch = BuiltInRegistries.ENTITY_TYPE.get(entityId);
-                bestMatchLength = entityPath.length();
-            }
-        }
-
-        return bestMatch;
-    }
-
-    private static boolean isGroundBlockResult(ItemStack stack) {
-        return stack.getItem() instanceof BlockItem;
-    }
-
-    @Nullable
-    public static BlockState createPreviewBlockState(ItemStack stack, float yaw) {
-        if (!(stack.getItem() instanceof BlockItem blockItem)) {
-            return null;
-        }
-
-        BlockState state = blockItem.getBlock().defaultBlockState();
-        if (state.hasProperty(BlockStateProperties.HORIZONTAL_FACING)) {
-            state = state.setValue(BlockStateProperties.HORIZONTAL_FACING, Direction.fromYRot(yaw));
-        }
-        return state;
-    }
-
     public static void configureEntity(Entity entity, ItemStack stack, Vec3 worldPos, float yaw, int tickCount) {
         entity.moveTo(worldPos.x, worldPos.y, worldPos.z, yaw, 0.0F);
         entity.setYRot(yaw);
         entity.yRotO = yaw;
         entity.tickCount = tickCount;
-
-        if (entity instanceof Boat boat) {
-            Boat.Type boatType = resolveBoatType(stack);
-            if (boatType != null) {
-                boat.setVariant(boatType);
-            }
-        }
 
         if (entity instanceof LivingEntity living) {
             living.yBodyRot = yaw;
@@ -243,15 +109,14 @@ public final class ConstructionPlacementHelper {
 
     @Nullable
     private static PlacementPlan findGroundPlacement(Level level, ItemStack stack, BlockPos targetPos, Direction targetFace,
-                                                      float yaw, @Nullable BlueprintDefinition recipe) {
+                                                      float yaw, BlueprintDefinition recipe) {
         return createGroundPlan(level, stack, targetPos, yaw, recipe);
     }
 
     private static PlacementPlan createGroundPlan(Level level, ItemStack stack, BlockPos supportPos, float yaw,
-                                                   @Nullable BlueprintDefinition recipe) {
+                                                   BlueprintDefinition recipe) {
         BlockPos sitePos = supportPos.above();
         Entity previewEntity = createPreviewEntity(level, stack, Vec3.ZERO, yaw, 0, recipe);
-        BlockState previewBlockState = createPreviewBlockState(stack, yaw);
         Vec3 worldPos = new Vec3(supportPos.getX() + 0.5D, supportPos.getY() + 1.05D, supportPos.getZ() + 0.5D);
         AABB bounds = new AABB(worldPos.x - 0.5D, worldPos.y, worldPos.z - 0.5D, worldPos.x + 0.5D, worldPos.y + 1.35D, worldPos.z + 0.5D);
 
@@ -261,27 +126,20 @@ public final class ConstructionPlacementHelper {
             worldPos = new Vec3(sitePos.getX() + 0.5D, sitePos.getY() + yOffset, sitePos.getZ() + 0.5D);
             configureEntity(previewEntity, stack, worldPos, yaw, 0);
             bounds = previewEntity.getBoundingBox();
-        } else if (previewBlockState != null) {
-            worldPos = Vec3.atCenterOf(sitePos);
-            bounds = getBlockPreviewBounds(level, sitePos, previewBlockState);
         }
 
-        boolean valid = hasGroundSupport(level, supportPos, bounds)
+        boolean valid = previewEntity != null
+                && hasGroundSupport(level, supportPos, bounds)
                 && !overlapsExistingConstructionSite(level, bounds)
-                && (previewEntity == null || level.noCollision(previewEntity, bounds));
+                && level.noCollision(previewEntity, bounds);
 
         return new PlacementPlan(PlacementMode.GROUND, supportPos.immutable(), worldPos, bounds, valid);
-    }
-
-    private static AABB getBlockPreviewBounds(Level level, BlockPos blockPos, BlockState state) {
-        VoxelShape shape = state.getShape(level, blockPos);
-        return shape.isEmpty() ? new AABB(blockPos) : shape.bounds().move(blockPos);
     }
 
     @Nullable
     private static PlacementPlan findWaterPlacement(Level level, ItemStack stack, BlockPos targetPos, Direction targetFace,
                                                      @Nullable Vec3 hitLocation, float yaw,
-                                                     @Nullable BlueprintDefinition recipe) {
+                                                     BlueprintDefinition recipe) {
         LinkedHashSet<BlockPos> candidates = new LinkedHashSet<>();
         addWaterCandidates(candidates, targetPos, targetFace);
 
@@ -303,7 +161,7 @@ public final class ConstructionPlacementHelper {
     }
 
     private static PlacementPlan createWaterPlan(Level level, ItemStack stack, BlockPos waterPos, Vec3 desiredWorldPos,
-                                                  float yaw, @Nullable BlueprintDefinition recipe) {
+                                                  float yaw, BlueprintDefinition recipe) {
         Vec3 worldPos = desiredWorldPos;
         Entity previewEntity = createPreviewEntity(level, stack, worldPos, yaw, 0, recipe);
         AABB bounds = new AABB(worldPos.x - 0.5D, worldPos.y, worldPos.z - 0.5D, worldPos.x + 0.5D, worldPos.y + 1.0D, worldPos.z + 0.5D);
@@ -313,33 +171,13 @@ public final class ConstructionPlacementHelper {
             bounds = previewEntity.getBoundingBox();
         }
 
-        boolean valid = level.getFluidState(waterPos).is(FluidTags.WATER)
+        boolean valid = previewEntity != null
+                && level.getFluidState(waterPos).is(FluidTags.WATER)
                 && hasWaterSupport(level, bounds, waterPos.getY())
                 && !overlapsExistingConstructionSite(level, bounds)
-                && (previewEntity == null || level.noCollision(previewEntity, bounds));
+                && level.noCollision(previewEntity, bounds);
 
         return new PlacementPlan(PlacementMode.WATER, waterPos.immutable(), worldPos, bounds, valid);
-    }
-
-    @Nullable
-    private static Boat.Type resolveBoatType(ItemStack stack) {
-        ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
-        if (itemId == null) {
-            return null;
-        }
-
-        String itemPath = itemId.getPath();
-        Boat.Type bestMatch = null;
-        int bestLength = -1;
-        for (Boat.Type type : Boat.Type.values()) {
-            String name = type.getName();
-            if ((itemPath.equals(name) || itemPath.startsWith(name + "_")) && name.length() > bestLength) {
-                bestMatch = type;
-                bestLength = name.length();
-            }
-        }
-
-        return bestMatch;
     }
 
     private static void addWaterCandidates(LinkedHashSet<BlockPos> candidates, BlockPos targetPos, Direction targetFace) {
@@ -356,14 +194,6 @@ public final class ConstructionPlacementHelper {
 
     private static void addCandidate(LinkedHashSet<BlockPos> candidates, BlockPos candidate) {
         candidates.add(candidate.immutable());
-    }
-
-    private static Vec3 getProbePos(BlockPos targetPos, @Nullable Vec3 hitLocation) {
-        return hitLocation != null ? hitLocation : Vec3.atCenterOf(targetPos);
-    }
-
-    private static Vec3 getAnchorProbePos(Level level, BlockPos anchorPos, PlacementMode mode) {
-        return mode == PlacementMode.WATER ? getWaterSurfacePos(level, anchorPos) : Vec3.atCenterOf(anchorPos.above());
     }
 
     private static Vec3 getWaterSurfacePos(Level level, BlockPos waterPos) {

@@ -6,6 +6,7 @@ import me.mss1r.axiomata.blueprint.internal.definition.BlueprintFormat;
 import net.minecraft.resources.ResourceLocation;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -94,6 +95,25 @@ class BlueprintFormatTest {
                 "stages[1].materials.example:wheel: count must be at least 1");
         assertError(CURRENT.replace("\"#minecraft:planks\"", "\"minecraft:planks\""),
                 "a tag needs # in front");
+    }
+
+    @Test
+    void placingInTheWorldNeedsTheEntity() {
+        assertError(CURRENT.replace("\"entity\": \"example:cart\", ", "\"placement\": \"ground\", "),
+                "result.entity: placing in the world needs the entity");
+        assertError(OLD.replace(", \"preview_entity\": \"example:cart\"", ""),
+                "result.deployment.preview_entity: placing in the world needs the entity");
+    }
+
+    @Test
+    void earlyEndFieldsOnACraftAreWarnedAbout() {
+        assertTrue(BlueprintFormat.warnings(parse(CURRENT).definition()).isEmpty(),
+                "A build placed in the world was warned about its early end");
+        BlueprintFormat.Parsed craft = parse(CURRENT.replace("\"entity\": \"example:cart\", ", ""));
+        assertTrue(craft.valid(), () -> String.join("; ", craft.errors()));
+        assertEquals(List.of("minStages has no effect: only builds placed in the world can end early",
+                        "adds has no effect: only builds placed in the world can end early"),
+                BlueprintFormat.warnings(craft.definition()));
     }
 
     private static void assertError(String json, String expected) {

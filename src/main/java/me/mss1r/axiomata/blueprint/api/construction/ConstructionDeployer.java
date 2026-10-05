@@ -26,6 +26,9 @@ public final class ConstructionDeployer {
     public static Entity deploy(ServerLevel level, String blueprintId, ItemStack blueprint, ItemStack result,
                                 BlockPos targetPos, Direction targetFace, Vec3 hitLocation, float yaw) {
         BlueprintDefinition recipe = BlueprintDefinitions.get(blueprintId);
+        if (recipe == null) {
+            return null;
+        }
         ConstructionPlacementHelper.PlacementPlan plan = ConstructionPlacementHelper.findPlacement(
                 level, result, targetPos, targetFace, hitLocation, yaw, recipe);
         if (plan == null || !plan.valid()) {
@@ -39,19 +42,20 @@ public final class ConstructionDeployer {
             return null;
         }
 
-        if (machine instanceof UnderConstruction underConstruction) {
-            boolean started = recipe != null && ConstructionStarters.isStarter(blueprint);
-            // Starter items were never drawn, so they build at the blueprint's exact cost.
-            underConstruction.buildProgress().begin(blueprintId,
-                    started ? BuildQuality.EXACT : BlueprintItem.getQuality(blueprint));
-            if (started) {
-                underConstruction.buildProgress().skipBuilt(ConstructionStarters.builtStages(recipe, blueprint));
-            }
-            underConstruction.onDeployed(yaw);
-            underConstruction.onBuildProgressChanged();
-        } else {
-            LOGGER.debug("{} does not support staged construction, placing it finished", blueprintId);
+        if (!(machine instanceof UnderConstruction underConstruction)) {
+            LOGGER.error("Blueprint {} builds {}, which does not support construction in the world", blueprintId,
+                    recipe.result().entity());
+            return null;
         }
+        boolean started = ConstructionStarters.isStarter(blueprint);
+        // Starter items were never drawn, so they build at the blueprint's exact cost.
+        underConstruction.buildProgress().begin(blueprintId,
+                started ? BuildQuality.EXACT : BlueprintItem.getQuality(blueprint));
+        if (started) {
+            underConstruction.buildProgress().skipBuilt(ConstructionStarters.builtStages(recipe, blueprint));
+        }
+        underConstruction.onDeployed(yaw);
+        underConstruction.onBuildProgressChanged();
 
         return level.addFreshEntity(machine) ? machine : null;
     }

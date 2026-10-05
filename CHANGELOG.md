@@ -6,6 +6,7 @@
 
 - The blueprint definition and construction APIs changed; mods built against 0.1.0-beta.6 need to be rebuilt.
 - Builds placed in the world need `result.entity`, and that entity must support construction. The entity is no longer guessed from the item, and blueprints no longer place blocks.
+- Construction markup is now one file, `data/<namespace>/construction/<model>.json`, which the server sends to clients. Files in `assets/<namespace>/construction` are no longer read; export the markup again.
 
 ### Added
 
@@ -21,6 +22,7 @@
 ### Fixed
 
 - A stage's materials are taken together, so an item material and a tag material can no longer be paid with the same stack.
+- A hammer blow counts only when it lands on the highlighted section; hits are checked against its cubes instead of a box around them.
 
 ## 0.1.0-beta.6
 

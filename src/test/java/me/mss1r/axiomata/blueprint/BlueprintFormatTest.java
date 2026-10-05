@@ -84,6 +84,26 @@ class BlueprintFormatTest {
     }
 
     @Test
+    void tagMaterialsAreGivenBackAsTheirReturnItem() {
+        String withReturns = CURRENT.replace("\"minStages\": 1,",
+                "\"minStages\": 1, \"returns\": { \"#minecraft:planks\": \"minecraft:oak_log\" },");
+        BlueprintFormat.Parsed parsed = parse(withReturns);
+        assertTrue(parsed.valid(), () -> String.join("; ", parsed.errors()));
+        BlueprintDefinition.Material planks = parsed.definition().stages().get(0).materials().get(1);
+        assertEquals(ResourceLocation.tryParse("minecraft:oak_log"), planks.returns());
+        assertEquals(ResourceLocation.tryParse("minecraft:oak_log"), planks.withCount(9).returns());
+        String written = BlueprintFormat.write(parsed.definition()).toString();
+        assertEquals(written, BlueprintFormat.write(parse(written).definition()).toString());
+
+        assertError(withReturns.replace("\"#minecraft:planks\": \"minecraft", "\"#minecraft:logs\": \"minecraft"),
+                "returns.#minecraft:logs: no stage takes this tag");
+        assertError(withReturns.replace("\"#minecraft:planks\": \"minecraft", "\"minecraft:planks\": \"minecraft"),
+                "returns.minecraft:planks: must be a tag");
+        assertError(withReturns.replace("\"minecraft:oak_log\" }", "\"minecraft:oak_lgo\" }"),
+                "returns.#minecraft:planks: there is no item");
+    }
+
+    @Test
     void pointsAtTheMistakeInABrokenFile() {
         assertError(CURRENT.replace("minecraft:oak_log\": 6", "minecraft:oak_lgo\": 6"),
                 "stages[0].materials.minecraft:oak_lgo: there is no item");

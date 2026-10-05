@@ -52,10 +52,7 @@ public final class ConstructionWork {
         if (!progress.materialsCommitted()) {
             // Commit the whole stage on its first hit and persist that fact. Reloading halfway
             // through a stage must not consume the same parts again.
-            if (materials != null) {
-                take(materials, stage.materials());
-            }
-            progress.commitMaterials();
+            progress.commitMaterials(materials != null ? take(materials, stage.materials()) : List.of());
         }
 
         if (!progress.strike()) {
@@ -78,11 +75,8 @@ public final class ConstructionWork {
         if (!progress.canEndHere()) {
             return new Result(Status.CANNOT_END, null);
         }
-        BlueprintConstructionPlan.Stage current = progress.currentStage();
-        if (current != null && progress.materialsCommitted() && materials != null) {
-            for (Material material : current.materials()) {
-                give(materials, material.displayStack());
-            }
+        if (progress.currentStage() != null && progress.materialsCommitted() && materials != null) {
+            progress.currentStageRefund().forEach(stack -> give(materials, stack));
         }
         progress.endHere();
         machine.applyBuiltData(progress.builtData());
@@ -94,12 +88,10 @@ public final class ConstructionWork {
         BuildProgress progress = machine.buildProgress();
         BlueprintConstructionPlan.Stage current = progress.currentStage();
         if (current != null && progress.hasCurrentStageWork()) {
-            boolean refund = progress.materialsCommitted();
+            List<ItemStack> refund = progress.materialsCommitted() ? progress.currentStageRefund() : List.of();
             progress.cancelCurrentStage();
-            if (refund && materials != null) {
-                for (Material material : current.materials()) {
-                    give(materials, material.displayStack());
-                }
+            if (materials != null) {
+                refund.forEach(stack -> give(materials, stack));
             }
             machine.onBuildProgressChanged();
             return new Result(Status.ADVANCED, null);
@@ -112,7 +104,7 @@ public final class ConstructionWork {
         BlueprintConstructionPlan.Stage stage = progress.plan().stage(undone);
         if (stage != null && materials != null) {
             for (Material material : stage.materials()) {
-                give(materials, material.displayStack());
+                give(materials, material.returnStack());
             }
         }
         machine.onBuildProgressChanged();
@@ -127,22 +119,25 @@ public final class ConstructionWork {
         return stacks;
     }
 
-    private static void take(Container container, List<Material> materials) {
+    /** Takes the materials and returns the items taken for them. */
+    private static List<ItemStack> take(Container container, List<Material> materials) {
         List<ItemStack> stacks = slots(container);
-        boolean[] held = new boolean[stacks.size()];
-        for (int slot = 0; slot < stacks.size(); slot++) {
-            held[slot] = !stacks.get(slot).isEmpty();
-        }
+        List<ItemStack> before = stacks.stream().map(ItemStack::copy).toList();
         MaterialAllocation.take(stacks, materials);
+        List<ItemStack> taken = new ArrayList<>();
         for (int slot = 0; slot < stacks.size(); slot++) {
-            if (held[slot] && stacks.get(slot).isEmpty()) {
+            int count = before.get(slot).getCount() - stacks.get(slot).getCount();
+            if (count > 0) {
+                taken.add(before.get(slot).copyWithCount(count));
+            }
+            if (!before.get(slot).isEmpty() && stacks.get(slot).isEmpty()) {
                 container.setItem(slot, ItemStack.EMPTY);
             }
         }
         container.setChanged();
+        return taken;
     }
 
-    /** Tag materials are refunded as the tag's first item. */
     private static void give(Container container, ItemStack material) {
         for (int slot = 0; slot < container.getContainerSize() && !material.isEmpty(); slot++) {
             ItemStack stack = container.getItem(slot);

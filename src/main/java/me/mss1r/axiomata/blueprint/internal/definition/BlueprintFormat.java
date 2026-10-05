@@ -27,7 +27,7 @@ import java.util.function.Predicate;
  */
 public final class BlueprintFormat {
     private static final Set<String> ROOT_FIELDS = Set.of("formatVersion", "result", "stages", "minStages",
-            "starter", "outline");
+            "starter", "outline", "returns");
     private static final Set<String> RESULT_FIELDS = Set.of("item", "count", "data", "entity", "placement");
     private static final Set<String> STAGE_FIELDS = Set.of("section", "hits", "materials", "adds");
     private static final Set<String> STARTER_FIELDS = Set.of("item", "builtStages");
@@ -77,7 +77,7 @@ public final class BlueprintFormat {
             }
         }
         Result result = result(object(root, "result", "", true, errors), ids, errors);
-        List<Stage> stages = stages(root, ids, errors);
+        List<Stage> stages = returns(root, stages(root, ids, errors), ids, errors);
         int minStages = 0;
         if (root.has("minStages")) {
             Integer value = integer(root.get("minStages"), "minStages", errors);
@@ -222,6 +222,44 @@ public final class BlueprintFormat {
             stages.add(new Stage(section, hits, materials, adds(json, path, errors)));
         }
         return stages;
+    }
+
+    /** {@code "returns": {"#tag": "item"}}: the item each tag material is given back as. */
+    private static List<Stage> returns(JsonObject root, List<Stage> stages, Ids ids, List<String> errors) {
+        JsonObject json = object(root, "returns", "", false, errors);
+        if (json == null) {
+            return stages;
+        }
+        Map<ResourceLocation, ResourceLocation> returns = new LinkedHashMap<>();
+        for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
+            String where = "returns." + entry.getKey();
+            ResourceLocation tag = entry.getKey().startsWith("#")
+                    ? ResourceLocation.tryParse(entry.getKey().substring(1)) : null;
+            if (tag == null) {
+                errors.add(where + ": must be a tag with # in front, as written in the stage materials");
+                continue;
+            }
+            if (stages.stream().flatMap(stage -> stage.materials().stream()).noneMatch(m -> tag.equals(m.tag()))) {
+                errors.add(where + ": no stage takes this tag");
+                continue;
+            }
+            ResourceLocation item = id(entry.getValue(), where, errors);
+            if (item != null && !ids.item().test(item)) {
+                errors.add(where + ": there is no item '" + item + "'");
+            } else if (item != null) {
+                returns.put(tag, item);
+            }
+        }
+        List<Stage> result = new ArrayList<>(stages.size());
+        for (Stage stage : stages) {
+            List<Material> materials = new ArrayList<>(stage.materials().size());
+            for (Material material : stage.materials()) {
+                materials.add(material.tag() != null && returns.containsKey(material.tag())
+                        ? material.withReturns(returns.get(material.tag())) : material);
+            }
+            result.add(new Stage(stage.section(), stage.hits(), materials, stage.adds()));
+        }
+        return result;
     }
 
     @Nullable
@@ -462,6 +500,13 @@ public final class BlueprintFormat {
             stages.add(json);
         }
         root.add("stages", stages);
+        JsonObject returns = new JsonObject();
+        definition.stages().forEach(stage -> stage.materials().stream()
+                .filter(material -> material.returns() != null)
+                .forEach(material -> returns.addProperty(material.key(), material.returns().toString())));
+        if (returns.size() > 0) {
+            root.add("returns", returns);
+        }
         return root;
     }
 

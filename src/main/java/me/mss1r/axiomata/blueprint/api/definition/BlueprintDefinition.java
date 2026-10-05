@@ -118,8 +118,16 @@ public final class BlueprintDefinition {
     public record Starter(ResourceLocation item, int builtStages) {
     }
 
-    /** An item or an item tag, with a count. */
-    public record Material(@Nullable ResourceLocation item, @Nullable ResourceLocation tag, int count) {
+    /**
+     * An item or an item tag, with a count. {@code returns} is the item a tag material is given back as, when nothing
+     * records which items of the tag were paid.
+     */
+    public record Material(@Nullable ResourceLocation item, @Nullable ResourceLocation tag, int count,
+                           @Nullable ResourceLocation returns) {
+        public Material(@Nullable ResourceLocation item, @Nullable ResourceLocation tag, int count) {
+            this(item, tag, count, null);
+        }
+
         public static Material ofItem(ResourceLocation item, int count) {
             return new Material(item, null, count);
         }
@@ -134,7 +142,11 @@ public final class BlueprintDefinition {
         }
 
         public Material withCount(int count) {
-            return new Material(item, tag, count);
+            return new Material(item, tag, count, returns);
+        }
+
+        public Material withReturns(@Nullable ResourceLocation returns) {
+            return new Material(item, tag, count, returns);
         }
 
         public boolean matches(ItemStack stack) {
@@ -147,18 +159,43 @@ public final class BlueprintDefinition {
             return tag != null && stack.is(TagKey.create(Registries.ITEM, tag));
         }
 
-        /** Item used for display and refunds: the item itself, or the first item of the tag. */
+        /** Item to show: the item itself, or each item of the tag in turn, one per second. */
         public ItemStack displayStack() {
             Item shown = Items.BARRIER;
             if (item != null) {
                 shown = BuiltInRegistries.ITEM.get(item);
-            } else if (tag != null) {
-                shown = BuiltInRegistries.ITEM.getTag(TagKey.create(Registries.ITEM, tag))
-                        .flatMap(set -> set.stream().findFirst())
-                        .map(holder -> holder.value())
-                        .orElse(Items.BARRIER);
+            } else {
+                List<Item> choices = tagItems();
+                if (!choices.isEmpty()) {
+                    shown = choices.get((int) (System.currentTimeMillis() / 1000L % choices.size()));
+                }
             }
             return new ItemStack(shown, Math.max(1, count));
+        }
+
+        /** Item to give back: the item itself, {@code returns}, or the first item of the tag. */
+        public ItemStack returnStack() {
+            Item given = Items.BARRIER;
+            if (item != null) {
+                given = BuiltInRegistries.ITEM.get(item);
+            } else if (returns != null) {
+                given = BuiltInRegistries.ITEM.get(returns);
+            } else {
+                List<Item> choices = tagItems();
+                if (!choices.isEmpty()) {
+                    given = choices.get(0);
+                }
+            }
+            return new ItemStack(given, Math.max(1, count));
+        }
+
+        private List<Item> tagItems() {
+            if (tag == null) {
+                return List.of();
+            }
+            return BuiltInRegistries.ITEM.getTag(TagKey.create(Registries.ITEM, tag))
+                    .map(set -> set.stream().map(holder -> holder.value()).toList())
+                    .orElse(List.of());
         }
 
         /** Display name: the item's name, or "any of" for a tag. */

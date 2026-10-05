@@ -10,7 +10,7 @@
 
 ### Added
 
-- Blueprint format 3: each stage lists its own materials, by item ID or item tag (`#minecraft:planks`); the build menu shows a tag as "any of …". Files in the old format with lettered ingredients still load.
+- Blueprint format 3: each stage lists its own materials, by item ID or item tag (`#minecraft:planks`); the build menu shows a tag as "any of …" and cycles through its items. `returns` names the item a tag material is given back as. Files in the old format with lettered ingredients still load.
 - Builds can start from a starter item instead of a drawn blueprint, and builds with a minimum stage can be finished early by sneak-attacking with the construction hammer.
 - Mistakes in blueprint files are logged with the pack, the field and the reason; a broken override falls back to the file beneath it.
 - Warnings at server start and reload for blueprints that players cannot obtain or that use fields with no effect.
@@ -21,6 +21,7 @@
 
 ### Fixed
 
+- Undoing a stage that was paid for but not finished gives back the items that were taken for it.
 - A stage's materials are taken together, so an item material and a tag material can no longer be paid with the same stack.
 - A hammer blow counts only when it lands on the highlighted section; hits are checked against its cubes instead of a box around them.
 

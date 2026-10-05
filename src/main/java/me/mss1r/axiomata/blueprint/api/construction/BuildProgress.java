@@ -3,10 +3,17 @@ package me.mss1r.axiomata.blueprint.api.construction;
 import me.mss1r.axiomata.construction.ConstructionProgress;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinitions;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public final class BuildProgress {
@@ -16,8 +23,11 @@ public final class BuildProgress {
     private static final String QUALITY_TAG = "BuildQuality";
     private static final String MATERIALS_COMMITTED_TAG = "BuildMaterialsCommitted";
     private static final String ENDED_TAG = "BuildEnded";
+    private static final String PAID_TAG = "BuildPaid";
 
     private final ConstructionProgress core = new ConstructionProgress();
+    // Items taken for the current stage, so that cancelling it gives back the same items rather than a tag's first.
+    private final List<ItemStack> paid = new ArrayList<>();
 
     public static BuildProgress finished() {
         return new BuildProgress();
@@ -30,6 +40,7 @@ public final class BuildProgress {
         }
         BuildQuality resolvedQuality = quality == null ? BuildQuality.PLAIN : quality;
         core.begin(blueprintId, resolvedQuality.id());
+        paid.clear();
     }
 
     public String blueprintId() {
@@ -48,8 +59,29 @@ public final class BuildProgress {
         return core.materialsCommitted();
     }
 
+    /** Marks the current stage's materials as taken without recording which items, as for creative players. */
     public void commitMaterials() {
+        commitMaterials(List.of());
+    }
+
+    /** Marks the current stage's materials as taken, recording the items that were taken for them. */
+    public void commitMaterials(List<ItemStack> taken) {
         core.commitMaterials();
+        paid.clear();
+        taken.forEach(stack -> paid.add(stack.copy()));
+    }
+
+    /**
+     * Items to give back for the current stage's taken materials: the items that were taken, or, for a stage taken
+     * before they were recorded, each material's {@link BlueprintDefinition.Material#returnStack()}.
+     */
+    public List<ItemStack> currentStageRefund() {
+        if (!paid.isEmpty()) {
+            return paid.stream().map(ItemStack::copy).toList();
+        }
+        BlueprintConstructionPlan.Stage stage = currentStage();
+        return stage == null ? List.of()
+                : stage.materials().stream().map(BlueprintDefinition.Material::returnStack).toList();
     }
 
     public boolean hasCurrentStageWork() {
@@ -58,6 +90,7 @@ public final class BuildProgress {
 
     public void cancelCurrentStage() {
         core.cancelCurrentStage();
+        paid.clear();
     }
 
     public BlueprintConstructionPlan plan() {
@@ -104,11 +137,13 @@ public final class BuildProgress {
      */
     public void endHere() {
         core.endHere();
+        paid.clear();
     }
 
     /** Marks the first {@code stages} stages as built without doing their work. */
     public void skipBuilt(int stages) {
         core.advanceTo(stages);
+        paid.clear();
     }
 
     /** Sum of the {@code adds} values of all built stages. */
@@ -132,11 +167,16 @@ public final class BuildProgress {
     /** Returns true only when this hit completed the current stage. */
     public boolean strike() {
         BlueprintConstructionPlan plan = plan();
-        return core.applyWork(plan.core());
+        boolean advanced = core.applyWork(plan.core());
+        if (advanced) {
+            paid.clear();
+        }
+        return advanced;
     }
 
     public int dismantle() {
         // The core returns the stage that became incomplete so its materials can be refunded.
+        paid.clear();
         return core.rollBackStage();
     }
 
@@ -148,6 +188,15 @@ public final class BuildProgress {
         tag.putString(QUALITY_TAG, snapshot.variantId());
         tag.putBoolean(MATERIALS_COMMITTED_TAG, snapshot.materialsCommitted());
         tag.putBoolean(ENDED_TAG, snapshot.intrinsicallyFinished() && !snapshot.planId().isEmpty());
+        // Item and count only: a stage takes plain items, and this needs no registry access to save.
+        ListTag paidTag = new ListTag();
+        for (ItemStack stack : paid) {
+            CompoundTag entry = new CompoundTag();
+            entry.putString("id", BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
+            entry.putInt("count", stack.getCount());
+            paidTag.add(entry);
+        }
+        tag.put(PAID_TAG, paidTag);
     }
 
     public void load(CompoundTag tag) {
@@ -160,6 +209,14 @@ public final class BuildProgress {
                 tag.getInt(HITS_TAG),
                 tag.getBoolean(MATERIALS_COMMITTED_TAG),
                 blueprintId.isEmpty() || tag.getBoolean(ENDED_TAG)));
+        paid.clear();
+        for (Tag value : tag.getList(PAID_TAG, Tag.TAG_COMPOUND)) {
+            CompoundTag entry = (CompoundTag) value;
+            ResourceLocation id = ResourceLocation.tryParse(entry.getString("id"));
+            if (id != null && BuiltInRegistries.ITEM.containsKey(id) && entry.getInt("count") > 0) {
+                paid.add(new ItemStack(BuiltInRegistries.ITEM.get(id), entry.getInt("count")));
+            }
+        }
     }
 
     private BuildQuality quality() {

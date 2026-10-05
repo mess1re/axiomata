@@ -7,20 +7,26 @@ import com.google.gson.JsonParser;
 import com.mojang.logging.LogUtils;
 import me.mss1r.axiomata.PackPriority;
 import me.mss1r.axiomata.ResourceIds;
+import me.mss1r.axiomata.blueprint.api.construction.UnderConstruction;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition;
 import me.mss1r.axiomata.blueprint.network.S2CBlueprintCatalogPacket;
 import me.mss1r.axiomata.blueprint.network.NetworkHandler;
+import me.mss1r.axiomata.blueprint.tracing.OutlineCatalog;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.entity.Entity;
 //? if forge {
 /*import net.minecraftforge.event.OnDatapackSyncEvent;
 *///?} else {
 import net.neoforged.neoforge.event.OnDatapackSyncEvent;
 //?}
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 import java.io.Reader;
@@ -44,6 +50,9 @@ public final class BlueprintDefinitionCatalog extends SimplePreparableReloadList
     private static Map<String, BlueprintDefinition> definitions = Map.of();
 
     public static void syncToClients(OnDatapackSyncEvent event) {
+        if (event.getPlayer() == null) {
+            validate(event.getPlayerList().getServer());
+        }
         S2CBlueprintCatalogPacket packet = new S2CBlueprintCatalogPacket(toNetworkJson());
         if (event.getPlayer() != null) {
             NetworkHandler.sendToPlayer(event.getPlayer(), packet);
@@ -88,6 +97,8 @@ public final class BlueprintDefinitionCatalog extends SimplePreparableReloadList
                     LOGGER.error("Skipping {}: {}", source, String.join("; ", parsed.errors()));
                     continue;
                 }
+                BlueprintFormat.warnings(parsed.definition())
+                        .forEach(warning -> LOGGER.warn("Blueprint {}: {}", source, warning));
                 if (parsed.legacy()) {
                     LOGGER.info("{} uses the old blueprint format with lettered ingredients; it still loads, "
                             + "see https://github.com/mess1re/axiomata/wiki/Blueprint-Data for the current one", source);
@@ -107,6 +118,43 @@ public final class BlueprintDefinitionCatalog extends SimplePreparableReloadList
     protected void apply(Map<String, BlueprintDefinition> loaded, ResourceManager resourceManager, ProfilerFiller profiler) {
         definitions = Collections.unmodifiableMap(new LinkedHashMap<>(loaded));
         LOGGER.info("Loaded {} blueprint definitions", definitions.size());
+    }
+
+    /**
+     * Checks what only a running world can tell. A build placed in the world must use an entity that supports
+     * construction; other blueprints are dropped so players never see them. A blueprint with neither an outline nor a
+     * starter cannot be obtained, which is only warned about.
+     */
+    public static void validate(MinecraftServer server) {
+        ServerLevel level = server.overworld();
+        if (level == null) {
+            return;
+        }
+        Map<String, BlueprintDefinition> kept = new LinkedHashMap<>();
+        definitions.forEach((id, definition) -> {
+            if (definition.buildsInWorld() && !supportsConstruction(level, definition.result().entity())) {
+                LOGGER.error("Skipping blueprint {}: entity {} does not support construction in the world. Building it"
+                        + " needs a mod that adds that support; to give the item instead, remove result.entity", id,
+                        definition.result().entity());
+                return;
+            }
+            if (definition.starter() == null && OutlineCatalog.get(definition.outlineId(id)) == null) {
+                LOGGER.warn("Blueprint {} cannot be obtained: there is no outline {} to draw it at the drawing table"
+                        + " and no starter item", id, definition.outlineId(id));
+            }
+            kept.put(id, definition);
+        });
+        definitions = Collections.unmodifiableMap(kept);
+    }
+
+    private static boolean supportsConstruction(ServerLevel level, @Nullable ResourceLocation entityId) {
+        Entity probe = entityId == null ? null
+                : BuiltInRegistries.ENTITY_TYPE.getOptional(entityId).map(type -> type.create(level)).orElse(null);
+        if (probe == null) {
+            return false;
+        }
+        probe.discard();
+        return probe instanceof UnderConstruction;
     }
 
     public static BlueprintDefinition get(String id) {

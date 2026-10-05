@@ -11,6 +11,7 @@ import me.mss1r.axiomata.blueprint.network.NetworkHandler;
 import me.mss1r.axiomata.blueprint.registry.*;
 import dev.architectury.event.events.common.CommandRegistrationEvent;
 import dev.architectury.event.events.common.InteractionEvent;
+import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.event.events.common.PlayerEvent;
 import dev.architectury.registry.ReloadListenerRegistry;
 import net.minecraft.resources.ResourceLocation;
@@ -63,6 +64,7 @@ public final class BlueprintModule {
         InteractionEvent.INTERACT_ENTITY.register(HammerWork::onEntityInteract);
         PlayerEvent.ATTACK_ENTITY.register(HammerWork::onEntityAttack);
         CommandRegistrationEvent.EVENT.register(BlueprintCommands::register);
+        LifecycleEvent.SERVER_STARTED.register(BlueprintDefinitionCatalog::validate);
         gameEventBus.addListener(BlueprintDefinitionCatalog::syncToClients);
         gameEventBus.addListener(OutlineCatalog::syncToClients);
 

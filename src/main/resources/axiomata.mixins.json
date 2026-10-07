@@ -6,6 +6,9 @@
   "refmap": "axiomata.refmap.json",
   "mixins": [
     "EntityCollisionMixin",
+    "FallingDebrisMixin",
+    "ProjectileMixin",
+    "ProjectileUtilMixin",
     "LivingEntityCollisionMixin",
     "ServerGamePacketListenerImplMixin",
     "WalkNodeEvaluatorMixin"

@@ -1,6 +1,7 @@
 package me.mss1r.axiomata;
 
 import me.mss1r.axiomata.blueprint.BlueprintModule;
+import me.mss1r.axiomata.ballistics.BallisticsModule;
 import me.mss1r.axiomata.collision.CollisionModule;
 import me.mss1r.axiomata.config.AxiomataClientConfig;
 import me.mss1r.axiomata.client.AxiomataUpdateNotifier;
@@ -31,6 +32,7 @@ public final class AxiomataBootstrap {
         ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, AxiomataClientConfig.SPEC);
         BlueprintModule.initialize(modEventBus, MinecraftForge.EVENT_BUS);
         CollisionModule.initialize();
+        BallisticsModule.initialize(modEventBus);
         initializeUpdateNotices();
     }
     *///?} else {
@@ -38,6 +40,7 @@ public final class AxiomataBootstrap {
         modContainer.registerConfig(ModConfig.Type.CLIENT, AxiomataClientConfig.SPEC);
         BlueprintModule.initialize(modEventBus, modContainer, NeoForge.EVENT_BUS);
         CollisionModule.initialize();
+        BallisticsModule.initialize(modEventBus);
         initializeUpdateNotices();
     }
     //?}

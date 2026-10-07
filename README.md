@@ -9,12 +9,20 @@ in the world, beyond the usual item, block and single-hitbox entity systems. It 
 
 - A data-driven blueprint system with drawing quality and staged, in-world construction
 - Model-based geometry used for collision, interaction, moving surfaces, climbing and pathfinding
+- Projectile flight and aiming, penetration, block damage, debris and artillery particles
+- Timed loading stages for players and automated crews
 
 ## For mod developers
 
 Blueprint integrations use `UnderConstruction`. Model collision integrations use
 `CollidableStructure`. Their supporting APIs are under `me.mss1r.axiomata.blueprint.api` and
 `me.mss1r.axiomata.collision`.
+
+Artillery integrations extend `BallisticProjectile` and provide their own projectile catalog and
+`ImpactResolver`. Block-damage policy and player attribution stay with the consuming mod.
+Loading uses `LoadingController.Host` and `LoadingRequirement`; each weapon supplies its stages,
+timings, sounds and completion callbacks. These APIs are under `me.mss1r.axiomata.ballistics`,
+`me.mss1r.axiomata.data.profile` and `me.mss1r.axiomata.loading`.
 
 ### Gradle
 

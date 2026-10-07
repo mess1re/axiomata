@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.0-beta.8
+
+### Added
+
+- Shared artillery APIs: projectile flight and aiming, multipart collisions, penetration, block damage and debris.
+- Projectile and block-material profiles, datapack reloads and profile synchronization.
+- Artillery particles and smoke textures.
+- Manual and automated loading stages with item consumption, tool wear and cancellation.
+
 ## 0.1.0-beta.7
 
 ### Notes

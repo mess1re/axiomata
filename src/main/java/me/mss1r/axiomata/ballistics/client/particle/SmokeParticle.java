@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class SmokeParticle extends TextureSheetParticle {
     private final SpriteSet sprites;
-    private final float baseSize;
+    private float baseSize;
     private final float baseAlpha;
     private final float phase;
     private final float animationOffset;
@@ -53,6 +53,12 @@ public final class SmokeParticle extends TextureSheetParticle {
         this.quadSize = this.baseSize * 0.82F;
         this.alpha = this.baseAlpha;
         this.updateSprite(this.animationOffset);
+    }
+
+    @Override
+    public Particle scale(float factor) {
+        this.baseSize *= factor;
+        return super.scale(factor);
     }
 
     @Override

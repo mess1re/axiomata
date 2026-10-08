@@ -6,7 +6,7 @@
 
 - Shared artillery APIs: projectile flight and aiming, multipart collisions, penetration, block damage and debris.
 - Projectile and block-material profiles, datapack reloads and profile synchronization.
-- Artillery particles and smoke textures.
+- Artillery particles and smoke textures, with scalable muzzle plumes for large guns.
 - Manual and automated loading stages with item consumption, tool wear and cancellation.
 
 ## 0.1.0-beta.7

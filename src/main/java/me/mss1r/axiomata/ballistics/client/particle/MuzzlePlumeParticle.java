@@ -3,10 +3,12 @@ package me.mss1r.axiomata.ballistics.client.particle;
 import me.mss1r.axiomata.ballistics.particle.ParticleSet;
 
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.particle.NoRenderParticle;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +29,7 @@ public final class MuzzlePlumeParticle extends NoRenderParticle {
         super(level, x, y, z);
         this.particles = particles;
         Vec3 encodedDirection = new Vec3(dx, dy, dz);
-        this.scale = Mth.clamp((float) encodedDirection.length(), 0.75F, 2.5F);
+        this.scale = Mth.clamp((float) encodedDirection.length(), 0.75F, 16F);
         this.direction = encodedDirection.lengthSqr() > 1.0E-8D
                 ? encodedDirection.normalize()
                 : DEFAULT_DIRECTION;
@@ -36,8 +38,10 @@ public final class MuzzlePlumeParticle extends NoRenderParticle {
                 : new Vec3(0.0D, 1.0D, 0.0D);
         this.right = this.direction.cross(referenceUp).normalize();
         this.up = this.right.cross(this.direction).normalize();
-        this.totalSmoke = Mth.clamp(Mth.ceil(4.0F + this.scale * 20.0F), 18, 44);
-        this.lifetime = Mth.clamp(Mth.ceil(3.0F + this.scale * 2.0F), 5, 7);
+        float ordinaryScale = Math.min(this.scale, 2.5F);
+        this.totalSmoke = Mth.clamp(Mth.ceil(4.0F + ordinaryScale * 20.0F), 18, 44)
+                + (this.scale > 2.5F ? Mth.ceil((this.scale - 2.5F) * 8) : 0);
+        this.lifetime = Mth.clamp(Mth.ceil(3.0F + this.scale * 2.0F), 5, 16);
     }
 
     @Override
@@ -70,9 +74,18 @@ public final class MuzzlePlumeParticle extends NoRenderParticle {
             Vec3 velocity = this.direction.scale(forwardSpeed)
                     .add(radialDirection.scale(coneSpeed))
                     .add(0.0D, this.random.nextDouble() * 0.006D, 0.0D);
-            this.level.addParticle(smoke, true,
-                    position.x, position.y, position.z,
-                    velocity.x, velocity.y, velocity.z);
+            if (this.scale <= 2.5F) {
+                this.level.addParticle(smoke, true, position.x, position.y, position.z, velocity.x, velocity.y, velocity.z);
+            } else {
+                var puff = Minecraft.getInstance().particleEngine.createParticle(smoke,
+                        position.x, position.y, position.z, velocity.x, velocity.y, velocity.z);
+                if (puff != null) puff.scale(this.scale / 2.5F);
+                if (this.age < 3 && i < 8) {
+                    var flame = Minecraft.getInstance().particleEngine.createParticle(ParticleTypes.FLAME,
+                            position.x, position.y, position.z, velocity.x * 1.8, velocity.y * 1.8, velocity.z * 1.8);
+                    if (flame != null) flame.scale(this.scale * 0.4F);
+                }
+            }
         }
         this.emittedSmoke += count;
 

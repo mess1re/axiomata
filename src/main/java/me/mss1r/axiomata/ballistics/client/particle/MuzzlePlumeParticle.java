@@ -62,7 +62,9 @@ public final class MuzzlePlumeParticle extends NoRenderParticle {
             double angle = this.random.nextDouble() * Mth.TWO_PI;
             Vec3 radialDirection = this.right.scale(Math.cos(angle))
                     .add(this.up.scale(Math.sin(angle)));
-            double radius = this.scale * (0.006D + this.random.nextDouble() * 0.018D);
+            boolean large = this.scale > 2.5F;
+            double radius = this.scale * (large ? 0.025D + this.random.nextDouble() * 0.14D
+                    : 0.006D + this.random.nextDouble() * 0.018D);
             Vec3 radialOffset = radialDirection.scale(radius);
             double distance = this.scale * (0.012D + this.random.nextDouble() * 0.035D);
             Vec3 position = new Vec3(this.x, this.y, this.z)
@@ -70,7 +72,8 @@ public final class MuzzlePlumeParticle extends NoRenderParticle {
                     .add(radialOffset);
             double forwardSpeed = (0.16D + this.random.nextDouble() * 0.16D)
                     * (0.9D + this.scale * 0.16D);
-            double coneSpeed = this.scale * (0.006D + this.random.nextDouble() * 0.018D);
+            double coneSpeed = this.scale * (large ? 0.025D + this.random.nextDouble() * 0.045D
+                    : 0.006D + this.random.nextDouble() * 0.018D);
             Vec3 velocity = this.direction.scale(forwardSpeed)
                     .add(radialDirection.scale(coneSpeed))
                     .add(0.0D, this.random.nextDouble() * 0.006D, 0.0D);
@@ -79,11 +82,17 @@ public final class MuzzlePlumeParticle extends NoRenderParticle {
             } else {
                 var puff = Minecraft.getInstance().particleEngine.createParticle(smoke,
                         position.x, position.y, position.z, velocity.x, velocity.y, velocity.z);
-                if (puff != null) puff.scale(this.scale / 2.5F);
-                if (this.age < 3 && i < 8) {
+                if (puff != null) {
+                    puff.scale(this.scale / 2.5F);
+                    puff.setColor(0.42F, 0.41F, 0.39F);
+                }
+                if (this.age < 3) {
                     var flame = Minecraft.getInstance().particleEngine.createParticle(ParticleTypes.FLAME,
                             position.x, position.y, position.z, velocity.x * 1.8, velocity.y * 1.8, velocity.z * 1.8);
-                    if (flame != null) flame.scale(this.scale * 0.4F);
+                    if (flame != null) {
+                        flame.scale(this.scale * 0.7F);
+                        flame.setLifetime(5 + this.random.nextInt(4));
+                    }
                 }
             }
         }

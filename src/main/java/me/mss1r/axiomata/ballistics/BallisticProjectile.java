@@ -463,12 +463,17 @@ public abstract class BallisticProjectile extends ThrowableItemProjectile {
      * fire. {@code speed} is in blocks/tick.
      */
     protected void arrive(ServerLevel level, Vec3 at, double speed) {
+        arrive(level, at, speed, getDeltaMovement());
+    }
+
+    /** Preserves the incoming direction when a delayed fuse bursts after the projectile has stopped. */
+    protected void arrive(ServerLevel level, Vec3 at, double speed, Vec3 incoming) {
         if (!blockAuthorityEnabled) {
             return;
         }
         ProjectilePhysicsProfile physics = getPhysicsProfile();
-        Vec3 outward = getDeltaMovement().lengthSqr() > 1.0E-8D
-                ? getDeltaMovement().normalize().reverse()
+        Vec3 outward = incoming.lengthSqr() > 1.0E-8D
+                ? incoming.normalize().reverse()
                 : new Vec3(0.0D, 1.0D, 0.0D);
         impacts().stop(level, craterMouth != null ? craterMouth : at, craterFace != null ? craterFace : outward,
                 outward.reverse(), physics, realSpeed(speed), physics.diameterOf(this), breaker());

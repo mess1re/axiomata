@@ -41,7 +41,7 @@ public final class MuzzlePlumeParticle extends NoRenderParticle {
         float ordinaryScale = Math.min(this.scale, 2.5F);
         this.totalSmoke = Mth.clamp(Mth.ceil(4.0F + ordinaryScale * 20.0F), 18, 44)
                 + (this.scale > 2.5F ? Mth.ceil((this.scale - 2.5F) * 8) : 0);
-        this.lifetime = Mth.clamp(Mth.ceil(3.0F + this.scale * 2.0F), 5, 16);
+        this.lifetime = this.scale > 2.5F ? 5 : Mth.clamp(Mth.ceil(3.0F + this.scale * 2.0F), 5, 16);
     }
 
     @Override
@@ -54,7 +54,7 @@ public final class MuzzlePlumeParticle extends NoRenderParticle {
         int remainingSmoke = this.totalSmoke - this.emittedSmoke;
         int remainingTicks = Math.max(1, this.lifetime - this.age);
         int count = this.age == 0
-                ? Math.min(remainingSmoke, Mth.ceil(this.totalSmoke * 0.3F))
+                ? Math.min(remainingSmoke, Mth.ceil(this.totalSmoke * (this.scale > 2.5F ? 0.65F : 0.3F)))
                 : Mth.ceil((float) remainingSmoke / (float) remainingTicks);
         SimpleParticleType smoke = particles.SMOKE.get();
 
@@ -66,12 +66,13 @@ public final class MuzzlePlumeParticle extends NoRenderParticle {
             double radius = this.scale * (large ? 0.025D + this.random.nextDouble() * 0.14D
                     : 0.006D + this.random.nextDouble() * 0.018D);
             Vec3 radialOffset = radialDirection.scale(radius);
-            double distance = this.scale * (0.012D + this.random.nextDouble() * 0.035D);
+            double distance = this.scale * (large ? 0.025D + this.random.nextDouble() * 0.35D
+                    : 0.012D + this.random.nextDouble() * 0.035D);
             Vec3 position = new Vec3(this.x, this.y, this.z)
                     .add(this.direction.scale(distance))
                     .add(radialOffset);
-            double forwardSpeed = (0.16D + this.random.nextDouble() * 0.16D)
-                    * (0.9D + this.scale * 0.16D);
+            double forwardSpeed = large ? this.scale * (0.04D + this.random.nextDouble() * 0.07D)
+                    : (0.16D + this.random.nextDouble() * 0.16D) * (0.9D + this.scale * 0.16D);
             double coneSpeed = this.scale * (large ? 0.025D + this.random.nextDouble() * 0.045D
                     : 0.006D + this.random.nextDouble() * 0.018D);
             Vec3 velocity = this.direction.scale(forwardSpeed)
@@ -86,19 +87,32 @@ public final class MuzzlePlumeParticle extends NoRenderParticle {
                     puff.scale(this.scale / 2.5F);
                     puff.setColor(0.42F, 0.41F, 0.39F);
                 }
-                if (this.age < 3) {
-                    var flame = Minecraft.getInstance().particleEngine.createParticle(ParticleTypes.FLAME,
-                            position.x, position.y, position.z, velocity.x * 1.8, velocity.y * 1.8, velocity.z * 1.8);
-                    if (flame != null) {
-                        flame.scale(this.scale * 0.7F);
-                        flame.setLifetime(5 + this.random.nextInt(4));
-                    }
-                }
             }
         }
         this.emittedSmoke += count;
+        if (this.scale > 2.5F && this.age < 4) emitFlash();
 
         super.tick();
+    }
+
+    private void emitFlash() {
+        // Flash density is independent of the number of smoke puffs.
+        int count = Mth.ceil(this.scale * (8 - this.age * 2));
+        for (int i = 0; i < count; i++) {
+            double angle = this.random.nextDouble() * Mth.TWO_PI;
+            Vec3 radial = this.right.scale(Math.cos(angle)).add(this.up.scale(Math.sin(angle)));
+            double distance = this.scale * (0.02D + this.random.nextDouble() * 0.38D);
+            double radius = this.scale * (0.025D + 0.09D * Math.sqrt(this.random.nextDouble()));
+            Vec3 position = new Vec3(this.x, this.y, this.z).add(this.direction.scale(distance)).add(radial.scale(radius));
+            Vec3 velocity = this.direction.scale(this.scale * (0.025D + this.random.nextDouble() * 0.035D))
+                    .add(radial.scale(this.scale * (0.015D + this.random.nextDouble() * 0.025D)));
+            var flame = Minecraft.getInstance().particleEngine.createParticle(ParticleTypes.FLAME,
+                    position.x, position.y, position.z, velocity.x, velocity.y, velocity.z);
+            if (flame != null) {
+                flame.scale(this.scale * 0.7F);
+                flame.setLifetime(5 + this.random.nextInt(4));
+            }
+        }
     }
 
     public static final class Provider implements ParticleProvider<SimpleParticleType> {

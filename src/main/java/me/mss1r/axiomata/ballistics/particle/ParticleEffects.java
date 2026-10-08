@@ -200,8 +200,10 @@ public final class ParticleEffects {
             double radius = profile.scale * (0.006D + progress * 0.035D)
                     * Math.sqrt(level.random.nextDouble());
             Vec3 position = origin.add(forward.scale(distance)).add(radialDirection.scale(radius));
-            Vec3 velocity = forward.scale((0.13D + level.random.nextDouble() * 0.1D)
-                            * (0.9D + profile.scale * 0.14D))
+            double forwardSpeed = profile.scale > 2.5D
+                    ? profile.scale * (0.035D + level.random.nextDouble() * 0.03D)
+                    : (0.13D + level.random.nextDouble() * 0.1D) * (0.9D + profile.scale * 0.14D);
+            Vec3 velocity = forward.scale(forwardSpeed)
                     .add(radialDirection.scale(profile.scale
                             * (0.004D + level.random.nextDouble() * 0.012D)));
             sendVelocity(level, ParticleTypes.POOF, position, velocity, profile.range);

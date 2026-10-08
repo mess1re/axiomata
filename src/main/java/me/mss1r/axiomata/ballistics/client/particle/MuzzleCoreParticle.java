@@ -27,7 +27,7 @@ public final class MuzzleCoreParticle extends TextureSheetParticle {
         this.hasPhysics = false;
         this.friction = .9F;
         this.alpha = .95F;
-        this.setSprite(sprites.get(0, 0));
+        this.pickSprite(sprites);
         this.setColor(1, .95F, .72F);
     }
 

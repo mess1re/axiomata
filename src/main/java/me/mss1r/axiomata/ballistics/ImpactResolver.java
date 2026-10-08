@@ -165,6 +165,14 @@ public final class ImpactResolver implements ImpactResults {
      */
     public Drive drive(ServerLevel level, ProjectilePhysicsProfile physics, double diameter,
                               Vec3 entry, BlockPos firstBlock, Vec3 velocity, @Nullable Player breaker) {
+        return drive(level, physics, diameter, entry, firstBlock, velocity, breaker, MAX_DRIVE_DISTANCE);
+    }
+
+    /** Limits channel traversal to this move's remaining distance, in blocks. A moving result may still be inside material. */
+    public Drive drive(ServerLevel level, ProjectilePhysicsProfile physics, double diameter,
+                       Vec3 entry, BlockPos firstBlock, Vec3 velocity, @Nullable Player breaker, double maxDistance) {
+        if (!Double.isFinite(maxDistance) || maxDistance < 0) throw new IllegalArgumentException("Invalid drive distance");
+        double limit = Math.min(maxDistance, MAX_DRIVE_DISTANCE);
         double speed = velocity.length();
         if (speed < 1.0E-6D) {
             return new Drive(false, entry, 0.0D, firstBlock, entry, faceNormal(firstBlock, entry));
@@ -179,7 +187,7 @@ public final class ImpactResolver implements ImpactResults {
         int openSamples = 0;
         Drive result = null;
 
-        for (double distance = 0.02D; distance <= MAX_DRIVE_DISTANCE; distance += DRIVE_SAMPLE_STEP) {
+        for (double distance = 0.02D; distance <= limit; distance += DRIVE_SAMPLE_STEP) {
             Vec3 sample = entry.add(direction.scale(distance));
             BlockPos pos = previous == null ? firstBlock : BlockPos.containing(sample);
             if (pos.equals(previous)) {
@@ -190,16 +198,19 @@ public final class ImpactResolver implements ImpactResults {
             double[] span = collisionSpan(level, pos, state, entry, direction);
             if (span == null) {
                 if (mouth != null && ++openSamples >= 2) {
-                    result = new Drive(true, exit.add(direction.scale(0.1D)), speed, pos, mouth, mouthFace);
+                    double travelled = Math.min(limit, exit.distanceTo(entry) + 0.1D);
+                    result = new Drive(true, entry.add(direction.scale(travelled)), speed, pos, mouth, mouthFace);
                     break;
                 }
                 continue;
             }
             openSamples = 0;
             Vec3 contact = entry.add(direction.scale(span[0]));
+            if (span[0] >= limit) break;
+            double end = Math.min(span[1], limit);
             Material material = cracked(level, pos, state);
             double next = material == null ? 0.0D
-                    : speedThrough(material, physics.mass(), diameter, speed, span[1] - span[0]);
+                    : speedThrough(material, physics.mass(), diameter, speed, end - Math.max(0, span[0]));
             double cost = material == null ? 0.0D
                     : material.breakEnergy() * (1.0D - StructuralDamageSystem.progress(level, pos, state));
             if (material == null || !canCut(physics, level, pos, state) || next < LEAST_FLIGHT_SPEED
@@ -220,10 +231,12 @@ public final class ImpactResolver implements ImpactResults {
                 mouthMatter = material.matter();
             }
             spare += Math.max(0.0D, fracture - cost);
-            exit = entry.add(direction.scale(span[1]));
+            exit = entry.add(direction.scale(end));
+            if (end == limit) break;
         }
         if (result == null) {
-            result = new Drive(mouth != null, exit, speed, previous == null ? firstBlock : previous,
+            boolean bounded = maxDistance < MAX_DRIVE_DISTANCE;
+            result = new Drive(bounded || mouth != null, bounded ? entry.add(direction.scale(limit)) : exit, speed, previous == null ? firstBlock : previous,
                     mouth != null ? mouth : entry, mouthFace != null ? mouthFace : direction.reverse());
         }
         crush(level, result.mouth(), result.face(), direction, spare, diameter, 0.0D, physics.hardness(), breaker);

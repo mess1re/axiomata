@@ -433,6 +433,11 @@ public abstract class BallisticProjectile extends ThrowableItemProjectile {
      * remaining speed; otherwise the result says where it stopped.
      */
     protected ImpactResults.Drive driveInto(ServerLevel level, BlockHitResult hit) {
+        return driveInto(level, hit, 64.0D);
+    }
+
+    /** As {@link #driveInto}, but never advances farther than the remaining movement in this tick. */
+    protected ImpactResults.Drive driveInto(ServerLevel level, BlockHitResult hit, double maxDistance) {
         Vec3 velocity = getDeltaMovement();
         double speed = velocity.length();
         BlockState struck = level.getBlockState(hit.getBlockPos());
@@ -444,7 +449,7 @@ public abstract class BallisticProjectile extends ThrowableItemProjectile {
         ProjectilePhysicsProfile physics = getPhysicsProfile();
         double metresPerSecond = TICKS_PER_SECOND;
         ImpactResults.Drive drive = impacts().drive(level, physics, physics.diameterOf(this),
-                hit.getLocation(), hit.getBlockPos(), velocity.scale(metresPerSecond), breaker());
+                hit.getLocation(), hit.getBlockPos(), velocity.scale(metresPerSecond), breaker(), maxDistance);
         double kept = drive.speed() / metresPerSecond;
         if (drive.passedThrough()) {
             setPos(drive.position().x, drive.position().y, drive.position().z);

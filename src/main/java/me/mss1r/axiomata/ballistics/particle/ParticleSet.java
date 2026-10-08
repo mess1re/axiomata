@@ -20,6 +20,7 @@ public final class ParticleSet {
     public final RegistrySupplier<SimpleParticleType> SMOKE;
     public final RegistrySupplier<SimpleParticleType> HEAVY_SMOKE;
     public final RegistrySupplier<SimpleParticleType> MUZZLE_PLUME;
+    public final RegistrySupplier<SimpleParticleType> MUZZLE_CORE;
     public final RegistrySupplier<SimpleParticleType> IMPACT_SMOKE_PLUME;
 
     public final RegistrySupplier<ParticleType<BlockParticleOption>> FRAGMENT;
@@ -36,6 +37,8 @@ public final class ParticleSet {
             particleTypes.register(heavySmokePath, () -> new SimpleParticleType(false));
         MUZZLE_PLUME =
             particleTypes.register("muzzle_plume", () -> new SimpleParticleType(false));
+        MUZZLE_CORE =
+            particleTypes.register("muzzle_core", () -> new SimpleParticleType(false));
         IMPACT_SMOKE_PLUME =
             particleTypes.register("impact_smoke_plume", () -> new SimpleParticleType(false));
         //? if forge {

@@ -3,6 +3,7 @@ package me.mss1r.axiomata.ballistics.client;
 import me.mss1r.axiomata.ballistics.client.particle.FragmentParticle;
 import me.mss1r.axiomata.ballistics.client.particle.ImpactSmokePlumeParticle;
 import me.mss1r.axiomata.ballistics.client.particle.MuzzlePlumeParticle;
+import me.mss1r.axiomata.ballistics.client.particle.MuzzleCoreParticle;
 import me.mss1r.axiomata.ballistics.client.particle.SmokeParticle;
 import me.mss1r.axiomata.ballistics.particle.ParticleSet;
 //? if forge {
@@ -21,6 +22,7 @@ public final class ParticleProviders {
         event.registerSpriteSet(particles.HEAVY_SMOKE.get(),
                 sprites -> new SmokeParticle.Provider(sprites, true));
         event.registerSpecial(particles.MUZZLE_PLUME.get(), new MuzzlePlumeParticle.Provider(particles));
+        event.registerSpriteSet(particles.MUZZLE_CORE.get(), MuzzleCoreParticle.Provider::new);
         event.registerSpecial(particles.IMPACT_SMOKE_PLUME.get(), new ImpactSmokePlumeParticle.Provider(particles));
         event.registerSpecial(particles.FRAGMENT.get(), new FragmentParticle.Provider());
     }

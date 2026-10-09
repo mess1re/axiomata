@@ -29,6 +29,11 @@ Entities with projectile openings implement `ProjectilePassThroughControl`; Axio
 the impact handler. Custom `ParticleSet`s need smoke sprite definitions and client providers;
 the flash core is registered and supplied by Axiomata.
 
+Add fixed-count components to the item tag `axiomata:quality_cost_exempt` to keep their blueprint
+cost independent of drawing quality. A material specified by a tag is exempt only when all its
+items are exempt. Material tags use `tag.item.<namespace>.<path>` translations (`/` becomes `.`);
+without a translation, the build menu shows the tag ID.
+
 ### Gradle
 
 ```gradle

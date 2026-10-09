@@ -198,10 +198,12 @@ public final class BlueprintDefinition {
                     .orElse(List.of());
         }
 
-        /** Display name: the item's name, or "any of" for a tag. */
+        /** Tag names use the tag.item.namespace.path translation convention; unknown tags keep their id. */
         public Component displayName() {
-            Component shown = displayStack().getHoverName();
-            return item != null ? shown : Component.translatable("gui.axiomata.any_of", shown);
+            if (item != null) return displayStack().getHoverName();
+            String key = "tag.item." + tag.getNamespace() + "." + tag.getPath().replace('/', '.');
+            return Component.translatable("gui.axiomata.any_of",
+                    Component.translatableWithFallback(key, "#" + tag));
         }
     }
 }

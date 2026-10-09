@@ -8,6 +8,11 @@
 - Projectile and block-material profiles, datapack reloads and profile synchronization.
 - Artillery particles and smoke textures, with scalable muzzle plumes for large guns.
 - Manual and automated loading stages with item consumption, tool wear and cancellation.
+- The `axiomata:quality_cost_exempt` item tag excludes fixed-count components from blueprint quality costs.
+
+### Changed
+
+- Tagged construction materials show their tag name instead of the name of the currently displayed item. Untranslated tags show their ID.
 
 ## 0.1.0-beta.7
 

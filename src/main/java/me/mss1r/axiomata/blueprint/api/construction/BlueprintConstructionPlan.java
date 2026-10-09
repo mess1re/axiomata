@@ -3,6 +3,11 @@ package me.mss1r.axiomata.blueprint.api.construction;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition.Material;
 import me.mss1r.axiomata.blueprint.config.BlueprintServerConfig;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.Item;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,6 +16,8 @@ import java.util.List;
 import java.util.Map;
 
 public record BlueprintConstructionPlan(List<Stage> stages) {
+    public static final TagKey<Item> QUALITY_COST_EXEMPT = TagKey.create(Registries.ITEM,
+            ResourceLocation.tryParse("axiomata:quality_cost_exempt"));
     /** A stage with the quality multipliers applied. */
     public record Stage(String section, List<Material> materials, int hits) {
     }
@@ -41,7 +48,8 @@ public record BlueprintConstructionPlan(List<Stage> stages) {
             int allocatedBefore = allocatedBaseMaterials.getOrDefault(material.key(), 0);
             int allocatedAfter = allocatedBefore + needed;
             allocatedBaseMaterials.put(material.key(), allocatedAfter);
-            int taken = quality.materialsFor(allocatedAfter) - quality.materialsFor(allocatedBefore);
+            int taken = qualityCostExempt(material) ? needed
+                    : quality.materialsFor(allocatedAfter) - quality.materialsFor(allocatedBefore);
             if (taken > 0) {
                 materials.add(material.withCount(taken));
             }
@@ -50,6 +58,15 @@ public record BlueprintConstructionPlan(List<Stage> stages) {
         // that inflated count here would charge the same penalty twice.
         int base = spec.hits() > 0 ? spec.hits() : hitsFor(baseCount);
         return new Stage(spec.section(), List.copyOf(materials), quality.hitsFor(base));
+    }
+
+    private static boolean qualityCostExempt(Material material) {
+        if (material.item() != null) {
+            return BuiltInRegistries.ITEM.get(material.item()).builtInRegistryHolder().is(QUALITY_COST_EXEMPT);
+        }
+        return BuiltInRegistries.ITEM.getTag(TagKey.create(Registries.ITEM, material.tag()))
+                .map(items -> items.size() > 0 && items.stream().allMatch(item -> item.is(QUALITY_COST_EXEMPT)))
+                .orElse(false);
     }
 
     public static int hitsFor(int itemCount) {

@@ -43,7 +43,12 @@ public final class DebrisPhysics {
         this.blocks = java.util.Objects.requireNonNull(blocks);
         this.enabled = java.util.Objects.requireNonNull(enabled);
         this.maximum = java.util.Objects.requireNonNull(maximum);
-        if (HANDLERS.putIfAbsent(namespace, this) != null) {
+    }
+
+    /** Register during mod startup, before saved debris can tick. Repeating this call on the same instance is safe. */
+    public void register() {
+        DebrisPhysics previous = HANDLERS.putIfAbsent(namespace, this);
+        if (previous != null && previous != this) {
             throw new IllegalArgumentException("Debris handler already registered: " + namespace);
         }
     }
@@ -51,7 +56,12 @@ public final class DebrisPhysics {
     /** Null means an ordinary falling block, not artillery debris. */
     @Nullable
     public static Boolean handleLanding(ServerLevel level, FallingBlockEntity debris, BlockPos pos, BlockState state) {
-        var data = debris.getPersistentData();
+        DebrisPhysics handler = handlerFor(debris.getPersistentData());
+        return handler == null ? null : handler.placeDebris(level, debris, pos, state);
+    }
+
+    @Nullable
+    static DebrisPhysics handlerFor(CompoundTag data) {
         DebrisPhysics handler = HANDLERS.get(data.getString(TAG_CONTEXT));
         if (handler == null) {
             for (DebrisPhysics candidate : HANDLERS.values()) {
@@ -61,7 +71,7 @@ public final class DebrisPhysics {
                 }
             }
         }
-        return handler == null ? null : handler.placeDebris(level, debris, pos, state);
+        return handler;
     }
 
     public void scatterAffectedBlocks(ServerLevel level, Vec3 center, float radius, List<BlockPos> affectedBlocks,

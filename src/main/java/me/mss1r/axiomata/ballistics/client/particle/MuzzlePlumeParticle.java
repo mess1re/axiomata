@@ -1,5 +1,6 @@
 package me.mss1r.axiomata.ballistics.client.particle;
 
+import me.mss1r.axiomata.ballistics.BallisticsModule;
 import me.mss1r.axiomata.ballistics.particle.ParticleSet;
 
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -145,7 +146,7 @@ public final class MuzzlePlumeParticle extends NoRenderParticle {
             for (int i = 0; i < 4; i++) {
                 Vec3 position = new Vec3(this.x, this.y, this.z).add(this.direction.scale(this.scale * (.06D + i * .16D)));
                 Vec3 encoded = this.direction.scale(this.scale * (1 - i * .1D));
-                Minecraft.getInstance().particleEngine.createParticle(particles.MUZZLE_CORE.get(),
+                Minecraft.getInstance().particleEngine.createParticle(BallisticsModule.MUZZLE_CORE.get(),
                         position.x, position.y, position.z, encoded.x, encoded.y, encoded.z);
             }
         }

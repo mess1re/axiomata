@@ -14,13 +14,13 @@ import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.registries.Registries;
 
+/** Custom particle IDs. Consumers supply the sprite lists for their smoke and heavy-smoke IDs. */
 public final class ParticleSet {
     private final DeferredRegister<ParticleType<?>> particleTypes;
 
     public final RegistrySupplier<SimpleParticleType> SMOKE;
     public final RegistrySupplier<SimpleParticleType> HEAVY_SMOKE;
     public final RegistrySupplier<SimpleParticleType> MUZZLE_PLUME;
-    public final RegistrySupplier<SimpleParticleType> MUZZLE_CORE;
     public final RegistrySupplier<SimpleParticleType> IMPACT_SMOKE_PLUME;
 
     public final RegistrySupplier<ParticleType<BlockParticleOption>> FRAGMENT;
@@ -37,8 +37,6 @@ public final class ParticleSet {
             particleTypes.register(heavySmokePath, () -> new SimpleParticleType(false));
         MUZZLE_PLUME =
             particleTypes.register("muzzle_plume", () -> new SimpleParticleType(false));
-        MUZZLE_CORE =
-            particleTypes.register("muzzle_core", () -> new SimpleParticleType(false));
         IMPACT_SMOKE_PLUME =
             particleTypes.register("impact_smoke_plume", () -> new SimpleParticleType(false));
         //? if forge {

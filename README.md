@@ -24,6 +24,11 @@ Loading uses `LoadingController.Host` and `LoadingRequirement`; each weapon supp
 timings, sounds and completion callbacks. These APIs are under `me.mss1r.axiomata.ballistics`,
 `me.mss1r.axiomata.data.profile` and `me.mss1r.axiomata.loading`.
 
+Call `DebrisPhysics.register()` during mod startup so saved debris can find your block-damage policy.
+Entities with projectile openings implement `ProjectilePassThroughControl`; Axiomata installs
+the impact handler. Custom `ParticleSet`s need smoke sprite definitions and client providers;
+the flash core is registered and supplied by Axiomata.
+
 ### Gradle
 
 ```gradle

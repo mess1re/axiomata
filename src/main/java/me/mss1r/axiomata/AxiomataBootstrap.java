@@ -32,7 +32,7 @@ public final class AxiomataBootstrap {
         ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, AxiomataClientConfig.SPEC);
         BlueprintModule.initialize(modEventBus, MinecraftForge.EVENT_BUS);
         CollisionModule.initialize();
-        BallisticsModule.initialize(modEventBus);
+        BallisticsModule.initialize(modEventBus, MinecraftForge.EVENT_BUS);
         initializeUpdateNotices();
     }
     *///?} else {
@@ -40,7 +40,7 @@ public final class AxiomataBootstrap {
         modContainer.registerConfig(ModConfig.Type.CLIENT, AxiomataClientConfig.SPEC);
         BlueprintModule.initialize(modEventBus, modContainer, NeoForge.EVENT_BUS);
         CollisionModule.initialize();
-        BallisticsModule.initialize(modEventBus);
+        BallisticsModule.initialize(modEventBus, NeoForge.EVENT_BUS);
         initializeUpdateNotices();
     }
     //?}

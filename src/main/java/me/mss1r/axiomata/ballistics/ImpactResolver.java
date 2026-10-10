@@ -15,7 +15,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.Block;
@@ -24,6 +23,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -193,7 +193,12 @@ public final class ImpactResolver implements ImpactResults {
             Vec3 end = box.getCenter();
             Vec3 start = end.subtract(axis.scale(contact.halfExtent().z * 2.0D + 2.0D));
             var hit = level.clip(new ClipContext(start, end, ClipContext.Block.COLLIDER,
-                    ClipContext.Fluid.NONE, (Entity) null));
+                    ClipContext.Fluid.NONE,
+                    //? if forge {
+                    /*null));
+                    *///?} else {
+                    CollisionContext.empty()));
+                    //?}
             if (hit.getType() != HitResult.Type.BLOCK || !hit.getBlockPos().equals(pos)) {
                 continue;
             }
@@ -206,7 +211,7 @@ public final class ImpactResolver implements ImpactResults {
                 double y = Math.max(0.0D, Math.abs(offset.y) - contact.halfExtent().y);
                 double distance = Math.sqrt(x * x + y * y);
                 double falloff = Math.max(0.0D, 1.0D - distance / spread);
-                weight = Math.max(weight, 0.25D * falloff * falloff);
+                weight = Math.max(weight, falloff * falloff);
             }
         }
         return weight;

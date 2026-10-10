@@ -13,6 +13,11 @@
 ### Changed
 
 - Tagged construction materials show their tag name instead of the name of the currently displayed item. Untranslated tags show their ID.
+- Paper and ink remain in the drawing table when its screen is closed.
+
+### Fixed
+
+- Unfinished drawings reappear when the table is reopened. Replacing or spoiling paper clears the previous drawing.
 
 ## 0.1.0-beta.7
 

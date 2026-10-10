@@ -110,6 +110,10 @@ public class DrawingTableScreen extends AbstractContainerScreen<DrawingTableMenu
     @Override
     protected void containerTick() {
         super.containerTick();
+        if (drawing && !canTrace()) {
+            drawing = false;
+            ClientTracing.cancelStroke();
+        }
         ClientTracing.flush();
     }
 
@@ -457,13 +461,16 @@ public class DrawingTableScreen extends AbstractContainerScreen<DrawingTableMenu
     }
 
     private boolean startTracing(double x, double y) {
-        TracingState state = menu.state();
-        if (!overSheet(x, y) || (state != TracingState.READY && state != TracingState.DRAWING)) {
+        if (!overSheet(x, y) || !canTrace()) {
             return false;
         }
         drawing = true;
         ClientTracing.sample((int) (x - DrawingTableLayout.SHEET_X), (int) (y - DrawingTableLayout.SHEET_Y));
         return true;
+    }
+
+    private boolean canTrace() {
+        return menu.state() == TracingState.READY || menu.state() == TracingState.DRAWING;
     }
 
     private boolean handleListClick(double x, double y, int button) {
@@ -519,7 +526,7 @@ public class DrawingTableScreen extends AbstractContainerScreen<DrawingTableMenu
 
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
-        if (drawing && button == 0) {
+        if (drawing && button == 0 && canTrace()) {
             double x = localX(mouseX) - DrawingTableLayout.SHEET_X;
             double y = localY(mouseY) - DrawingTableLayout.SHEET_Y;
             ClientTracing.sample((int) x, (int) y);

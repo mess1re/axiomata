@@ -77,6 +77,11 @@ public final class ClientTracing {
         pendingLift = true;
     }
 
+    public static void cancelStroke() {
+        pendingCount = 0;
+        pendingLift = true;
+    }
+
     public static void flush() {
         if (session == null || (pendingCount == 0 && !pendingLift)) {
             return;

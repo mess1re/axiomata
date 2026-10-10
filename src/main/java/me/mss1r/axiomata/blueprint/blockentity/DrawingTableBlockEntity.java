@@ -53,6 +53,7 @@ public class DrawingTableBlockEntity extends BlockEntity implements ExtendedMenu
     private String blueprintId = "";
     private TracingSession session;
     private boolean ruined;
+    private long sheetRevision;
 
     private final ContainerData data = new ContainerData() {
         @Override
@@ -78,6 +79,7 @@ public class DrawingTableBlockEntity extends BlockEntity implements ExtendedMenu
 
     public DrawingTableBlockEntity(BlockPos pos, BlockState state) {
         super(BlueprintBlockEntities.DRAWING_TABLE.get(), pos, state);
+        container.addListener(changed -> setChanged());
     }
 
     @Override
@@ -108,6 +110,10 @@ public class DrawingTableBlockEntity extends BlockEntity implements ExtendedMenu
 
     public TracingSession session() {
         return session;
+    }
+
+    public long sheetRevision() {
+        return sheetRevision;
     }
 
     public BlueprintOutline outline() {
@@ -152,9 +158,13 @@ public class DrawingTableBlockEntity extends BlockEntity implements ExtendedMenu
         if (hasWorkInProgress() && !id.equals(blueprintId)) {
             return false;
         }
+        if (id.equals(blueprintId)) {
+            return true;
+        }
         blueprintId = id;
         session = null;
         ruined = false;
+        sheetRevision++;
         setChanged();
         return true;
     }
@@ -192,17 +202,20 @@ public class DrawingTableBlockEntity extends BlockEntity implements ExtendedMenu
     private void spoilSheet() {
         ruined = true;
         session = null;
+        sheetRevision++;
         container.setItem(SLOT_PAPER, ItemStack.EMPTY);
         container.setItem(SLOT_RESULT, ItemStack.EMPTY);
     }
     public void notePaperChanged() {
         if (ruined && hasPaper()) {
             ruined = false;
+            sheetRevision++;
             setChanged();
         }
         // Removing the sheet is how the player abandons the current drawing.
         if (!hasPaper() && session != null) {
             session = null;
+            sheetRevision++;
             setChanged();
         }
     }
@@ -210,6 +223,7 @@ public class DrawingTableBlockEntity extends BlockEntity implements ExtendedMenu
     public void clearSheet() {
         session = null;
         ruined = false;
+        sheetRevision++;
         setChanged();
     }
 

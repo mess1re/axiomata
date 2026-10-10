@@ -3,7 +3,6 @@ package me.mss1r.axiomata.blueprint.network;
 import dev.architectury.networking.NetworkManager;
 import me.mss1r.axiomata.ResourceIds;
 import me.mss1r.axiomata.blueprint.blockentity.DrawingTableBlockEntity;
-import me.mss1r.axiomata.blueprint.tracing.BlueprintOutline;
 import me.mss1r.axiomata.blueprint.menu.DrawingTableMenu;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
@@ -55,11 +54,6 @@ public record C2SSelectBlueprintPacket(String blueprintId) implements CustomPack
             }
             menu.refreshResult();
             menu.broadcastChanges();
-
-            BlueprintOutline outline = table.outline();
-            if (outline != null) {
-                NetworkHandler.sendToPlayer(player, S2CTracingStatePacket.of(table, outline));
-            }
         });
     }
 }

@@ -9,6 +9,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -32,9 +33,6 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import net.minecraft.server.level.ServerPlayer;
-import me.mss1r.axiomata.blueprint.tracing.BlueprintOutline;
-import me.mss1r.axiomata.blueprint.network.NetworkHandler;
-import me.mss1r.axiomata.blueprint.network.S2CTracingStatePacket;
 
 import java.util.Locale;
 
@@ -202,6 +200,17 @@ public class DrawingTableBlock extends HorizontalDirectionalBlock implements Ent
         }
 
         return InteractionResult.sidedSuccess(level.isClientSide);
+    }
+
+    @Override
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState replacement, boolean moving) {
+        if (!level.isClientSide && !state.is(replacement.getBlock())
+                && level.getBlockEntity(pos) instanceof DrawingTableBlockEntity table) {
+            // The result slot is a preview; it has not consumed paper or ink yet.
+            table.getContainer().setItem(DrawingTableBlockEntity.SLOT_RESULT, ItemStack.EMPTY);
+            Containers.dropContents(level, pos, table.getContainer());
+        }
+        super.onRemove(state, level, pos, replacement, moving);
     }
 
     private static VoxelShape rotateShape(Direction from, Direction to, VoxelShape shape) {

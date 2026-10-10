@@ -12,6 +12,8 @@ import me.mss1r.axiomata.blueprint.api.event.BlueprintEvents;
 import me.mss1r.axiomata.blueprint.item.BlueprintItem;
 import me.mss1r.axiomata.blueprint.registry.BlueprintItems;
 import me.mss1r.axiomata.blueprint.registry.BlueprintMenus;
+import me.mss1r.axiomata.blueprint.network.NetworkHandler;
+import me.mss1r.axiomata.blueprint.network.S2CTracingStatePacket;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.SimpleContainer;
@@ -31,6 +33,8 @@ public class DrawingTableMenu extends AbstractContainerMenu {
     private final ContainerData data;
     private final net.minecraft.world.level.Level level;
     private final BlockPos tablePos;
+    private final Player viewer;
+    private long lastSheetRevision = Long.MIN_VALUE;
 
     private long strokeTick = Long.MIN_VALUE;
     private int strokeSamples;
@@ -50,6 +54,7 @@ public class DrawingTableMenu extends AbstractContainerMenu {
         this.data = data;
         this.level = playerInv.player.level();
         this.tablePos = pos;
+        this.viewer = playerInv.player;
 
         addSlot(new LockedSlot(container, DrawingTableBlockEntity.SLOT_PAPER,
                 DrawingTableLayout.slotX(DrawingTableLayout.PAPER_FRAME_X), DrawingTableLayout.slotY(),
@@ -132,6 +137,17 @@ public class DrawingTableMenu extends AbstractContainerMenu {
     public void slotsChanged(net.minecraft.world.Container changed) {
         refreshResult();
         super.slotsChanged(changed);
+    }
+
+    @Override
+    public void broadcastChanges() {
+        super.broadcastChanges();
+        DrawingTableBlockEntity table = table();
+        if (viewer instanceof ServerPlayer player && table != null
+                && table.sheetRevision() != lastSheetRevision && table.outline() != null) {
+            NetworkHandler.sendToPlayer(player, S2CTracingStatePacket.of(table, table.outline()));
+            lastSheetRevision = table.sheetRevision();
+        }
     }
 
     public void refreshResult() {
@@ -233,21 +249,9 @@ public class DrawingTableMenu extends AbstractContainerMenu {
     @Override
     public void removed(Player player) {
         super.removed(player);
-        returnToPlayer(player, DrawingTableBlockEntity.SLOT_PAPER);
-        returnToPlayer(player, DrawingTableBlockEntity.SLOT_INK);
-    }
-
-    private void returnToPlayer(Player player, int slot) {
         DrawingTableBlockEntity table = table();
-        // Paper and ink stay in the table while a drawing exists. Returning either on close would
-        // make reopening look as if the saved work had vanished.
-        if (table != null && table.hasWorkInProgress()) {
-            return;
-        }
-        ItemStack stack = container.getItem(slot);
-        if (!stack.isEmpty()) {
-            player.getInventory().placeItemBackInInventory(stack);
-            container.setItem(slot, ItemStack.EMPTY);
+        if (table != null) {
+            table.liftPen();
         }
     }
 }

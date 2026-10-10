@@ -56,7 +56,11 @@ sourceSets.test {
 }
 
 legacyForge {
-    version = project.property("deps.forge") as String
+    enable {
+        forgeVersion = project.property("deps.forge") as String
+        // The binary pipeline retains Forge signatures after remapping, breaking plain JUnit.
+        setDisableRecompilation(false)
+    }
 
     runs {
         register("client") {

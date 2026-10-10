@@ -59,7 +59,7 @@
 
 ### Changed
 
-- Construction hammer strikes now use wooden impact sounds. The section-completion sound is unchanged.
+- Construction hammer strikes now use wooden impact sounds.
 
 ## 0.1.0-beta.4
 

@@ -20,6 +20,9 @@ Blueprint integrations use `UnderConstruction`. Model collision integrations use
 
 Artillery integrations extend `BallisticProjectile` and provide their own projectile catalog and
 `ImpactResolver`. Block-damage policy and player attribution stay with the consuming mod.
+`ImpactResolver.contactImpact` handles blunt strikes using energy in joules and an oriented
+contact box. Its local Z axis points into the wall; lateral spread damages connected exposed
+blocks without creating a projectile channel or blast crater.
 Loading uses `LoadingController.Host` and `LoadingRequirement`; each weapon supplies its stages,
 timings, sounds and completion callbacks. These APIs are under `me.mss1r.axiomata.ballistics`,
 `me.mss1r.axiomata.data.profile` and `me.mss1r.axiomata.loading`.

@@ -5,27 +5,36 @@ import me.mss1r.axiomata.ballistics.profile.BlockMaterialProfile;
 import me.mss1r.axiomata.ballistics.profile.BlockMaterialCatalog;
 import me.mss1r.axiomata.ballistics.particle.ParticleSet;
 import me.mss1r.axiomata.ballistics.damage.StructuralDamageSystem;
+import me.mss1r.axiomata.collision.OrientedBox;
+import me.mss1r.axiomata.collision.OrientedBoxCollider;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.HitResult;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.HashSet;
+import java.util.ArrayDeque;
+import java.util.Set;
 
-/** Projectile penetration, craters and accumulated cracks. Distances are in metres and energy in joules. */
+/** Penetration, contact strikes, craters and accumulated cracks. Distances are in metres and energy in joules. */
 public final class ImpactResolver implements ImpactResults {
 
     /** Normalizes vanilla blast resistance and hardness against stone. */
@@ -116,6 +125,94 @@ public final class ImpactResolver implements ImpactResults {
                         .orElse(environment.stoneFractureEnergy() * standing) * crushing,
                 solidVolume(level, pos, state), matter);
     }
+
+    /**
+     * A blunt strike with a finite energy budget, in joules. Local Z is the strike direction;
+     * spread reaches sideways along connected, exposed blocks, never through a second layer.
+     * Unlike a projectile impact, this creates no penetration channel or blast crater.
+     */
+    public void contactImpact(ServerLevel level, OrientedBox contact, double energy, double spread,
+                              @Nullable Player breaker) {
+        if (!(energy > 0.0D) || !Double.isFinite(energy) || !Double.isFinite(spread) || spread < 0.0D) {
+            return;
+        }
+        Vec3 axis = contact.rotation().axis(2);
+        AABB bounds = contact.enclosingBounds();
+        List<ContactTarget> targets = new ArrayList<>();
+        Set<BlockPos> visited = new HashSet<>();
+        ArrayDeque<BlockPos> fringe = new ArrayDeque<>();
+        for (BlockPos cursor : BlockPos.betweenClosed(BlockPos.containing(bounds.minX, bounds.minY, bounds.minZ),
+                BlockPos.containing(bounds.maxX, bounds.maxY, bounds.maxZ))) {
+            BlockPos pos = cursor.immutable();
+            if (contactWeight(level, pos, contact, axis, 0.0D) > 0.0D) {
+                fringe.add(pos);
+            }
+        }
+        // Without a direct contact there is no strike to propagate through the wall.
+        while (!fringe.isEmpty()) {
+            BlockPos pos = fringe.removeFirst();
+            if (!visited.add(pos)) {
+                continue;
+            }
+            double weight = contactWeight(level, pos, contact, axis, spread);
+            if (!(weight > 0.0D)) {
+                continue;
+            }
+            BlockState state = level.getBlockState(pos);
+            Material material = material(level, pos, state);
+            targets.add(new ContactTarget(pos, material == null ? Double.POSITIVE_INFINITY
+                    : material.breakEnergy(), weight, environment.blocks().mayDamage(level, pos, state, breaker)));
+            for (Direction direction : Direction.values()) {
+                fringe.add(pos.relative(direction));
+            }
+        }
+        double totalWeight = targets.stream().mapToDouble(ContactTarget::weight).sum();
+        for (ContactTarget target : targets) {
+            if (!target.mayBreak()) {
+                continue;
+            }
+            double share = energy * target.weight() / totalWeight;
+            float progress = target.breakEnergy() == 0.0D ? 1.0F : (float) (share / target.breakEnergy());
+            if (StructuralDamageSystem.applyImpact(level, target.pos(), progress, 1.0F)
+                    == StructuralDamageSystem.ImpactResult.BREAK_BLOCK) {
+                environment.blocks().breakBlock(level, target.pos(), breaker);
+            }
+        }
+    }
+
+    private static double contactWeight(ServerLevel level, BlockPos pos, OrientedBox contact, Vec3 axis,
+                                        double spread) {
+        double weight = 0.0D;
+        for (AABB localBox : level.getBlockState(pos).getCollisionShape(level, pos).toAabbs()) {
+            AABB box = localBox.move(pos);
+            OrientedBox nearby = new OrientedBox(contact.center(),
+                    contact.halfExtent().add(spread, spread, 0.0D), contact.rotation());
+            if (OrientedBoxCollider.separate(box, nearby, Vec3.ZERO) == null) {
+                continue;
+            }
+            Vec3 end = box.getCenter();
+            Vec3 start = end.subtract(axis.scale(contact.halfExtent().z * 2.0D + 2.0D));
+            var hit = level.clip(new ClipContext(start, end, ClipContext.Block.COLLIDER,
+                    ClipContext.Fluid.NONE, (Entity) null));
+            if (hit.getType() != HitResult.Type.BLOCK || !hit.getBlockPos().equals(pos)) {
+                continue;
+            }
+            if (OrientedBoxCollider.separate(box, contact, Vec3.ZERO) != null) {
+                return 1.0D;
+            }
+            if (spread > 0.0D) {
+                Vec3 offset = contact.rotation().transformInverse(end.subtract(contact.center()));
+                double x = Math.max(0.0D, Math.abs(offset.x) - contact.halfExtent().x);
+                double y = Math.max(0.0D, Math.abs(offset.y) - contact.halfExtent().y);
+                double distance = Math.sqrt(x * x + y * y);
+                double falloff = Math.max(0.0D, 1.0D - distance / spread);
+                weight = Math.max(weight, 0.25D * falloff * falloff);
+            }
+        }
+        return weight;
+    }
+
+    private record ContactTarget(BlockPos pos, double breakEnergy, double weight, boolean mayBreak) {}
 
     /** Estimates the solid fraction of full collision blocks from opacity, including leaves. */
     private double matter(BlockGetter level, BlockPos pos, BlockState state) {

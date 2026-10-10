@@ -9,6 +9,7 @@
 - Artillery particles and smoke textures, with scalable muzzle plumes for large guns.
 - Manual and automated loading stages with item consumption, tool wear and cancellation.
 - The `axiomata:quality_cost_exempt` item tag excludes fixed-count components from blueprint quality costs.
+- Contact impacts share an energy budget across struck blocks and nearby surface damage.
 
 ### Changed
 

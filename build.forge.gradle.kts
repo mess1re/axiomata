@@ -159,6 +159,6 @@ tasks.withType<Jar>().configureEach {
 
 tasks.register<Copy>("buildAndCollect") {
     dependsOn("build")
-    from(tasks.named<Jar>("jar"), tasks.named<Jar>("sourcesJar"))
+    from(tasks.named("reobfJar"), tasks.named<Jar>("sourcesJar"))
     into(rootProject.layout.buildDirectory.dir("libs/$modVersion"))
 }

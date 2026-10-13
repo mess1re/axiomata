@@ -23,7 +23,7 @@ public abstract class ProjectileUtilMixin {
                     + "Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;"
                     + "Lnet/minecraft/world/phys/AABB;Ljava/util/function/Predicate;F)"
                     + "Lnet/minecraft/world/phys/EntityHitResult;",
-            at = @At("RETURN"),
+            at = @At("HEAD"),
             cancellable = true
     )
     private static void axiomata$traceBallisticProjectilesAgainstModelGeometry(

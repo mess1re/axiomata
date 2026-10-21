@@ -24,6 +24,14 @@ public interface CollidableStructure {
         return previousCollisionGroups();
     }
 
+    /**
+     * Step-up height the structure's authored stairs need. Walkers use the larger of their own
+     * step height and this, so a deck's steps can be a little taller than a vanilla block step.
+     */
+    default double walkStepHeight() {
+        return 0.0D;
+    }
+
     default List<ClimbableGroup> climbableGroups() {
         return List.of();
     }

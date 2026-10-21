@@ -11,6 +11,8 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 public final class StructureCollisionSystem {
+    /** Upper bound for {@link CollidableStructure#walkStepHeight()}: steps, never a wall. */
+    private static final double MAX_STRUCTURE_STEP = 1.0D;
     private static final double BOUNDS_MARGIN = 0.25D;
     private static final double ASCENDING_EPSILON = 1.0E-4D;
 
@@ -41,29 +43,52 @@ public final class StructureCollisionSystem {
             return new Movement(vanillaMovement, false);
         }
 
-        AABB path = entity.getBoundingBox().expandTowards(vanillaMovement).inflate(BOUNDS_MARGIN);
-        Vec3 allowed = vanillaMovement;
-        boolean supported = false;
-        boolean changed = false;
-
-        for (CollidableStructure structure : structuresNear(entity, path)) {
-            // Climbing already supplied a centred, guided movement this tick. Resolving against
-            // the same structure again would stop the climber on the opening around the ladder.
-            if (StructureClimbingSystem.isGuidedClimbing(entity, structure)) {
-                continue;
-            }
-            StructureCollisionResolver.ResolvedMovement response = StructureCollisionResolver.resolveMovement(
-                    structure, entity.getBoundingBox(), allowed, 0.0D);
-            supported |= response.isSupported()
-                    && requestedMovement.y <= ASCENDING_EPSILON
-                    && vanillaMovement.y <= ASCENDING_EPSILON;
-            if (!response.allowed().equals(allowed)) {
-                allowed = response.allowed();
-                changed = true;
+        AABB box = entity.getBoundingBox();
+        double height = entity.maxUpStep();
+        AABB path = box.expandTowards(requestedMovement)
+                .expandTowards(0, Math.max(height, MAX_STRUCTURE_STEP), 0).inflate(BOUNDS_MARGIN);
+        List<CollidableStructure> nearby = structuresNear(entity, path).stream()
+                .filter(structure -> !StructureClimbingSystem.isGuidedClimbing(entity, structure)).toList();
+        if (nearby.isEmpty()) return new Movement(vanillaMovement, false);
+        if (height > 0) {
+            for (CollidableStructure structure : nearby) {
+                height = Math.max(height, Math.min(MAX_STRUCTURE_STEP, structure.walkStepHeight()));
             }
         }
+        Movement result = resolve(entity, box, vanillaMovement, nearby);
+        boolean grounded = entity.onGround() || requestedMovement.y < 0 && result.supported();
+        if (height > 0 && grounded && requestedMovement.y <= 0
+                && result.allowed().horizontalDistanceSqr() < requestedMovement.horizontalDistanceSqr() - 1.0E-8D) {
+            // Match vanilla's up/across/down step, checking both world and structure geometry.
+            Movement up = resolve(entity, box, new Vec3(0, height, 0), nearby);
+            AABB raised = box.move(up.allowed());
+            Movement across = resolve(entity, raised, new Vec3(requestedMovement.x, 0, requestedMovement.z), nearby);
+            Movement down = resolve(entity, raised.move(across.allowed()),
+                    new Vec3(0, requestedMovement.y - up.allowed().y, 0), nearby);
+            Vec3 stepped = up.allowed().add(across.allowed()).add(down.allowed());
+            if (stepped.horizontalDistanceSqr() > result.allowed().horizontalDistanceSqr() + 1.0E-8D) {
+                return new Movement(stepped, down.supported());
+            }
+        }
+        return new Movement(result.allowed(), result.supported()
+                && requestedMovement.y <= ASCENDING_EPSILON && vanillaMovement.y <= ASCENDING_EPSILON);
+    }
 
-        return new Movement(changed ? collideWithWorld(entity, allowed) : allowed, supported);
+    private static Movement resolve(Entity entity, AABB box, Vec3 wanted, List<CollidableStructure> nearby) {
+        Vec3 allowed = collideWithWorld(entity, box, wanted);
+        boolean supported = false;
+        for (int pass = 0; pass < 4; pass++) {
+            Vec3 before = allowed;
+            for (CollidableStructure structure : nearby) {
+                var response = StructureCollisionResolver.resolveMovement(structure, box, allowed, 0.0D);
+                supported |= response.isSupported() && wanted.y <= ASCENDING_EPSILON;
+                allowed = response.allowed();
+            }
+            // Untouched by the structures, the movement is already the world's answer.
+            if (before.distanceToSqr(allowed) < 1.0E-16D) break;
+            allowed = collideWithWorld(entity, box, allowed);
+        }
+        return new Movement(allowed, supported);
     }
 
     public static void markSupported(Entity entity) {
@@ -85,7 +110,10 @@ public final class StructureCollisionSystem {
     }
 
     static Vec3 collideWithWorld(Entity entity, Vec3 requested) {
-        AABB box = entity.getBoundingBox();
+        return collideWithWorld(entity, entity.getBoundingBox(), requested);
+    }
+
+    private static Vec3 collideWithWorld(Entity entity, AABB box, Vec3 requested) {
         List<VoxelShape> entityCollisions = entity.level().getEntityCollisions(
                 entity, box.expandTowards(requested));
         return Entity.collideBoundingBox(entity, requested, box, entity.level(), entityCollisions);

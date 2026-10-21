@@ -14,6 +14,9 @@
         [`${TRANSLATION_PREFIX}select_cubes_first`]: "Select cubes first",
         [`${TRANSLATION_PREFIX}empty_section`]: "This section has no cubes",
         [`${TRANSLATION_PREFIX}all_assigned`]: "All cubes are assigned",
+        [`${TRANSLATION_PREFIX}export_markup`]: "Construction Markup",
+        [`${TRANSLATION_PREFIX}export_markup_description`]: "Export the build sections as data/<namespace>/construction/<model>.json",
+        [`${TRANSLATION_PREFIX}export_no_sections`]: "The model has no build sections to export",
         [`${TRANSLATION_PREFIX}assign_selected`]: "Assign selected cubes",
         [`${TRANSLATION_PREFIX}isolate_section`]: "Show only this section",
         [`${TRANSLATION_PREFIX}move_up`]: "Move up",
@@ -51,6 +54,9 @@
         [`${TRANSLATION_PREFIX}select_cubes_first`]: "Сначала выделите кубы",
         [`${TRANSLATION_PREFIX}empty_section`]: "В секции пока нет кубов",
         [`${TRANSLATION_PREFIX}all_assigned`]: "Все кубы распределены",
+        [`${TRANSLATION_PREFIX}export_markup`]: "Разметка стройки",
+        [`${TRANSLATION_PREFIX}export_markup_description`]: "Выгрузить секции сборки в data/<namespace>/construction/<model>.json",
+        [`${TRANSLATION_PREFIX}export_no_sections`]: "В модели нет секций сборки",
         [`${TRANSLATION_PREFIX}assign_selected`]: "Отнести выделенное",
         [`${TRANSLATION_PREFIX}isolate_section`]: "Показать только эту секцию",
         [`${TRANSLATION_PREFIX}move_up`]: "Выше",
@@ -308,12 +314,170 @@
         });
     }
 
+    // The construction markup the game reads to raise the model stage by stage. Cube indices count each bone's
+    // exported cubes in outliner order, as GeckoLib's geo file does. Parts are in entity-local blocks, the way GeckoLib
+    // draws the model: turned half a revolution around Y. Nodes are plain objects, see liveNodes.
+    const markup = (() => {
+        function rotation(axis, degrees) {
+            const a = degrees * Math.PI / 180, c = Math.cos(a), s = Math.sin(a);
+            if (axis === 0) return [[1, 0, 0], [0, c, -s], [0, s, c]];
+            if (axis === 1) return [[c, 0, s], [0, 1, 0], [-s, 0, c]];
+            return [[c, -s, 0], [s, c, 0], [0, 0, 1]];
+        }
+
+        function multiply(a, b) {
+            return a.map(row => [0, 1, 2].map(j => row[0] * b[0][j] + row[1] * b[1][j] + row[2] * b[2][j]));
+        }
+
+        function apply(m, v) {
+            return m.map(row => row[0] * v[0] + row[1] * v[1] + row[2] * v[2]);
+        }
+
+        // Blockbench turns about X, then Y, then Z.
+        function euler(angles) {
+            let m = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+            for (let axis = 0; axis < 3; axis++) {
+                if (angles[axis]) m = multiply(rotation(axis, angles[axis]), m);
+            }
+            return m;
+        }
+
+        function about(m, point, pivot) {
+            return apply(m, point.map((v, i) => v - pivot[i])).map((v, i) => v + pivot[i]);
+        }
+
+        function part(cube, chain) {
+            const low = cube.from.map(v => v - cube.inflate), high = cube.to.map(v => v + cube.inflate);
+            let centre = low.map((v, i) => (v + high[i]) / 2);
+            const half = low.map((v, i) => (high[i] - v) / 2);
+            let turn = euler(cube.rotation);
+            centre = about(turn, centre, cube.origin);
+            for (let depth = chain.length - 1; depth >= 0; depth--) {
+                const groupTurn = euler(chain[depth].rotation);
+                centre = about(groupTurn, centre, chain[depth].origin);
+                turn = multiply(groupTurn, turn);
+            }
+            const flip = [[-1, 0, 0], [0, 1, 0], [0, 0, -1]];
+            centre = apply(flip, centre);
+            turn = multiply(flip, turn);
+            return { center: centre.map(v => v / 16), halfExtent: half.map(v => v / 16), rotation: [].concat(...turn) };
+        }
+
+        // Bones in the order GeckoLib exports them, a parent before the groups inside it, and every exported cube.
+        function walk(nodes, chain, bones, cubes) {
+            let index = 0;
+            for (const node of nodes) {
+                if (!node.export) continue;
+                if (node.group) {
+                    if (!bones.has(node.name)) bones.set(node.name, node);
+                    walk(node.children, chain.concat([node]), bones, cubes);
+                } else {
+                    if (!chain.length) throw new Error("A cube is outside every bone; GeckoLib cannot export it");
+                    cubes.push({ bone: chain[chain.length - 1].name, index: index++, cube: node, chain });
+                }
+            }
+        }
+
+        function number(value) {
+            const rounded = Number(value.toFixed(4));
+            return Object.is(rounded, -0) ? "0" : String(rounded);
+        }
+
+        // Objects across lines with two-space indents, number lists on one line.
+        function write(value, indent) {
+            if (typeof value === "number") return number(value);
+            if (typeof value === "string") return JSON.stringify(value);
+            const inner = indent + "  ";
+            if (Array.isArray(value)) {
+                if (value.every(v => typeof v === "number")) return "[" + value.map(number).join(", ") + "]";
+                if (!value.length) return "[]";
+                return "[\n" + value.map(v => inner + write(v, inner)).join(",\n") + "\n" + indent + "]";
+            }
+            const entries = value instanceof Map ? [...value.entries()] : Object.entries(value);
+            if (!entries.length) return "{}";
+            return "{\n" + entries.map(([k, v]) => inner + JSON.stringify(k) + ": " + write(v, inner)).join(",\n")
+                + "\n" + indent + "}";
+        }
+
+        function build(nodes, names, modelId) {
+            const bones = new Map(), cubes = [];
+            walk(nodes, [], bones, cubes);
+            const known = new Set(names);
+            const counts = new Map();
+            for (const entry of cubes) {
+                counts.set(entry.bone, (counts.get(entry.bone) || 0) + 1);
+                if (entry.cube.section && !known.has(entry.cube.section)) {
+                    throw new Error(`Cube ${entry.index} of bone ${entry.bone} is in section ${entry.cube.section}, which the model does not list`);
+                }
+            }
+            const boneCubes = new Map([...bones.keys()].filter(b => counts.has(b)).map(b => [b, counts.get(b)]));
+            const sections = names.map(name => {
+                const found = new Map(), parts = new Map();
+                let low = null, high = null;
+                for (const entry of cubes) {
+                    if (entry.cube.section !== name) continue;
+                    if (!found.has(entry.bone)) found.set(entry.bone, []);
+                    found.get(entry.bone).push(entry.index);
+                    parts.set(entry.bone + "#" + entry.index, part(entry.cube, entry.chain));
+                    low = low ? low.map((v, i) => Math.min(v, entry.cube.from[i])) : entry.cube.from.slice();
+                    high = high ? high.map((v, i) => Math.max(v, entry.cube.to[i])) : entry.cube.to.slice();
+                }
+                for (const [bone, group] of bones) {
+                    if (group.section === name && !found.has(bone)) found.set(bone, []);
+                }
+                const ordered = new Map([...bones.keys()].filter(b => found.has(b)).map(b => [b, found.get(b)]));
+                const section = new Map([["name", name], ["bones", ordered]]);
+                if (low) {
+                    // Model pixels with X the way GeckoLib exports it, used for hits when a file has no parts.
+                    section.set("box", [-high[0], low[1], low[2], -low[0], high[1], high[2]]);
+                    section.set("parts", [...ordered].flatMap(([bone, indices]) =>
+                        indices.map(index => parts.get(bone + "#" + index))));
+                }
+                return section;
+            });
+            return write(new Map([["model", modelId], ["boneCubes", boneCubes], ["sections", sections]]), "") + "\n";
+        }
+
+        return { build };
+    })();
+
+    if (typeof AXIOMATA_MARKUP_TEST === "function") AXIOMATA_MARKUP_TEST(markup);
+
+    function liveNodes(list) {
+        return list.filter(node => node instanceof Group || node instanceof Cube).map(node => node instanceof Group
+            ? {
+                group: true, name: node.name, origin: node.origin, rotation: node.rotation,
+                export: node.export !== false, section: node[CUBE_PROPERTY] || "", children: liveNodes(node.children)
+            }
+            : {
+                group: false, from: node.from, to: node.to, origin: node.origin, rotation: node.rotation,
+                inflate: node.inflate || 0, export: node.export !== false, section: node[CUBE_PROPERTY] || ""
+            });
+    }
+
+    function exportMarkup() {
+        const names = sections().map(section => section.name);
+        if (!names.length) {
+            Blockbench.showQuickMessage(t("export_no_sections"));
+            return;
+        }
+        const name = Project.name || "model";
+        const namespace = Project.geckolib_modid || "minecraft";
+        Blockbench.export({
+            type: "JSON",
+            extensions: ["json"],
+            name,
+            content: markup.build(liveNodes(Outliner.root), names, `${namespace}:geo/${name}.geo.json`),
+            savetype: "text"
+        });
+    }
+
     Plugin.register("axiomata_sections", {
         title: t("title"),
         author: "mss1r",
         icon: "construction",
         description: t("description"),
-        version: "1.2.0",
+        version: "1.3.0",
         variant: "both",
         onload() {
             registered = [
@@ -417,6 +581,16 @@
             `);
 
             actions = [];
+            const exportAction = new Action("axiomata_export_markup", {
+                name: t("export_markup"),
+                description: t("export_markup_description"),
+                icon: "construction",
+                category: "file",
+                condition: () => Boolean(Project) && sections().length > 0,
+                click: exportMarkup
+            });
+            MenuBar.addAction(exportAction, "file.export");
+            actions.push(exportAction);
             for (let slot = 0; slot < MAX_SHORTCUTS; slot++) {
                 const action = new Action(`axiomata_assign_${slot + 1}`, {
                     name: t("shortcut_name", slot + 1),

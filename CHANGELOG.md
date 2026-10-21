@@ -10,7 +10,7 @@
 - Clients learn the progress of every build from Axiomata. `UnderConstruction.constructionStatus()` and `isFullyBuilt()` work on both sides without synchronized fields in the result.
 - `ConstructionGeometry` makes the built sections of an unfinished build solid and its built ladders climbable, and tells whether a bone stands yet, e.g. for a rope between two sections.
 - `ConstructionGeoRenderer` draws unfinished GeckoLib results. Only a player holding a construction hammer sees the sections still to come and the stage sign.
-- `tools/construction_markup.py` writes the construction markup from a Blockbench model. The Build Sections plugin assigns sections to groups too, for bones without cubes.
+- The Build Sections Blockbench plugin exports the construction markup (File → Export → Construction Markup) and assigns sections to groups too, for bones without cubes.
 - `UnderConstruction.acceptsSupport` lets a result refuse blocks it cannot be built on.
 
 ### Changed

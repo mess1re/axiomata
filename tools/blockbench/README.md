@@ -17,11 +17,5 @@ With no cubes selected, the selected group is assigned instead. Use this for bon
 such as rope anchors: they stand once their section is built.
 
 Section data is stored in the model as `axiomata_sections` and `axiomata_section` properties.
-`tools/construction_markup.py` turns them into the construction markup file:
-
-```
-python tools/construction_markup.py cart.bbmodel data/example/construction/cart.json --model example:geo/cart.geo.json
-```
-
-Marker colors can mirror section numbers for visual reference. This can be disabled in the panel
-or Blockbench settings.
+**File → Export → Construction Markup** writes the file the game reads, next to the geo file GeckoLib exports:
+`data/<namespace>/construction/<model>.json`. Export it again whenever the model or its sections change.

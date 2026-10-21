@@ -32,11 +32,17 @@ base {
 repositories {
     maven("https://maven.architectury.dev/") { name = "Architectury" }
     maven("https://maven.blamejared.com/") { name = "Jared" }
+    maven("https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/") {
+        name = "GeckoLib"
+        content { includeGroupByRegex("software\\.bernie.*") }
+    }
     mavenCentral()
 }
 
 dependencies {
     implementation("dev.architectury:architectury-forge:$architecturyVersion")
+    // Only the optional construction renderer uses GeckoLib; mods that render with it bring it.
+    "modCompileOnly"("software.bernie.geckolib:geckolib-forge-${sc.current.version}:${project.property("deps.geckolib")}")
     compileOnly("mezz.jei:jei-${sc.current.version}-common-api:$jeiVersion")
     compileOnly("mezz.jei:jei-${sc.current.version}-forge-api:$jeiVersion")
     annotationProcessor("org.spongepowered:mixin:0.8.5:processor")

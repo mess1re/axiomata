@@ -5,7 +5,9 @@
 ### Added
 
 - Structures carry the structures resting on them, including whole stacks, and turn them with their support.
-- `StructurePlacement.findOnTop` finds a pose on top of another structure; `StructureTerrainCollision.clampMotion`, `clampYaw` and `canOccupy` check full geometry against terrain and other structures.
+- `StructurePlacement.findOnTop` finds a pose on top of another structure, lowered from the aimed height so a mast above the deck does not take it; `StructurePlacement.isClear` checks a proposed pose against blocks, the world border, other structures and unfinished sites. `StructureTerrainCollision.clampMotion`, `clampYaw` and `canOccupy` check full geometry against terrain and other structures.
+- Blueprints place builds on the deck of a finished structure, such as a ship, which carries them through construction and reloads. `ConstructionTarget.pick` finds the aimed block or structure surface, for blueprints and other deployment items alike; `ConstructionDeployer.deploy` takes it.
+- `CollidableStructure.supportContactGroups()` adds contact-only footing, e.g. the wheel box a machine stands on or a climb-through ladder: it places and carries the load without becoming an obstacle.
 - `CollidableStructure.walkStepHeight()` lets walkers climb a structure's own steps when they are taller than a vanilla step.
 - Clients learn the progress of every build from Axiomata. `UnderConstruction.constructionStatus()` and `isFullyBuilt()` work on both sides without synchronized fields in the result.
 - `ConstructionGeometry` makes the built sections of an unfinished build solid and its built ladders climbable, and tells whether a bone stands yet, e.g. for a rope between two sections.
@@ -14,21 +16,17 @@
 - `UnderConstruction.acceptsSupport` lets a result refuse blocks it cannot be built on, and `mayWork` decides who may build or take it apart.
 - Rope, a shared building material, in the `c:ropes` item tag. Recipes and blueprints can take any rope through `#c:ropes`.
 - `BuildProgress.workDone()` gives the share of a build's hammer work done. `MaterialAllocation`, which takes several materials from one inventory the way stages pay for themselves, moved to the public `blueprint.api.construction` package.
-- An unfinished result carries no one, and taking a finished one apart sets its riders down. It ignores everything but the construction hammer, stays where it was placed and keeps its progress in its own save data. Destroyed, it leaves a quarter of what its built stages took and half of what was paid for the stage under way.
+- An unfinished result carries no one, and taking a finished one apart sets its riders down. It ignores everything but the construction hammer, does not move on its own (a structure carrying it still does) and keeps its progress in its own save data. Destroyed, it leaves a quarter of what its built stages took and half of what was paid for the stage under way.
 
 ### Changed
 
 - Hammer blows land on the active section by the construction markup without any code in the result, including results without collision geometry, whose markup is placed by their position and yaw. Any item in `axiomata:construction_hammers` builds, not only Axiomata's hammer.
 - Stacks of resting structures cost far less per tick, and neighbour queries are indexed by chunk column.
+- Structures that keep vanilla box movement (`movesByGeometry()` false) collide with other structures' surfaces, and a load never pushes away the structure that carries it.
 
 ### Removed
 
 - Builds that end early (`minStages`), starter items (`starter`) and stage `adds`, with `ConstructionStarters`, `BuildProgress.endHere` and `UnderConstruction.applyBuiltData`. A build is finished when every stage stands; results of variable size belong to item recipes. Blueprint files that use these fields no longer load.
-
-### Fixed
-
-- Hybrid structures using a vanilla wheel/body box now collide with structure surfaces instead of falling through them.
-- A carried structure no longer pushes its own supporting hull away when its articulated parts meet the deck.
 
 ## 0.1.0-beta.8
 

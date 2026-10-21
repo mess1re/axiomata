@@ -11,6 +11,7 @@
     "ProjectileUtilMixin",
     "LivingEntityCollisionMixin",
     "ServerGamePacketListenerImplMixin",
+    "UnderConstructionMixin",
     "WalkNodeEvaluatorMixin"
   ],
   "client": [

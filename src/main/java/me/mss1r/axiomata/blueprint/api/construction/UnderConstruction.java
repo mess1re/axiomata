@@ -53,6 +53,11 @@ public interface UnderConstruction {
         return true;
     }
 
+    /** Who may build or take apart this result, e.g. only its owner's side. Others cannot touch it with a hammer. */
+    default boolean mayWork(Player builder) {
+        return true;
+    }
+
     /** A blow counts when the builder's aim lands on the section being assembled, by the construction markup. */
     default boolean acceptsBlowOnStage(Player builder, String section) {
         ResourceLocation model = constructionModel();

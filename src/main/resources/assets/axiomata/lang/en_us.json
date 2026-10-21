@@ -38,6 +38,7 @@
   "gui.axiomata.drawing_table.pick": "Pick something to draw",
   "gui.axiomata.drawing_table.ruined": "A fine drawing… of something else",
   "message.axiomata.construction.missing": "%1$s needs %2$s × %3$s",
+  "message.axiomata.construction.not_yours": "This build is someone else's",
   "tooltip.axiomata.blueprint.quality.clean": "Cleanly drawn",
   "tooltip.axiomata.blueprint.quality.plain": "Normally drawn",
   "tooltip.axiomata.blueprint.quality.hasty": "Drawn in a hurry",

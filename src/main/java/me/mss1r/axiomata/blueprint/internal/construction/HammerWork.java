@@ -1,6 +1,7 @@
 package me.mss1r.axiomata.blueprint.internal.construction;
 
 import dev.architectury.event.EventResult;
+import me.mss1r.axiomata.blueprint.api.BlueprintTags;
 import me.mss1r.axiomata.blueprint.api.construction.BlueprintConstructionPlan;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition;
 import me.mss1r.axiomata.blueprint.api.construction.BuildProgress;
@@ -25,12 +26,13 @@ public final class HammerWork {
     }
 
     public static EventResult onEntityInteract(Player player, Entity target, InteractionHand hand) {
-        ItemStack held = player.getItemInHand(hand);
-        if (!(held.getItem() instanceof ConstructionHammerItem)) {
-            return EventResult.pass();
-        }
         if (!(target instanceof UnderConstruction machine) || machine.isFullyBuilt()) {
             return EventResult.pass();
+        }
+        ItemStack held = player.getItemInHand(hand);
+        if (!held.is(BlueprintTags.CONSTRUCTION_HAMMERS)) {
+            // An unfinished result has nothing to offer but its construction.
+            return EventResult.interruptFalse();
         }
 
         // Architectury reports both hands for one click. Only the main-hand server event may do
@@ -38,7 +40,11 @@ public final class HammerWork {
         if (player.level().isClientSide() || hand != InteractionHand.MAIN_HAND) {
             return EventResult.interruptTrue();
         }
-        if (player.isShiftKeyDown()) {
+        if (!machine.mayWork(player)) {
+            if (player instanceof ServerPlayer serverPlayer) {
+                serverPlayer.displayClientMessage(Component.translatable("message.axiomata.construction.not_yours"), true);
+            }
+        } else if (player.isShiftKeyDown()) {
             dismantle(player, target, machine);
         } else {
             strike(player, target, machine);

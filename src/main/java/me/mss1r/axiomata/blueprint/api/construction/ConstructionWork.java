@@ -90,6 +90,38 @@ public final class ConstructionWork {
         return new Result(Status.ADVANCED, null);
     }
 
+    /** Share of the built stages' materials left as debris when an unfinished result is destroyed. */
+    public static final float BUILT_DEBRIS = 0.25F;
+    /** Share of the materials already paid for the stage under way left as debris. */
+    public static final float PAID_DEBRIS = 0.5F;
+
+    /**
+     * What is left of an unfinished result that is destroyed: a quarter of what its built stages took and half of what
+     * was paid for the stage under way. Tags come back as their {@code returns} item.
+     */
+    public static List<ItemStack> debris(UnderConstruction machine) {
+        BuildProgress progress = machine.buildProgress();
+        BlueprintConstructionPlan plan = progress.plan();
+        List<ItemStack> debris = new ArrayList<>();
+        for (int index = 0; index < Math.min(progress.stage(), plan.stageCount()); index++) {
+            for (Material material : plan.stage(index).materials()) {
+                add(debris, material.returnStack(), (int) Math.floor(material.count() * BUILT_DEBRIS));
+            }
+        }
+        if (progress.currentStage() != null && progress.materialsCommitted()) {
+            for (ItemStack paid : progress.currentStageRefund()) {
+                add(debris, paid, (int) Math.floor(paid.getCount() * PAID_DEBRIS));
+            }
+        }
+        return debris;
+    }
+
+    private static void add(List<ItemStack> debris, ItemStack stack, int count) {
+        if (count > 0 && !stack.isEmpty()) {
+            debris.add(stack.copyWithCount(count));
+        }
+    }
+
     private static void changed(UnderConstruction machine) {
         machine.onBuildProgressChanged();
         ConstructionSync.changed(machine);

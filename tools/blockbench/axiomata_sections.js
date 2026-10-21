@@ -106,6 +106,16 @@
         return Cube.all ?? [];
     }
 
+    function groups() {
+        return Group.all ?? [];
+    }
+
+    // A selected group stands for a bone without cubes, such as a rope anchor.
+    function selectedGroups() {
+        if (Array.isArray(Group.multi_selected)) return Group.multi_selected;
+        return Group.selected ? [Group.selected] : [];
+    }
+
     function sectionIndex(name) {
         return sections().findIndex(section => section.name === name);
     }
@@ -189,8 +199,8 @@
             if (!trimmed || trimmed === name || sectionIndex(trimmed) >= 0) return;
             edit(t("undo_rename"), () => {
                 sections()[sectionIndex(name)].name = trimmed;
-                for (const cube of cubes()) {
-                    if (cube[CUBE_PROPERTY] === name) cube[CUBE_PROPERTY] = trimmed;
+                for (const node of [...cubes(), ...groups()]) {
+                    if (node[CUBE_PROPERTY] === name) node[CUBE_PROPERTY] = trimmed;
                 }
             });
         });
@@ -201,8 +211,8 @@
             const index = sectionIndex(name);
             if (index < 0) return;
             sections().splice(index, 1);
-            for (const cube of cubes()) {
-                if (cube[CUBE_PROPERTY] === name) cube[CUBE_PROPERTY] = "";
+            for (const node of [...cubes(), ...groups()]) {
+                if (node[CUBE_PROPERTY] === name) node[CUBE_PROPERTY] = "";
             }
             repaintAll();
         });
@@ -221,15 +231,18 @@
     }
 
     function assignSelection(name) {
-        if (!Cube.selected || Cube.selected.length === 0) {
+        const selectedCubes = Cube.selected ?? [];
+        const anchors = selectedCubes.length === 0 ? selectedGroups() : [];
+        if (selectedCubes.length === 0 && anchors.length === 0) {
             Blockbench.showQuickMessage(t("select_cubes_first"));
             return;
         }
         edit(t("undo_assign"), () => {
-            for (const cube of Cube.selected) {
+            for (const cube of selectedCubes) {
                 cube[CUBE_PROPERTY] = name;
                 paint(cube, name);
             }
+            for (const group of anchors) group[CUBE_PROPERTY] = name;
         });
     }
 
@@ -300,12 +313,13 @@
         author: "mss1r",
         icon: "construction",
         description: t("description"),
-        version: "1.1.0",
+        version: "1.2.0",
         variant: "both",
         onload() {
             registered = [
                 new Property(ModelProject, "array", SECTIONS_PROPERTY, { default: [] }),
-                new Property(Cube, "string", CUBE_PROPERTY, { default: "" })
+                new Property(Cube, "string", CUBE_PROPERTY, { default: "" }),
+                new Property(Group, "string", CUBE_PROPERTY, { default: "" })
             ];
 
             setting = new Setting(MIRROR_SETTING, {

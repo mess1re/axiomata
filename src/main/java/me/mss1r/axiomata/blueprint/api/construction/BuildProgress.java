@@ -28,6 +28,9 @@ public final class BuildProgress {
     private final ConstructionProgress core = new ConstructionProgress();
     // Items taken for the current stage, so that cancelling it gives back the same items rather than a tag's first.
     private final List<ItemStack> paid = new ArrayList<>();
+    private BlueprintConstructionPlan cachedPlan;
+    private BlueprintDefinition planDefinition;
+    private BuildQuality planQuality;
 
     public static BuildProgress finished() {
         return new BuildProgress();
@@ -94,7 +97,15 @@ public final class BuildProgress {
     }
 
     public BlueprintConstructionPlan plan() {
-        return BlueprintConstructionPlan.of(BlueprintDefinitions.get(blueprintId()), quality());
+        // Asked on every collision query of an unfinished build; rebuilt only when the definition or quality changes.
+        BlueprintDefinition definition = BlueprintDefinitions.get(blueprintId());
+        BuildQuality quality = quality();
+        if (cachedPlan == null || planDefinition != definition || planQuality != quality) {
+            cachedPlan = BlueprintConstructionPlan.of(definition, quality);
+            planDefinition = definition;
+            planQuality = quality;
+        }
+        return cachedPlan;
     }
 
     public boolean complete() {

@@ -11,9 +11,8 @@ public final class TracingRules {
 
     public static final int MAX_SAMPLES_PER_TICK = 8;
 
-    // Wide enough to take both strokes of a doubled beam in one pass. Snapping still keeps the ink on
-    // the line, and wandering off it is counted as before.
-    public static final float COVER_RADIUS_PIXELS = 3.0F;
+    // Snapping already keeps the line clean. Each stroke of a doubled beam is drawn on its own.
+    public static final float COVER_RADIUS_PIXELS = 2.0F;
 
     // A few stray cells of a large drawing may stay dry; a missed stretch of line may not.
     public static final float COVERAGE_TARGET = 0.9975F;

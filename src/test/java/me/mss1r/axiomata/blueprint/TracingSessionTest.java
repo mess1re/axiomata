@@ -36,7 +36,7 @@ class TracingSessionTest {
     }
 
     @Test
-    void theBrushInksTheCellsAroundTheNibCornersIncluded() {
+    void theNibInksItsCellAndTheFourBesideIt() {
         boolean[][] ink = new boolean[RESOLUTION][RESOLUTION];
         for (int y = 40; y < 45; y++) {
             for (int x = 40; x < 45; x++) {
@@ -45,8 +45,8 @@ class TracingSessionTest {
         }
         TracingSession session = session(ink);
         session.apply(42 * 2 + 1, 42 * 2 + 1);
-        assertTrue(session.covered(41, 41) && session.covered(43, 43), "A three-pixel nib leaves its corners dry");
-        assertFalse(session.covered(40, 42), "The nib reaches two cells away");
+        assertTrue(session.covered(41, 42) && session.covered(42, 43), "The nib leaves the cells beside it dry");
+        assertFalse(session.covered(41, 41) || session.covered(40, 42), "The nib reaches past the cells beside it");
     }
 
     @Test

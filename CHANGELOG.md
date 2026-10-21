@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.1.0-beta.9
+
+### Added
+
+- Structures carry the structures resting on them, including whole stacks, and turn them with their support.
+- `StructurePlacement.findOnTop` finds a pose on top of another structure; `StructureTerrainCollision.clampMotion`, `clampYaw` and `canOccupy` check full geometry against terrain and other structures.
+- `CollidableStructure.walkStepHeight()` lets walkers climb a structure's own steps when they are taller than a vanilla step.
+- Clients learn the progress of every build from Axiomata. `UnderConstruction.constructionStatus()` and `isFullyBuilt()` work on both sides without synchronized fields in the result.
+- `ConstructionGeometry` makes the built sections of an unfinished build solid and its built ladders climbable, and tells whether a bone stands yet, e.g. for a rope between two sections.
+- `ConstructionGeoRenderer` draws unfinished GeckoLib results. Only a player holding a construction hammer sees the sections still to come and the stage sign.
+- `tools/construction_markup.py` writes the construction markup from a Blockbench model. The Build Sections plugin assigns sections to groups too, for bones without cubes.
+- `UnderConstruction.acceptsSupport` lets a result refuse blocks it cannot be built on.
+
+### Changed
+
+- Hammer blows land on the active section by the construction markup without any code in the result.
+- Stacks of resting structures cost far less per tick, and neighbour queries are indexed by chunk column.
+
+### Removed
+
+- Builds that end early (`minStages`), starter items (`starter`) and stage `adds`, with `ConstructionStarters`, `BuildProgress.endHere` and `UnderConstruction.applyBuiltData`. A build is finished when every stage stands; results of variable size belong to item recipes. Blueprint files that use these fields no longer load.
+
 ## 0.1.0-beta.8
 
 ### Added

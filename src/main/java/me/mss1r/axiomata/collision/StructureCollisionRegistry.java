@@ -12,7 +12,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -28,7 +27,8 @@ public final class StructureCollisionRegistry {
     private static final int SWEEP_QUERIES = 256;
 
     private static final Object LOCK = new Object();
-    private static final Map<CollidableStructure, Entry> STRUCTURES = new LinkedHashMap<>();
+    // By identity: Entity.equals compares entity ids, which a singleplayer client and server share.
+    private static final Map<CollidableStructure, Entry> STRUCTURES = new IdentityHashMap<>();
     private static final Map<Level, Index> INDEX = new MapMaker().weakKeys().makeMap();
     private static final List<Entry> DIRTY = new ArrayList<>();
     private static long order;
@@ -99,7 +99,11 @@ public final class StructureCollisionRegistry {
         // Async pathfinding uses snapshots. It must not populate bounds from a half-updated
         // structure while the server thread is moving it.
         synchronized (LOCK) {
-            return new ArrayList<>(STRUCTURES.keySet());
+            List<Entry> entries = new ArrayList<>(STRUCTURES.values());
+            entries.sort(Comparator.comparingLong(entry -> entry.order));
+            List<CollidableStructure> structures = new ArrayList<>(entries.size());
+            for (Entry entry : entries) structures.add(entry.structure);
+            return structures;
         }
     }
 

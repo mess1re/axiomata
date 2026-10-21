@@ -48,7 +48,8 @@ public interface CollidableStructure {
     /**
      * Whether {@code Entity.move} resolves the solid geometry against the world and steps it over terrain. Return
      * false to keep vanilla movement by the bounding box, e.g. when the consumer clamps the geometry itself and the
-     * box stands for the wheels the structure rolls on.
+     * box stands for the wheels the structure rolls on. This box still collides with other
+     * structures; the entity is carried only once through structure-to-structure support.
      */
     default boolean movesByGeometry() {
         return true;

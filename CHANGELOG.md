@@ -25,6 +25,11 @@
 
 - Builds that end early (`minStages`), starter items (`starter`) and stage `adds`, with `ConstructionStarters`, `BuildProgress.endHere` and `UnderConstruction.applyBuiltData`. A build is finished when every stage stands; results of variable size belong to item recipes. Blueprint files that use these fields no longer load.
 
+### Fixed
+
+- Hybrid structures using a vanilla wheel/body box now collide with structure surfaces instead of falling through them.
+- A carried structure no longer pushes its own supporting hull away when its articulated parts meet the deck.
+
 ## 0.1.0-beta.8
 
 ### Added

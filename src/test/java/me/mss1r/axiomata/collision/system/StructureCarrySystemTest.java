@@ -89,6 +89,53 @@ class StructureCarrySystemTest {
     }
 
     @Test
+    void anArticulatedLoadCannotPushItsSupportingHullDown() {
+        TestEntity deck = entity(DECK, 0, 0, 0);
+        double[] offset = {0};
+        TestEntity engine = new TestEntity(level, CARGO) {
+            @Override public List<CollisionGroup> collisionGroups() {
+                return List.of(CollisionGroup.fixed("mechanism", shape(new AABB(-.5, .5 + offset[0], -.5, .5, 2, .5))));
+            }
+            @Override public List<CollisionGroup> supportContactGroups() {
+                return List.of(CollisionGroup.fixed("wheels", shape(new AABB(-.5, 0, -.5, .5, .01, .5))));
+            }
+        };
+        entities.add(engine);
+        StructureMotionSystem.tickStructure(engine);
+        deck.setPos(.1, 0, 0);
+        StructureMotionSystem.tickStructure(deck);
+        offset[0] = -.55;
+        StructureMotionSystem.tickStructure(engine);
+        assertEquals(0, deck.getY(), .001, "An animated load must not push its support down");
+    }
+
+    @Test
+    void nativeWheelBoxDoesNotFallThroughADeckBelowItsRaisedMechanism() {
+        TestEntity deck = entity(DECK, 0, 0, 0);
+        TestEntity engine = new TestEntity(level, shape(new AABB(-.5, .53, -.5, .5, 2, .5))) {
+            @Override public boolean movesByGeometry() { return false; }
+            @Override public List<CollisionGroup> supportContactGroups() {
+                return List.of(CollisionGroup.fixed("wheels", shape(new AABB(-.5, 0, -.5, .5, .01, .5))));
+            }
+        };
+        entities.add(engine);
+        engine.setPos(2, 0, 0);
+        StructureMotionSystem.tickStructure(engine);
+        for (int tick = 0; tick < 100; tick++) {
+            engine.move(MoverType.SELF, new Vec3(0, -.08, 0));
+            StructureMotionSystem.tickStructure(engine);
+            assertEquals(0, engine.getY(), .001, "Wheel support on tick " + tick);
+            assertTrue(engine.onGround());
+        }
+        // Structures must not also enter the ordinary passenger carry path.
+        assertFalse(StructureCollisionSystem.canCollide(engine));
+        deck.setPos(1, .1, 0);
+        StructureMotionSystem.tickStructure(deck);
+        assertEquals(3, engine.getX(), .001);
+        assertEquals(.1, engine.getY(), .001);
+    }
+
+    @Test
     void contactOnlyWheelsBelowAnElevatedMechanismAreFoundByAFlatPlatform() {
         TestEntity platform = entity(DECK, 0, 0, 0);
         TestEntity engine = new TestEntity(level, shape(new AABB(-.5, .53, -.5, .5, 2, .5))) {

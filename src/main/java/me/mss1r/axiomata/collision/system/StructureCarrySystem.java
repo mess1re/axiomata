@@ -42,6 +42,13 @@ final class StructureCarrySystem {
     private static <T extends Entity & CollidableStructure> void carry(
             T child, CollidableStructure parent, StructureTransform previous, List<CollisionGroup> previousGroups,
             StructureTransform current, List<CollisionGroup> currentGroups) {
+        // The load's own tick must not depenetrate its supporting hull in the opposite direction.
+        // Articulated parts may meet the deck; resolving that contact belongs to the hull moving
+        // the load, not the load pushing its foundation (and all the other loads) away.
+        // Probe before the move: a platform raised into its load has not become that load's cargo.
+        if (parent instanceof Entity parentEntity && parentEntity.getDeltaMovement().y <= 1.0E-4D
+                && StructureCollisionResolver.supportingGroup(child.collisionTransform(), StructureGeometry.solid(child),
+                        previous, StructureGeometry.supportContact(parent), REACH) != null) return;
         StructureTransform initial = child.collisionTransform();
         Predicate<CollidableStructure> notParent = other -> other == parent;
         SupportedStructures assembly = null;

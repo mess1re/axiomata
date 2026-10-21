@@ -2,6 +2,7 @@ package me.mss1r.axiomata.collision.system;
 
 import java.util.List;
 import me.mss1r.axiomata.collision.CollidableStructure;
+import me.mss1r.axiomata.collision.StructureGeometry;
 import me.mss1r.axiomata.collision.StructureCollisionResolver;
 import me.mss1r.axiomata.collision.StructureCollisionRegistry;
 import net.minecraft.world.entity.Entity;
@@ -39,7 +40,10 @@ public final class StructureCollisionSystem {
     }
 
     public static Movement collideMovement(Entity entity, Vec3 requestedMovement, Vec3 vanillaMovement) {
-        if (!canCollide(entity)) {
+        // Hybrid consumers keep vanilla movement for their wheel/body box, even though they
+        // expose a separate articulated structure. That box still needs to hit other structures.
+        if (!canCollide(entity) && !(entity.isAlive() && !entity.noPhysics
+                && entity instanceof CollidableStructure structure && !structure.movesByGeometry())) {
             return new Movement(vanillaMovement, false);
         }
 
@@ -50,6 +54,12 @@ public final class StructureCollisionSystem {
         List<CollidableStructure> nearby = structuresNear(entity, path).stream()
                 .filter(structure -> !StructureClimbingSystem.isGuidedClimbing(entity, structure)).toList();
         if (nearby.isEmpty()) return new Movement(vanillaMovement, false);
+        if (entity instanceof CollidableStructure structure) {
+            // A load on this body is part of its assembly, not an obstacle to the native box.
+            SupportedStructures assembly = SupportedStructures.of((Entity & CollidableStructure) entity,
+                    StructureGeometry.solid(structure), other -> false);
+            nearby = nearby.stream().filter(other -> !assembly.contains(other)).toList();
+        }
         if (height > 0) {
             for (CollidableStructure structure : nearby) {
                 height = Math.max(height, Math.min(MAX_STRUCTURE_STEP, structure.walkStepHeight()));

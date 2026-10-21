@@ -1,5 +1,6 @@
 package me.mss1r.axiomata.collision.system;
 
+import me.mss1r.axiomata.collision.StructureGeometry;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -44,10 +45,10 @@ public final class StructureMotionSystem {
         Set<CollidableStructure> active = ACTIVE.get();
         if (!active.add(structure)) return;
         try {
-            Snapshot now = new Snapshot(structure.collisionTransform(), List.copyOf(structure.solidCollisionGroups()));
+            Snapshot now = new Snapshot(structure.collisionTransform(), List.copyOf(StructureGeometry.solid(structure)));
             Snapshot previous;
             synchronized (HISTORY) { previous = HISTORY.put(structure, now); }
-            if (previous == null) previous = new Snapshot(structure.previousCollisionTransform(), structure.previousSolidCollisionGroups());
+            if (previous == null) previous = new Snapshot(structure.previousCollisionTransform(), StructureGeometry.previousSolid(structure));
             tickMotion(structure, structureEntity, now.groups(), previous.groups(), now.transform(), previous.transform(),
                     carryStructures);
         } finally {

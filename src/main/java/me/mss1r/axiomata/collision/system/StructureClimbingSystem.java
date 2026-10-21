@@ -1,5 +1,6 @@
 package me.mss1r.axiomata.collision.system;
 
+import me.mss1r.axiomata.collision.StructureGeometry;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Map;
@@ -49,7 +50,7 @@ public final class StructureClimbingSystem {
         }
         AABB bounds = entity.getBoundingBox().inflate(CLIMBABLE_REACH);
         for (CollidableStructure structure : StructureCollisionSystem.structuresNear(entity, bounds)) {
-            for (ClimbableGroup climbable : structure.climbableGroups()) {
+            for (ClimbableGroup climbable : StructureGeometry.climbables(structure)) {
                 if (intersectsClimbable(structure, climbable, entity.getBoundingBox())) {
                     rememberClimbAttachment(entity, structure);
                     VirtualPlatformSupport.markSupported(entity);
@@ -86,7 +87,7 @@ public final class StructureClimbingSystem {
 
         AABB path = entity.getBoundingBox().expandTowards(movement).inflate(CLIMBABLE_REACH);
         for (CollidableStructure structure : StructureCollisionSystem.structuresNear(entity, path)) {
-            for (ClimbableGroup climbable : structure.climbableGroups()) {
+            for (ClimbableGroup climbable : StructureGeometry.climbables(structure)) {
                 if (intersectsClimbable(structure, climbable,
                         entity.getBoundingBox().expandTowards(movement))) {
                     rememberClimbAttachment(entity, structure);
@@ -99,7 +100,7 @@ public final class StructureClimbingSystem {
                 }
             }
             if (hasRecentClimbAttachment(entity, structure)) {
-                for (ClimbableGroup climbable : structure.climbableGroups()) {
+                for (ClimbableGroup climbable : StructureGeometry.climbables(structure)) {
                     if (!intersectsClimbable(structure.collisionTransform(), climbable,
                             entity.getBoundingBox().expandTowards(movement), ATTACHED_CLIMBABLE_REACH)) {
                         continue;
@@ -228,7 +229,7 @@ public final class StructureClimbingSystem {
     static boolean intersectsAnyClimbable(CollidableStructure structure,
                                           StructureTransform transform, AABB worldBox,
                                           double reach) {
-        for (ClimbableGroup climbable : structure.climbableGroups()) {
+        for (ClimbableGroup climbable : StructureGeometry.climbables(structure)) {
             if (intersectsClimbable(transform, climbable, worldBox, reach)) {
                 return true;
             }

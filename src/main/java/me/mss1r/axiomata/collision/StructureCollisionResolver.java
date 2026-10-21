@@ -57,7 +57,7 @@ public final class StructureCollisionResolver {
             CollidableStructure structure, AABB worldBox, Vec3 worldMovement, double stepHeight) {
         return resolveMovement(
                 structure.collisionTransform(),
-                structure.solidCollisionGroups(),
+                StructureGeometry.solid(structure),
                 worldBox,
                 worldMovement,
                 stepHeight);
@@ -340,7 +340,7 @@ public final class StructureCollisionResolver {
             CollidableStructure structure, AABB worldBox, Vec3 worldMovement, double stepHeight) {
         return resolve(
                 structure.collisionTransform(),
-                structure.solidCollisionGroups(),
+                StructureGeometry.solid(structure),
                 worldBox,
                 worldMovement,
                 stepHeight);
@@ -760,7 +760,7 @@ public final class StructureCollisionResolver {
     public static CollisionGroup supportingGroup(
             CollidableStructure structure, AABB worldBox, double reach) {
         return supportingGroup(
-                structure.collisionTransform(), structure.solidCollisionGroups(), worldBox, reach);
+                structure.collisionTransform(), StructureGeometry.solid(structure), worldBox, reach);
     }
 
     public static CollisionGroup supportingGroup(

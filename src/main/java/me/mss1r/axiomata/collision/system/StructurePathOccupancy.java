@@ -1,5 +1,6 @@
 package me.mss1r.axiomata.collision.system;
 
+import me.mss1r.axiomata.collision.StructureGeometry;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import me.mss1r.axiomata.collision.CollidableStructure;
 import me.mss1r.axiomata.collision.CollisionGroup;
@@ -55,7 +56,7 @@ final class StructurePathOccupancy {
             return cached;
         }
 
-        List<CollisionGroup> groups = structure.solidCollisionGroups();
+        List<CollisionGroup> groups = StructureGeometry.solid(structure);
         LongOpenHashSet blocks = mark(transform, groups);
         StructurePathOccupancy occupancy = new StructurePathOccupancy(placement, blocks,
                 StructureCollisionResolver.worldBounds(transform, groups));

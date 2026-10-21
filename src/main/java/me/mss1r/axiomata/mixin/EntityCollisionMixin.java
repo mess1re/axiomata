@@ -1,5 +1,6 @@
 package me.mss1r.axiomata.mixin;
 
+import me.mss1r.axiomata.collision.StructureGeometry;
 import me.mss1r.axiomata.collision.system.StructureCollisionSystem;
 import me.mss1r.axiomata.collision.CollidableStructure;
 import me.mss1r.axiomata.collision.system.StructureTerrainCollision;
@@ -37,7 +38,7 @@ public abstract class EntityCollisionMixin {
             Vec3 requested, CallbackInfoReturnable<Vec3> callbackInfo) {
         Entity self = (Entity) (Object) this;
         if (self instanceof CollidableStructure structure && !self.noPhysics && structure.movesByGeometry()
-                && !structure.solidCollisionGroups().isEmpty()) {
+                && !StructureGeometry.solid(structure).isEmpty()) {
             @SuppressWarnings("unchecked") T moving = (T) self;
             Vec3 allowed = StructureTerrainCollision.collideMotion(moving, requested);
             axiomata$supportedByStructure |= requested.y < 0.0D && allowed.y > requested.y + 1.0E-8D;

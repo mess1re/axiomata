@@ -1,5 +1,6 @@
 package me.mss1r.axiomata.collision.system;
 
+import me.mss1r.axiomata.collision.StructureGeometry;
 import me.mss1r.axiomata.collision.CollidableStructure;
 import me.mss1r.axiomata.collision.CollisionGroup;
 import me.mss1r.axiomata.collision.CollisionPose;
@@ -39,7 +40,7 @@ public final class StructureTerrainCollision {
 
     public static <T extends Entity & CollidableStructure> Vec3 clampMotion(
             T structure, Vec3 wanted, Predicate<CollidableStructure> ignored) {
-        return clampMotion(structure, wanted, structure.solidCollisionGroups(), -1.0D, ignored);
+        return clampMotion(structure, wanted, StructureGeometry.solid(structure), -1.0D, ignored);
     }
 
     /** Entity.move entry point, retaining the consumer's vanilla step height. */
@@ -53,7 +54,7 @@ public final class StructureTerrainCollision {
             return settle(structure, start, wanted);
         }
         SupportedStructures assembly =
-                SupportedStructures.of(structure, structure.solidCollisionGroups(), other -> false);
+                SupportedStructures.of(structure, StructureGeometry.solid(structure), other -> false);
         List<CollisionGroup> groups = assembly.groups();
         Vec3 allowed = resolveMotion(structure, start, groups, wanted, -1, assembly::contains);
         double height = structure.maxUpStep();
@@ -136,7 +137,7 @@ public final class StructureTerrainCollision {
 
     private static <T extends Entity & CollidableStructure> Vec3 settle(
             T structure, StructureTransform start, Vec3 wanted) {
-        List<CollisionGroup> groups = structure.solidCollisionGroups();
+        List<CollisionGroup> groups = StructureGeometry.solid(structure);
         AABB bounds = StructureCollisionResolver.worldBounds(start, groups);
         if (bounds == null) return wanted;
         List<CollidableStructure> nearby =
@@ -187,7 +188,7 @@ public final class StructureTerrainCollision {
         if (!Float.isFinite(wantedYaw)) return start.yawDegrees();
         if (Math.abs(net.minecraft.util.Mth.wrapDegrees(wantedYaw - start.yawDegrees())) < 1.0E-4F) return wantedYaw;
         return clampYaw(structure, wantedYaw,
-                SupportedStructures.of(structure, structure.solidCollisionGroups(), ignored), ignored);
+                SupportedStructures.of(structure, StructureGeometry.solid(structure), ignored), ignored);
     }
 
     /** As {@link #clampYaw(Entity, float, Predicate)}, with the loads already gathered. */
@@ -280,7 +281,7 @@ public final class StructureTerrainCollision {
                                         transform,
                                         groups,
                                         other.collisionTransform(),
-                                        other.solidCollisionGroups(),
+                                        StructureGeometry.solid(other),
                                         allowed)
                                 .allowed();
             }
@@ -291,7 +292,7 @@ public final class StructureTerrainCollision {
 
     static <T extends Entity & CollidableStructure> boolean isSupportedByWorld(
             T structure, double reach) {
-        List<CollisionGroup> groups = structure.solidCollisionGroups();
+        List<CollisionGroup> groups = StructureGeometry.solid(structure);
         AABB bounds = StructureCollisionResolver.worldBounds(structure, groups);
         if (bounds == null) return false;
         Vec3 down = new Vec3(0, -reach, 0);
@@ -343,7 +344,7 @@ public final class StructureTerrainCollision {
             Predicate<CollidableStructure> ignored) {
         List<CollisionGroup> groups =
                 stepHeight < 0
-                        ? structure.solidCollisionGroups().stream()
+                        ? StructureGeometry.solid(structure).stream()
                                 .filter(group -> !excluded.test(group))
                                 .toList()
                         : terrainGroups(structure, excluded);
@@ -388,7 +389,7 @@ public final class StructureTerrainCollision {
             double after =
                     StructureCollisionResolver.resolveStructures(
                                     other.collisionTransform(),
-                                    other.solidCollisionGroups(),
+                                    StructureGeometry.solid(other),
                                     wanted,
                                     groups,
                                     Vec3.ZERO)
@@ -398,7 +399,7 @@ public final class StructureTerrainCollision {
             double before =
                     StructureCollisionResolver.resolveStructures(
                                     other.collisionTransform(),
-                                    other.solidCollisionGroups(),
+                                    StructureGeometry.solid(other),
                                     current,
                                     groups,
                                     Vec3.ZERO)
@@ -466,11 +467,11 @@ public final class StructureTerrainCollision {
 
     private static List<CollisionGroup> terrainGroups(
             CollidableStructure structure, Predicate<CollisionGroup> excluded) {
-        List<CollisionGroup> current = structure.solidCollisionGroups();
+        List<CollisionGroup> current = StructureGeometry.solid(structure);
         if (current.isEmpty()) {
             return List.of();
         }
-        List<CollisionGroup> previous = structure.previousSolidCollisionGroups();
+        List<CollisionGroup> previous = StructureGeometry.previousSolid(structure);
         List<CollisionGroup> still = new ArrayList<>(current.size());
         for (CollisionGroup group : current) {
             if (excluded.test(group)) {

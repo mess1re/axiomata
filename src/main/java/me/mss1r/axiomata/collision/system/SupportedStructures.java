@@ -38,13 +38,13 @@ final class SupportedStructures {
     List<CollidableStructure> loads() { return loads; }
 
     private void collect(CollidableStructure parent) {
-        AABB bounds = StructureCollisionResolver.worldBounds(parent, parent.solidCollisionGroups());
+        AABB bounds = StructureCollisionResolver.worldBounds(parent, StructureGeometry.solid(parent));
         if (bounds == null) return;
         for (CollidableStructure candidate : StructureCollisionRegistry.structuresNear(rootEntity, bounds.inflate(.03D), .03D)) {
             if (members.contains(candidate) || ignored.test(candidate) || !(candidate instanceof Entity entity)
                     || !entity.isAlive() || entity.noPhysics || entity.isPassenger() || entity.getDeltaMovement().y > 1.0E-4D) continue;
-            if (StructureCollisionResolver.supportingGroup(parent.collisionTransform(), parent.solidCollisionGroups(),
-                    candidate.collisionTransform(), candidate.solidCollisionGroups(), .03D) == null) continue;
+            if (StructureCollisionResolver.supportingGroup(parent.collisionTransform(), StructureGeometry.solid(parent),
+                    candidate.collisionTransform(), StructureGeometry.solid(candidate), .03D) == null) continue;
             if (StructureTerrainCollision.isSupportedByWorld((Entity & CollidableStructure) entity, .03D)) continue;
             members.add(candidate);
             loads.add(candidate);
@@ -53,7 +53,7 @@ final class SupportedStructures {
             CollisionPose relative = new CollisionPose(rotation,
                     root.toLocal(new Vec3(transform.x(), transform.y(), transform.z())));
             int index = members.size();
-            for (CollisionGroup group : candidate.solidCollisionGroups()) {
+            for (CollisionGroup group : StructureGeometry.solid(candidate)) {
                 groups.add(new CollisionGroup("support/" + index + "/" + group.name(), group.shape(), group.pose().then(relative)));
             }
             collect(candidate);

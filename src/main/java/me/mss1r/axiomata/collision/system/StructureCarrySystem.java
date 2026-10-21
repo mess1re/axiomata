@@ -47,14 +47,14 @@ final class StructureCarrySystem {
         SupportedStructures assembly = null;
         CollisionGroup support = child.getDeltaMovement().y <= 1.0E-4D
                 ? StructureCollisionResolver.supportingGroup(previous, previousGroups,
-                    child.collisionTransform(), child.solidCollisionGroups(), REACH) : null;
+                    child.collisionTransform(), StructureGeometry.solid(child), REACH) : null;
         boolean worldSupport = support != null && StructureTerrainCollision.isSupportedByWorld(child, REACH);
         if (support != null && !worldSupport && claimSupport(child, parent)) {
             CollisionGroup after = currentGroups.stream().filter(g -> g.name().equals(support.name())).findFirst().orElse(null);
             if (after != null) {
                 StructureTransform wanted = StructureCarryTransform.carry(previous, support, current, after, child.collisionTransform());
                 Vec3 movement = new Vec3(wanted.x() - initial.x(), wanted.y() - initial.y(), wanted.z() - initial.z());
-                assembly = SupportedStructures.of(child, child.solidCollisionGroups(), notParent);
+                assembly = SupportedStructures.of(child, StructureGeometry.solid(child), notParent);
                 Vec3 allowed = StructureTerrainCollision.clampMotion(child, movement, assembly, -1.0D, notParent);
                 child.setPos(child.getX() + allowed.x, child.getY() + allowed.y, child.getZ() + allowed.z);
                 float yaw = StructureTerrainCollision.clampYaw(child, wanted.yawDegrees(), assembly, notParent);
@@ -64,9 +64,9 @@ final class StructureCarrySystem {
         }
         // A moving hull can also meet an unsupported structure from the side.
         Vec3 push = StructureCollisionResolver.resolveStructures(current, currentGroups,
-                child.collisionTransform(), child.solidCollisionGroups(), Vec3.ZERO).pushOut();
+                child.collisionTransform(), StructureGeometry.solid(child), Vec3.ZERO).pushOut();
         if (push.lengthSqr() > EPSILON) {
-            if (assembly == null) assembly = SupportedStructures.of(child, child.solidCollisionGroups(), notParent);
+            if (assembly == null) assembly = SupportedStructures.of(child, StructureGeometry.solid(child), notParent);
             Vec3 allowed = StructureTerrainCollision.clampMotion(child, push, assembly, -1.0D, notParent);
             child.setPos(child.getX() + allowed.x, child.getY() + allowed.y, child.getZ() + allowed.z);
             double inward = child.getDeltaMovement().dot(push.normalize());
@@ -124,8 +124,8 @@ final class StructureCarrySystem {
         return child instanceof Entity childEntity && parent instanceof Entity parentEntity
                 && !childEntity.isRemoved() && !parentEntity.isRemoved() && childEntity.level() == parentEntity.level()
                 && childEntity.getDeltaMovement().y <= 1.0E-4D
-                && StructureCollisionResolver.supportingGroup(parent.collisionTransform(), parent.solidCollisionGroups(),
-                    child.collisionTransform(), child.solidCollisionGroups(), REACH) != null;
+                && StructureCollisionResolver.supportingGroup(parent.collisionTransform(), StructureGeometry.solid(parent),
+                    child.collisionTransform(), StructureGeometry.solid(child), REACH) != null;
     }
 
     private static CollidableStructure dereference(WeakReference<CollidableStructure> reference) {

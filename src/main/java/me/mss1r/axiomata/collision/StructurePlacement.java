@@ -24,8 +24,8 @@ public final class StructurePlacement {
         if (candidate == support || !Double.isFinite(x) || !Double.isFinite(z) || !Float.isFinite(yawDegrees)) {
             return Optional.empty();
         }
-        List<CollisionGroup> moving = candidate.solidCollisionGroups();
-        List<CollisionGroup> fixed = support.solidCollisionGroups();
+        List<CollisionGroup> moving = StructureGeometry.solid(candidate);
+        List<CollisionGroup> fixed = StructureGeometry.solid(support);
         StructureTransform origin = new StructureTransform(x, 0, z, yawDegrees);
         AABB candidateBounds = StructureCollisionResolver.worldBounds(origin, moving);
         AABB supportBounds = StructureCollisionResolver.worldBounds(support.collisionTransform(), fixed);

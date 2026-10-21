@@ -67,6 +67,7 @@ public final class BlueprintModule {
         gameEventBus.addListener(BlueprintDefinitionCatalog::syncToClients);
         gameEventBus.addListener(OutlineCatalog::syncToClients);
         gameEventBus.addListener(ConstructionMarkupCatalog::syncToClients);
+        gameEventBus.addListener(me.mss1r.axiomata.blueprint.internal.construction.ConstructionSync::onStartTracking);
 
         if (FMLEnvironment.dist == Dist.CLIENT) {
             modEventBus.addListener(me.mss1r.axiomata.blueprint.client.events.BlueprintClientModEvents::clientSetup);

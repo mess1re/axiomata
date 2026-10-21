@@ -8,8 +8,11 @@ import me.mss1r.axiomata.ResourceIds;
 import me.mss1r.axiomata.blueprint.BlueprintModule;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
 //? if neoforge {
+import net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 //?}
 
@@ -29,6 +32,7 @@ public final class NetworkHandler {
     private static final ResourceLocation TRACING_STATE = id("tracing_state");
     private static final ResourceLocation OUTLINE_INDEX = id("outline_index");
     private static final ResourceLocation TAKE_TABLE_RESULT = id("take_table_result");
+    private static final ResourceLocation CONSTRUCTION_STATE = id("construction_state");
     *///?}
 
     private NetworkHandler() {
@@ -66,6 +70,8 @@ public final class NetworkHandler {
                     S2COutlineIndexPacket.STREAM_CODEC);
             NetworkManager.registerS2CPayloadType(S2CConstructionMarkupPacket.TYPE,
                     S2CConstructionMarkupPacket.STREAM_CODEC);
+            NetworkManager.registerS2CPayloadType(S2CConstructionStatePacket.TYPE,
+                    S2CConstructionStatePacket.STREAM_CODEC);
         });
         //?}
         EnvExecutor.runInEnv(Env.CLIENT, () -> NetworkHandler::registerClientReceivers);
@@ -81,6 +87,8 @@ public final class NetworkHandler {
                 S2COutlineIndexPacket::decode, S2COutlineIndexPacket::handle);
         register(NetworkManager.s2c(), CONSTRUCTION_BOUNDS,
                 S2CConstructionMarkupPacket::decode, S2CConstructionMarkupPacket::handle);
+        register(NetworkManager.s2c(), CONSTRUCTION_STATE,
+                S2CConstructionStatePacket::decode, S2CConstructionStatePacket::handle);
         *///?} else {
         NetworkManager.registerReceiver(NetworkManager.s2c(), S2CBlueprintCatalogPacket.TYPE,
                 S2CBlueprintCatalogPacket.STREAM_CODEC, S2CBlueprintCatalogPacket::handle);
@@ -90,6 +98,8 @@ public final class NetworkHandler {
                 S2COutlineIndexPacket.STREAM_CODEC, S2COutlineIndexPacket::handle);
         NetworkManager.registerReceiver(NetworkManager.s2c(), S2CConstructionMarkupPacket.TYPE,
                 S2CConstructionMarkupPacket.STREAM_CODEC, S2CConstructionMarkupPacket::handle);
+        NetworkManager.registerReceiver(NetworkManager.s2c(), S2CConstructionStatePacket.TYPE,
+                S2CConstructionStatePacket.STREAM_CODEC, S2CConstructionStatePacket::handle);
         //?}
     }
 
@@ -132,6 +142,28 @@ public final class NetworkHandler {
     public static void sendToPlayer(ServerPlayer player, Object packet) {
         //? if forge {
         /*FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.buffer());
+        NetworkManager.sendToPlayer(player, encodeForClient(packet, buffer), buffer);
+        *///?} else {
+        NetworkManager.sendToPlayer(player, (CustomPacketPayload) packet);
+        //?}
+    }
+
+    /** Sends to every player that has the entity in view. */
+    public static void sendToTracking(Entity entity, Object packet) {
+        if (!(entity.level() instanceof ServerLevel level)) {
+            return;
+        }
+        //? if forge {
+        /*FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.buffer());
+        ResourceLocation id = encodeForClient(packet, buffer);
+        level.getChunkSource().broadcast(entity, NetworkManager.toPacket(NetworkManager.s2c(), id, buffer));
+        *///?} else {
+        level.getChunkSource().broadcast(entity, new ClientboundCustomPayloadPacket((CustomPacketPayload) packet));
+        //?}
+    }
+
+    //? if forge {
+    /*private static ResourceLocation encodeForClient(Object packet, FriendlyByteBuf buffer) {
         ResourceLocation id;
         if (packet instanceof S2CBlueprintCatalogPacket value) {
             S2CBlueprintCatalogPacket.encode(value, buffer);
@@ -145,14 +177,15 @@ public final class NetworkHandler {
         } else if (packet instanceof S2CConstructionMarkupPacket value) {
             S2CConstructionMarkupPacket.encode(value, buffer);
             id = CONSTRUCTION_BOUNDS;
+        } else if (packet instanceof S2CConstructionStatePacket value) {
+            S2CConstructionStatePacket.encode(value, buffer);
+            id = CONSTRUCTION_STATE;
         } else {
             throw new IllegalArgumentException("Unsupported server packet: " + packet.getClass().getName());
         }
-        NetworkManager.sendToPlayer(player, id, buffer);
-        *///?} else {
-        NetworkManager.sendToPlayer(player, (CustomPacketPayload) packet);
-        //?}
+        return id;
     }
+    *///?}
 
     private static ResourceLocation id(String path) {
         return ResourceIds.id(BlueprintModule.MOD_ID, path);

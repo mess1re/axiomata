@@ -1,5 +1,6 @@
 package me.mss1r.axiomata.blueprint.api.construction;
 
+import me.mss1r.axiomata.blueprint.internal.construction.ConstructionSync;
 import me.mss1r.axiomata.blueprint.internal.construction.MaterialAllocation;
 import net.minecraft.world.Container;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition.Material;
@@ -55,10 +56,10 @@ public final class ConstructionWork {
         }
 
         if (!progress.strike()) {
-            machine.onBuildProgressChanged();
+            changed(machine);
             return new Result(Status.PROGRESSED, null);
         }
-        machine.onBuildProgressChanged();
+        changed(machine);
         return new Result(Status.ADVANCED, null);
     }
 
@@ -71,7 +72,7 @@ public final class ConstructionWork {
             if (materials != null) {
                 refund.forEach(stack -> give(materials, stack));
             }
-            machine.onBuildProgressChanged();
+            changed(machine);
             return new Result(Status.ADVANCED, null);
         }
 
@@ -85,8 +86,13 @@ public final class ConstructionWork {
                 give(materials, material.returnStack());
             }
         }
-        machine.onBuildProgressChanged();
+        changed(machine);
         return new Result(Status.ADVANCED, null);
+    }
+
+    private static void changed(UnderConstruction machine) {
+        machine.onBuildProgressChanged();
+        ConstructionSync.changed(machine);
     }
 
     private static List<ItemStack> slots(Container container) {

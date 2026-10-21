@@ -12,7 +12,8 @@ import me.mss1r.axiomata.blueprint.internal.construction.ConstructionSync;
 
 /**
  * Implemented by the real entity being assembled. There is no temporary construction-site entity. While it is
- * unfinished Axiomata keeps it still, lets no one ride it, saves and synchronizes its {@link BuildProgress} and leaves
+ * unfinished Axiomata prevents self-propelled motion (a supporting structure can still carry it), lets no one ride it,
+ * saves and synchronizes its {@link BuildProgress} and leaves
  * debris when it is killed; the result gates only its own actions, such as firing, on {@link #isFullyBuilt()}.
  */
 public interface UnderConstruction {

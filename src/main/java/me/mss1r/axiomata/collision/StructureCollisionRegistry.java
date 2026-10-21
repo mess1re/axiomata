@@ -84,6 +84,13 @@ public final class StructureCollisionRegistry {
         }
 
         AABB bounds = StructureCollisionResolver.worldBounds(structure);
+        // Contact-only feet can lie below the picked/solid mechanism. They must participate in
+        // the spatial index too, otherwise a low platform never discovers the load on its deck.
+        // Most structures have no extra feet. Do not prepare their entire solid geometry a
+        // second time just to index optional contact-only parts.
+        var contactGroups = structure.supportContactGroups();
+        AABB contact = contactGroups.isEmpty() ? null : StructureCollisionResolver.worldBounds(structure, contactGroups);
+        if (contact != null) bounds = bounds == null ? contact : bounds.minmax(contact);
         synchronized (LOCK) {
             // Bounds may be calculated off-thread while the structure is removed. Do not put a
             // dead entry back into the cache after that race.

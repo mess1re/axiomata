@@ -12,6 +12,17 @@ public interface CollidableStructure {
         return collisionGroups();
     }
 
+    /**
+     * Additional, contact-only geometry used when this structure is a load: placement, support
+     * contact and space reserved by an unfinished build. Solid parts are included automatically.
+     * Include a non-solid footing here when
+     * e.g. a wheeled machine stands on its vanilla box, or a climb-through ladder rests on a deck.
+     * These parts do not become obstacles for walkers or support surfaces for other loads.
+     */
+    default List<CollisionGroup> supportContactGroups() {
+        return List.of();
+    }
+
     StructureTransform collisionTransform();
 
     /** Previous tick's root transform, used to carry entities instead of teleporting under them. */

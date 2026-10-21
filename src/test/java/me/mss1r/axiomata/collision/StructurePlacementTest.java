@@ -53,6 +53,49 @@ class StructurePlacementTest {
         assertTrue(StructurePlacement.findOnTop(CANDIDATE, support, Double.NaN, 0, 0).isEmpty());
         assertTrue(StructurePlacement.findOnTop(CANDIDATE, support, 0, 0, Float.POSITIVE_INFINITY).isEmpty());
         assertTrue(StructurePlacement.findOnTop(support, support, 0, 0, 0).isEmpty());
+        assertTrue(StructurePlacement.findOnTop(CANDIDATE, support, 0, Double.POSITIVE_INFINITY, 0, 0).isEmpty());
+    }
+
+    @Test void aimedDeckDoesNotPlaceOnTheMastAboveIt() {
+        var mast = box("mast", new AABB(2, 0, -.2, 2.4, 12, .2));
+        var support = new Structure(ORIGIN, List.of(DECK, mast));
+        var result = StructurePlacement.findOnTop(CANDIDATE, support, 0, 0, 0, 0).orElseThrow();
+        assertEquals(1, result.transform().y(), .001);
+        assertEquals("deck", result.support().name());
+    }
+
+    @Test void aMastThroughTheCandidateRejectsPlacementInsteadOfPushingItAside() {
+        var mast = box("mast", new AABB(-.1, 0, -.1, .1, 12, .1));
+        assertTrue(StructurePlacement.findOnTop(CANDIDATE,
+                new Structure(ORIGIN, List.of(DECK, mast)), 0, 0, 0, 0).isEmpty());
+    }
+
+    @Test void aLowCeilingDoesNotCountAsAValidDeckPlacement() {
+        var ceiling = box("ceiling", new AABB(-5, 1.5, -5, 5, 1.75, 5));
+        assertTrue(StructurePlacement.findOnTop(CANDIDATE,
+                new Structure(ORIGIN, List.of(DECK, ceiling)), 0, 0, 0, 0).isEmpty());
+    }
+
+    @Test void aimsAtTheLowerDeckEvenWhenThereIsAnUpperDeck() {
+        var upper = box("upper", new AABB(-5, 3.75, -5, 5, 4, 5));
+        var result = StructurePlacement.findOnTop(CANDIDATE,
+                new Structure(ORIGIN, List.of(DECK, upper)), 0, 0, 0, 0).orElseThrow();
+        assertEquals("deck", result.support().name());
+        assertEquals(1, result.transform().y(), .001);
+    }
+
+    @Test void aNonSolidFootingKeepsAnElevatedMechanismAtItsGroundDatum() {
+        var raised = box("mechanism", new AABB(-.5, .53, -.5, .5, 2, .5));
+        var feet = box("footing", new AABB(-.5, 0, -.5, .5, .01, .5));
+        CollidableStructure candidate = new CollidableStructure() {
+            public List<CollisionGroup> collisionGroups() { return List.of(raised); }
+            public List<CollisionGroup> supportContactGroups() { return List.of(feet); }
+            public StructureTransform collisionTransform() { return ORIGIN; }
+            public StructureTransform previousCollisionTransform() { return ORIGIN; }
+        };
+        var result = StructurePlacement.findOnTop(candidate, new Structure(ORIGIN, List.of(DECK)), 0, 0, 0, 0).orElseThrow();
+        assertEquals(0, result.transform().y(), .001, "The wheels, not the raised mechanism, must rest on deck");
+        assertEquals(List.of(raised), StructureGeometry.solid(candidate), "A contact-only footing is not a wall");
     }
 
     private record Structure(StructureTransform collisionTransform, List<CollisionGroup> collisionGroups) implements CollidableStructure {

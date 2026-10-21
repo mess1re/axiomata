@@ -19,6 +19,30 @@ public abstract class EntityCollisionMixin {
     @Unique
     private boolean axiomata$supportedByStructure;
 
+    // Register after a successful level addition, including disk loads of motionless sites.
+    // A pre-add event is cancellable and could leave an entity that never spawned in the index.
+    @Inject(method =
+            //? if forge {
+            /*"onAddedToWorld",
+            *///?} else {
+            "onAddedToLevel",
+            //?}
+            at = @At("TAIL"), remap = false)
+    private void axiomata$registerAddedStructure(CallbackInfo callbackInfo) {
+        if ((Object) this instanceof CollidableStructure structure) StructureCollisionSystem.register(structure);
+    }
+
+    @Inject(method =
+            //? if forge {
+            /*"onRemovedFromWorld",
+            *///?} else {
+            "onRemovedFromLevel",
+            //?}
+            at = @At("TAIL"), remap = false)
+    private void axiomata$unregisterRemovedStructure(CallbackInfo callbackInfo) {
+        if ((Object) this instanceof CollidableStructure structure) StructureCollisionSystem.unregister(structure);
+    }
+
     @Inject(method = "move", at = @At("HEAD"))
     private void axiomata$resetStructureSupport(MoverType moverType, Vec3 movement, CallbackInfo callbackInfo) {
         axiomata$supportedByStructure = false;

@@ -292,7 +292,7 @@ public final class StructureTerrainCollision {
 
     static <T extends Entity & CollidableStructure> boolean isSupportedByWorld(
             T structure, double reach) {
-        List<CollisionGroup> groups = StructureGeometry.solid(structure);
+        List<CollisionGroup> groups = StructureGeometry.supportContact(structure);
         AABB bounds = StructureCollisionResolver.worldBounds(structure, groups);
         if (bounds == null) return false;
         Vec3 down = new Vec3(0, -reach, 0);

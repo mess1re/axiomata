@@ -5,6 +5,9 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import me.mss1r.axiomata.collision.*;
+import me.mss1r.axiomata.blueprint.api.construction.BuildProgress;
+import me.mss1r.axiomata.blueprint.api.construction.UnderConstruction;
+import net.minecraft.resources.ResourceLocation;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -83,6 +86,135 @@ class StructureCarrySystemTest {
         parent.setPos(0, 1, 0);
         StructureMotionSystem.tickStructure(parent);
         assertEquals(1, child.getY(), .001);
+    }
+
+    @Test
+    void contactOnlyWheelsBelowAnElevatedMechanismAreFoundByAFlatPlatform() {
+        TestEntity platform = entity(DECK, 0, 0, 0);
+        TestEntity engine = new TestEntity(level, shape(new AABB(-.5, .53, -.5, .5, 2, .5))) {
+            @Override public List<CollisionGroup> supportContactGroups() {
+                return List.of(CollisionGroup.fixed("footing", shape(new AABB(-.5, 0, -.5, .5, .01, .5))));
+            }
+        };
+        entities.add(engine);
+        engine.setPos(2, 0, 0);
+        StructureMotionSystem.tickStructure(engine);
+        platform.setPos(1, 0, 0);
+        StructureMotionSystem.tickStructure(platform);
+        assertEquals(3, engine.getX(), .001);
+        assertEquals(0, engine.getY(), .001);
+    }
+
+    private Site site(double x, double y, double z) {
+        Site site = new Site(level);
+        site.setPos(x, y, z);
+        entities.add(site);
+        StructureMotionSystem.tickStructure(site);
+        return site;
+    }
+
+    @Test
+    void aBareConstructionSiteFollowsTranslationAndRotationWithoutBecomingSolid() {
+        TestEntity parent = entity(DECK, 0, 0, 0);
+        Site site = site(2, 0, 0);
+        assertTrue(StructureGeometry.solid(site).isEmpty());
+        parent.setPos(1, 1, 0);
+        parent.setYRot(90);
+        StructureMotionSystem.tickStructure(parent);
+        assertEquals(1, site.getX(), .001);
+        assertEquals(1, site.getY(), .001);
+        assertEquals(2, site.getZ(), .001);
+        assertEquals(90, site.getYRot(), .001);
+        assertTrue(StructureGeometry.solid(site).isEmpty(), "A carried site must not create invisible walls");
+        StructureMotionSystem.tickStructure(site);
+        StructureMotionSystem.tickStructure(parent);
+        assertEquals(2, site.getZ(), .001, "No double carry in the site's own tick");
+    }
+
+    @Test
+    void aMotionlessSiteIsIndexedOnLevelAdditionAndUnindexedOnUnload() {
+        Site site = new Site(level);
+        entities.add(site);
+        site.onAddedToLevel();
+        assertTrue(StructureCollisionRegistry.snapshot().stream().anyMatch(found -> found == site));
+        site.onRemovedFromLevel();
+        assertFalse(StructureCollisionRegistry.snapshot().stream().anyMatch(found -> found == site));
+    }
+
+    @Test
+    void finishingAConstructionSiteDoesNotLoseItsSupport() {
+        TestEntity parent = entity(DECK, 0, 0, 0);
+        Site site = site(2, 0, 0);
+        parent.setPos(1, 0, 0);
+        StructureMotionSystem.tickStructure(parent);
+        site.finished = true;
+        StructureCollisionSystem.register(site);
+        parent.setPos(2, 0, 0);
+        StructureMotionSystem.tickStructure(parent);
+        assertEquals(4, site.getX(), .001);
+        assertFalse(StructureGeometry.solid(site).isEmpty());
+    }
+
+    @Test
+    void aFreshlyLoadedSiteReacquiresSupportWithoutSavedEntityIds() {
+        TestEntity parent = entity(DECK, 0, 0, 0);
+        Site first = site(2, 0, 0);
+        parent.setPos(1, 0, 0);
+        parent.setYRot(30);
+        StructureMotionSystem.tickStructure(parent);
+        CompoundTag tag = first.saveWithoutId(new CompoundTag());
+        first.discard();
+        Site loaded = site(0, 0, 0);
+        loaded.load(tag);
+        StructureCollisionSystem.register(loaded);
+        Vec3 expected = loaded.position().add(1, 0, 0);
+        parent.setPos(2, 0, 0);
+        StructureMotionSystem.tickStructure(parent);
+        assertEquals(expected.x, loaded.getX(), .001);
+        assertEquals(expected.z, loaded.getZ(), .001);
+        assertEquals(30, loaded.getYRot(), .001);
+    }
+
+    @Test
+    void aBareSiteOverADeckOpeningIsNotCarried() {
+        var sides = new CollisionShape(Vec3.ZERO, List.of(
+                CollisionPart.axisAligned(new AABB(-5, -.25, -5, -1, 0, 5)),
+                CollisionPart.axisAligned(new AABB(1, -.25, -5, 5, 0, 5))));
+        TestEntity parent = entity(sides, 0, 0, 0);
+        Site site = site(0, 0, 0);
+        parent.setPos(0, 0, 1);
+        StructureMotionSystem.tickStructure(parent);
+        assertEquals(0, site.getZ(), .001);
+    }
+
+    @Test
+    void aBareSiteCanBeCarriedAsPartOfAStackWithoutMakingTheStackSolid() {
+        TestEntity parent = entity(DECK, 0, 0, 0);
+        TestEntity middle = entity(CARGO, 2, 0, 0);
+        Site site = site(2, 1, 0);
+        parent.setYRot(90);
+        StructureMotionSystem.tickStructure(parent);
+        assertEquals(0, site.getX(), .001);
+        assertEquals(2, site.getZ(), .001);
+        assertEquals(1, site.getY(), .001);
+        StructureMotionSystem.tickStructure(middle);
+        assertEquals(2, site.getZ(), .001);
+        assertTrue(StructureGeometry.solid(site).isEmpty());
+    }
+
+    @Test
+    void placementRespectsPlannedSitesAndRealBlockGeometry() {
+        TestEntity candidate = entity(CARGO, 0, 0, 0);
+        assertTrue(StructurePlacement.isClear(candidate, candidate.collisionTransform()));
+        Site site = site(0, 0, 0);
+        assertFalse(StructurePlacement.isClear(candidate, candidate.collisionTransform()), "Unbuilt sites reserve their space");
+        site.discard();
+        when(level.getBlockCollisions(any(), any())).thenReturn(
+                List.of(Shapes.create(new AABB(.2, .2, .2, .4, .4, .4))));
+        assertFalse(StructurePlacement.isClear(candidate, candidate.collisionTransform()));
+        when(level.getBlockCollisions(any(), any())).thenReturn(
+                List.of(Shapes.create(new AABB(2, .2, .2, 3, .4, .4))));
+        assertTrue(StructurePlacement.isClear(candidate, candidate.collisionTransform()), "Nearby blocks outside the parts do not block placement");
     }
 
     @Test
@@ -494,7 +626,7 @@ class StructureCarrySystemTest {
                         .allowed());
     }
 
-    private static final class TestEntity extends Entity implements CollidableStructure {
+    private static class TestEntity extends Entity implements CollidableStructure {
         private final List<CollisionGroup> groups;
         private StructureTransform previous;
         private float stepHeight;
@@ -537,5 +669,18 @@ class StructureCarrySystemTest {
         public float maxUpStep() {
             return stepHeight;
         }
+    }
+
+    private static final class Site extends TestEntity implements UnderConstruction {
+        private final BuildProgress progress = BuildProgress.finished();
+        private boolean finished;
+
+        Site(Level level) {
+            super(level, CARGO);
+        }
+
+        @Override public BuildProgress buildProgress() { return progress; }
+        @Override public boolean isFullyBuilt() { return finished; }
+        @Override public ResourceLocation constructionModel() { return null; }
     }
 }

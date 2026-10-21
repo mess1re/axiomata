@@ -867,12 +867,18 @@ public final class StructureCollisionResolver {
 
     public static Optional<Vec3> clipSegment(
             CollidableStructure structure, Vec3 worldStart, Vec3 worldEnd, double padding) {
-        StructureTransform transform = structure.collisionTransform();
+        return clipSegment(structure.collisionTransform(), structure.collisionGroups(), worldStart, worldEnd, padding);
+    }
+
+    /** Clips only the supplied geometry, e.g. solid deck parts rather than decorative rigging. */
+    public static Optional<Vec3> clipSegment(
+            StructureTransform transform, List<CollisionGroup> groups,
+            Vec3 worldStart, Vec3 worldEnd, double padding) {
         Vec3 structureStart = transform.toLocal(worldStart);
         Vec3 structureEnd = transform.toLocal(worldEnd);
         Vec3 closest = null;
         double closestDistanceSqr = Double.MAX_VALUE;
-        for (CollisionGroup group : structure.collisionGroups()) {
+        for (CollisionGroup group : groups) {
             for (CollisionPart part : group.parts()) {
                 Vec3 start = group.toPart(part, structureStart);
                 Vec3 end = group.toPart(part, structureEnd);

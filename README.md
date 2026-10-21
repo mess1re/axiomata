@@ -20,16 +20,27 @@ Blueprint integrations use `UnderConstruction`. Model collision integrations use
 
 Call `StructureMotionSystem.tickStructure(this)` after updating a structure's position and posed
 groups. It carries supported players and other `CollidableStructure` entities, including stacked
-loads. Structure-to-structure contact uses `solidCollisionGroups()` on both sides; picking-only
-geometry does not become a support surface. Cargo remains server-owned and is not a passenger.
+loads. Only `solidCollisionGroups()` can support another structure. A load can additionally declare
+`supportContactGroups()`, e.g. contact-only wheel feet or a climb-through ladder. These extra parts
+are used for placement and finding support, not as invisible obstacles. Cargo remains server-owned
+and is not a passenger. Unfinished builds use their planned footing even before the first section
+exists, while only their built sections physically collide. Contacts are rediscovered after loading;
+no entity IDs or mounted attachments are saved. Registration and removal follow the entity's level
+lifecycle, including motionless sites loaded from disk.
 Consumers with a separate root-yaw field override `rotateWithSupport` to update that field too.
 
 `Entity.move` uses the solid geometry for translation. Code that moves with `setPos` instead must
 first constrain its displacement with `StructureTerrainCollision.clampMotion`. That method also
 checks clearance for supported loads. `clampYaw` checks the turning arc; `canOccupy` checks
 a single proposed root pose.
-`StructurePlacement.findOnTop` returns a candidate pose and its supporting group without spawning
-anything. Validate world clearance with `canOccupy` before applying it.
+`ConstructionTarget.pick(player, reach, partialTick, fluids)` selects the nearest block or finished
+solid structure surface. It ignores decorative rigging and respects block occlusion; fluid targets
+remain block-only. Recompute the aim on the server. `StructurePlacement.findOnTop` returns a candidate
+pose and supporting group without spawning anything; pass the hit's Y coordinate to place on a deck
+below a mast rather than above the whole structure. Validate the proposed pose with
+`StructurePlacement.isClear` before applying it: it checks blocks, the world border, other structures
+and the space reserved by unfinished sites. Consume the item only after successful entity addition.
+`ConstructionDeployer.deploy` accepts a `ConstructionTarget`; its block-based overload is retained.
 
 Artillery integrations extend `BallisticProjectile` and provide their own projectile catalog and
 `ImpactResolver`. Block-damage policy and player attribution stay with the consuming mod.

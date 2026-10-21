@@ -44,7 +44,7 @@ final class SupportedStructures {
             if (members.contains(candidate) || ignored.test(candidate) || !(candidate instanceof Entity entity)
                     || !entity.isAlive() || entity.noPhysics || entity.isPassenger() || entity.getDeltaMovement().y > 1.0E-4D) continue;
             if (StructureCollisionResolver.supportingGroup(parent.collisionTransform(), StructureGeometry.solid(parent),
-                    candidate.collisionTransform(), StructureGeometry.solid(candidate), .03D) == null) continue;
+                    candidate.collisionTransform(), StructureGeometry.supportContact(candidate), .03D) == null) continue;
             if (StructureTerrainCollision.isSupportedByWorld((Entity & CollidableStructure) entity, .03D)) continue;
             members.add(candidate);
             loads.add(candidate);

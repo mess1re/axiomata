@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * What every result does while it is built, so that its mod need not: it carries no one, stays where it was placed,
+ * What every result does while it is built, so that its mod need not: it cannot be boarded or move under its own power,
  * keeps its progress in its own save data and leaves debris when it is destroyed.
  */
 @Mixin(Entity.class)

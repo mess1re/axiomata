@@ -113,7 +113,7 @@ public record C2SUseBlueprintPacket(String recipeId) implements CustomPacketPayl
                         *///?} else {
                         player.blockInteractionRange(),
                         //?}
-                        0.0F
+                        1.0F
                 );
                 if (target == null) {
                     player.displayClientMessage(Component.translatable("message.axiomata.construction_target_missing"), false);

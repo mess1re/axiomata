@@ -47,7 +47,7 @@ final class StructureCarrySystem {
         SupportedStructures assembly = null;
         CollisionGroup support = child.getDeltaMovement().y <= 1.0E-4D
                 ? StructureCollisionResolver.supportingGroup(previous, previousGroups,
-                    child.collisionTransform(), StructureGeometry.solid(child), REACH) : null;
+                    child.collisionTransform(), StructureGeometry.supportContact(child), REACH) : null;
         boolean worldSupport = support != null && StructureTerrainCollision.isSupportedByWorld(child, REACH);
         if (support != null && !worldSupport && claimSupport(child, parent)) {
             CollisionGroup after = currentGroups.stream().filter(g -> g.name().equals(support.name())).findFirst().orElse(null);
@@ -125,7 +125,7 @@ final class StructureCarrySystem {
                 && !childEntity.isRemoved() && !parentEntity.isRemoved() && childEntity.level() == parentEntity.level()
                 && childEntity.getDeltaMovement().y <= 1.0E-4D
                 && StructureCollisionResolver.supportingGroup(parent.collisionTransform(), StructureGeometry.solid(parent),
-                    child.collisionTransform(), StructureGeometry.solid(child), REACH) != null;
+                    child.collisionTransform(), StructureGeometry.supportContact(child), REACH) != null;
     }
 
     private static CollidableStructure dereference(WeakReference<CollidableStructure> reference) {

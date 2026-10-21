@@ -36,7 +36,7 @@
   "commands.axiomata.blueprint.unknown": "Неизвестный чертеж: %s",
   "commands.axiomata.blueprint.give.success": "Чертеж %s выдан игрокам: %s",
   "gui.axiomata.drawing_table.pick": "Выбери, что чертить",
-  "gui.axiomata.drawing_table.ruined": "Лист испорчен",
+  "gui.axiomata.drawing_table.ruined": "Отличный чертёж… чего-то другого",
   "message.axiomata.construction.missing": "%1$s: требуется %2$s × %3$s",
   "tooltip.axiomata.blueprint.quality.clean": "Начерчен аккуратно",
   "tooltip.axiomata.blueprint.quality.plain": "Обычное качество",

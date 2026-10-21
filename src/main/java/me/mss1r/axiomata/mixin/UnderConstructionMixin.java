@@ -10,6 +10,7 @@ import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -21,15 +22,18 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  */
 @Mixin(Entity.class)
 public abstract class UnderConstructionMixin {
+    @Unique
     private static final String PROGRESS_TAG = "AxiomataConstruction";
 
+    @Unique
     private boolean axiomata$unfinished() {
         return this instanceof UnderConstruction machine && !machine.isFullyBuilt();
     }
 
-    @Inject(method = "canAddPassenger", at = @At("HEAD"), cancellable = true)
-    private void axiomata$noRidersWhileUnfinished(Entity passenger, CallbackInfoReturnable<Boolean> callback) {
-        if (axiomata$unfinished()) {
+    // On the rider's side: a result may decide who boards it in its own code, but nobody boards it unfinished.
+    @Inject(method = "startRiding(Lnet/minecraft/world/entity/Entity;Z)Z", at = @At("HEAD"), cancellable = true)
+    private void axiomata$noRidingUnfinished(Entity vehicle, boolean force, CallbackInfoReturnable<Boolean> callback) {
+        if (vehicle instanceof UnderConstruction machine && !machine.isFullyBuilt()) {
             callback.setReturnValue(false);
         }
     }

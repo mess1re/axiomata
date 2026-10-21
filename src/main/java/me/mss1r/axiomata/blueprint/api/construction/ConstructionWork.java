@@ -97,26 +97,28 @@ public final class ConstructionWork {
 
     /**
      * What is left of an unfinished result that is destroyed: a quarter of what its built stages took and half of what
-     * was paid for the stage under way. Tags come back as their {@code returns} item.
+     * was paid for the stage under way, each counted over all its stages. Tags come back as their {@code returns} item.
      */
     public static List<ItemStack> debris(UnderConstruction machine) {
         BuildProgress progress = machine.buildProgress();
         BlueprintConstructionPlan plan = progress.plan();
-        List<ItemStack> debris = new ArrayList<>();
+        Map<String, ItemStack> built = new java.util.LinkedHashMap<>();
         for (int index = 0; index < Math.min(progress.stage(), plan.stageCount()); index++) {
             for (Material material : plan.stage(index).materials()) {
-                add(debris, material.returnStack(), (int) Math.floor(material.count() * BUILT_DEBRIS));
+                ItemStack stack = material.returnStack();
+                built.merge(material.key(), stack, (have, more) -> have.copyWithCount(have.getCount() + more.getCount()));
             }
         }
+        List<ItemStack> debris = new ArrayList<>();
+        built.values().forEach(stack -> add(debris, stack, BUILT_DEBRIS));
         if (progress.currentStage() != null && progress.materialsCommitted()) {
-            for (ItemStack paid : progress.currentStageRefund()) {
-                add(debris, paid, (int) Math.floor(paid.getCount() * PAID_DEBRIS));
-            }
+            progress.currentStageRefund().forEach(stack -> add(debris, stack, PAID_DEBRIS));
         }
         return debris;
     }
 
-    private static void add(List<ItemStack> debris, ItemStack stack, int count) {
+    private static void add(List<ItemStack> debris, ItemStack stack, float share) {
+        int count = (int) Math.floor(stack.getCount() * share);
         if (count > 0 && !stack.isEmpty()) {
             debris.add(stack.copyWithCount(count));
         }

@@ -11,11 +11,12 @@
 - `ConstructionGeometry` makes the built sections of an unfinished build solid and its built ladders climbable, and tells whether a bone stands yet, e.g. for a rope between two sections.
 - `ConstructionGeoRenderer` draws unfinished GeckoLib results. Only a player holding a construction hammer sees the sections still to come and the stage sign.
 - The Build Sections Blockbench plugin exports the construction markup (File → Export → Construction Markup) and assigns sections to groups too, for bones without cubes.
-- `UnderConstruction.acceptsSupport` lets a result refuse blocks it cannot be built on.
+- `UnderConstruction.acceptsSupport` lets a result refuse blocks it cannot be built on, and `mayWork` decides who may build or take it apart.
+- An unfinished result carries no one, ignores everything but the construction hammer, stays where it was placed and keeps its progress in its own save data. Destroyed, it leaves a quarter of what its built stages took and half of what was paid for the stage under way.
 
 ### Changed
 
-- Hammer blows land on the active section by the construction markup without any code in the result.
+- Hammer blows land on the active section by the construction markup without any code in the result. Any item in `axiomata:construction_hammers` builds, not only Axiomata's hammer.
 - Stacks of resting structures cost far less per tick, and neighbour queries are indexed by chunk column.
 
 ### Removed

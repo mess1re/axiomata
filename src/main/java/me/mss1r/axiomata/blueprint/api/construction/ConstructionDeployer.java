@@ -10,6 +10,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
 
@@ -24,12 +25,20 @@ public final class ConstructionDeployer {
     @Nullable
     public static Entity deploy(ServerLevel level, String blueprintId, ItemStack blueprint, ItemStack result,
                                 BlockPos targetPos, Direction targetFace, Vec3 hitLocation, float yaw) {
+        return deploy(level, blueprintId, blueprint, result, ConstructionTarget.of(
+                new BlockHitResult(hitLocation, targetFace, targetPos, false)), yaw);
+    }
+
+    /** Deploys on the aimed block or on the deck of the aimed structure, which then carries the build. */
+    @Nullable
+    public static Entity deploy(ServerLevel level, String blueprintId, ItemStack blueprint, ItemStack result,
+                                ConstructionTarget target, float yaw) {
         BlueprintDefinition recipe = BlueprintDefinitions.get(blueprintId);
         if (recipe == null) {
             return null;
         }
         ConstructionPlacementHelper.PlacementPlan plan = ConstructionPlacementHelper.findPlacement(
-                level, result, targetPos, targetFace, hitLocation, yaw, recipe);
+                level, result, target, yaw, recipe);
         if (plan == null || !plan.valid()) {
             return null;
         }

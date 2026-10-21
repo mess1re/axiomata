@@ -1,6 +1,10 @@
 package me.mss1r.axiomata.blueprint.internal.construction;
 
+import me.mss1r.axiomata.blueprint.api.construction.ConstructionTarget;
 import me.mss1r.axiomata.blueprint.api.construction.UnderConstruction;
+import me.mss1r.axiomata.collision.CollidableStructure;
+import me.mss1r.axiomata.collision.StructurePlacement;
+import me.mss1r.axiomata.collision.system.StructureInteractionPicker;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition;
 import net.minecraft.core.BlockPos;
 //? if neoforge {
@@ -14,11 +18,15 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -38,7 +46,29 @@ public final class ConstructionPlacementHelper {
 
     public enum PlacementMode {
         GROUND,
-        WATER
+        WATER,
+        STRUCTURE
+    }
+
+    /** The aimed target within the player's reach, or null. */
+    @Nullable
+    public static ConstructionTarget target(Player player, BlueprintDefinition recipe, double reach, float partialTick) {
+        HitResult hit = player.pick(reach, partialTick, requiresFluidTargeting(recipe));
+        BlockHitResult block = hit instanceof BlockHitResult blockHit && hit.getType() == HitResult.Type.BLOCK
+                ? blockHit : null;
+        if (requiresFluidTargeting(recipe)) {
+            return block == null ? null : ConstructionTarget.of(block);
+        }
+        Vec3 start = player.getEyePosition(partialTick);
+        Vec3 end = start.add(player.getViewVector(partialTick).scale(reach));
+        EntityHitResult structureHit = StructureInteractionPicker.findHit(player, start, end,
+                entity -> entity instanceof CollidableStructure
+                        && !(entity instanceof UnderConstruction machine && !machine.isFullyBuilt()),
+                block == null ? reach * reach : start.distanceToSqr(block.getLocation()));
+        if (structureHit != null && structureHit.getEntity() instanceof CollidableStructure structure) {
+            return ConstructionTarget.on(structure, structureHit.getLocation());
+        }
+        return block == null ? null : ConstructionTarget.of(block);
     }
 
     public record PlacementPlan(PlacementMode mode, BlockPos anchorPos, Vec3 worldPos, AABB bounds, boolean valid) {
@@ -47,6 +77,17 @@ public final class ConstructionPlacementHelper {
     /** Whether the blueprint is placed on water rather than on the ground. */
     public static boolean requiresFluidTargeting(BlueprintDefinition recipe) {
         return recipe.result().placement() == BlueprintDefinition.Placement.WATER;
+    }
+
+    @Nullable
+    public static PlacementPlan findPlacement(Level level, ItemStack stack, ConstructionTarget target, float yaw,
+                                                BlueprintDefinition recipe) {
+        if (target.structure() != null) {
+            return recipe.buildsInWorld() && !requiresFluidTargeting(recipe)
+                    ? findStructurePlacement(level, stack, target.structure(), target.location(), yaw, recipe)
+                    : null;
+        }
+        return findPlacement(level, stack, target.pos(), target.face(), target.location(), yaw, recipe);
     }
 
     @Nullable
@@ -106,6 +147,24 @@ public final class ConstructionPlacementHelper {
         ) {
             entity.setCustomName(stack.getHoverName());
         }
+    }
+
+    /** On the deck of a structure: lowered from the aimed point onto its geometry, then carried by it. */
+    private static PlacementPlan findStructurePlacement(Level level, ItemStack stack, CollidableStructure support,
+                                                         Vec3 hit, float yaw, BlueprintDefinition recipe) {
+        Entity previewEntity = createPreviewEntity(level, stack, hit, yaw, 0, recipe);
+        AABB bounds = new AABB(hit.x - 0.5D, hit.y, hit.z - 0.5D, hit.x + 0.5D, hit.y + 1.0D, hit.z + 0.5D);
+        if (!(previewEntity instanceof CollidableStructure candidate)) {
+            return new PlacementPlan(PlacementMode.STRUCTURE, BlockPos.containing(hit), hit, bounds, false);
+        }
+        var placed = StructurePlacement.findOnTop(candidate, support, hit.x, hit.y, hit.z, yaw);
+        Vec3 worldPos = placed.map(result -> new Vec3(hit.x, result.transform().y(), hit.z)).orElse(hit);
+        configureEntity(previewEntity, stack, worldPos, yaw, 0);
+        bounds = previewEntity.getBoundingBox();
+        boolean valid = placed.isPresent()
+                && !overlapsExistingConstructionSite(level, bounds)
+                && !level.getBlockCollisions(previewEntity, bounds).iterator().hasNext();
+        return new PlacementPlan(PlacementMode.STRUCTURE, BlockPos.containing(worldPos), worldPos, bounds, valid);
     }
 
     @Nullable

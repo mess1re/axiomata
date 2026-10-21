@@ -1,5 +1,6 @@
 package me.mss1r.axiomata.blueprint.network;
 
+import me.mss1r.axiomata.blueprint.api.construction.ConstructionTarget;
 import dev.architectury.networking.NetworkManager;
 import me.mss1r.axiomata.ResourceIds;
 import me.mss1r.axiomata.blueprint.api.BlueprintPermissions;
@@ -18,8 +19,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
 //? if forge {
 /*import net.minecraftforge.common.ForgeMod;
 *///?}
@@ -106,21 +105,22 @@ public record C2SUseBlueprintPacket(String recipeId) implements CustomPacketPayl
 
             net.minecraft.world.entity.Entity machine = null;
             if (buildsInWorld) {
-                HitResult target = player.pick(
+                ConstructionTarget target = ConstructionPlacementHelper.target(
+                        player,
+                        recipe,
                         //? if forge {
                         /*player.getAttributeValue(ForgeMod.BLOCK_REACH.get()),
                         *///?} else {
                         player.blockInteractionRange(),
                         //?}
-                        0.0F,
-                        ConstructionPlacementHelper.requiresFluidTargeting(recipe)
+                        0.0F
                 );
-                if (!(target instanceof BlockHitResult blockTarget) || target.getType() != HitResult.Type.BLOCK) {
+                if (target == null) {
                     player.displayClientMessage(Component.translatable("message.axiomata.construction_target_missing"), false);
                     return;
                 }
-                if (!player.serverLevel().mayInteract(player, blockTarget.getBlockPos())
-                        || !player.mayUseItemAt(blockTarget.getBlockPos(), blockTarget.getDirection(), blueprint)) {
+                if (!player.serverLevel().mayInteract(player, target.pos())
+                        || !player.mayUseItemAt(target.pos(), target.face(), blueprint)) {
                     player.displayClientMessage(Component.translatable("gui.axiomata.no_permission"), false);
                     return;
                 }
@@ -130,9 +130,7 @@ public record C2SUseBlueprintPacket(String recipeId) implements CustomPacketPayl
                         packet.recipeId,
                         blueprint,
                         result,
-                        blockTarget.getBlockPos(),
-                        blockTarget.getDirection(),
-                        blockTarget.getLocation(),
+                        target,
                         player.getYRot()
                 );
                 if (machine == null) {

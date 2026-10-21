@@ -1,5 +1,6 @@
 package me.mss1r.axiomata.blueprint.client.events;
 
+import me.mss1r.axiomata.blueprint.api.construction.ConstructionTarget;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import me.mss1r.axiomata.blueprint.api.BlueprintTags;
 import me.mss1r.axiomata.blueprint.client.PlacementTargetHelper;
@@ -15,7 +16,6 @@ import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 //? if forge {
 /*import net.minecraftforge.client.event.RenderLevelStageEvent;
@@ -57,19 +57,13 @@ public class BlueprintClientGameEvents {
         *///?} else {
         float partialTick = event.getPartialTick().getGameTimeDeltaPartialTick(false);
         //?}
-        BlockHitResult blockHitResult = PlacementTargetHelper.getPlacementTarget(minecraft, previewStack, recipe, partialTick);
-        if (blockHitResult == null) {
+        ConstructionTarget target =
+                PlacementTargetHelper.getPlacementTarget(minecraft, previewStack, recipe, partialTick);
+        if (target == null) {
             return;
         }
         ConstructionPlacementHelper.PlacementPlan plan = ConstructionPlacementHelper.findPlacement(
-                level,
-                previewStack,
-                blockHitResult.getBlockPos(),
-                blockHitResult.getDirection(),
-                blockHitResult.getLocation(),
-                player.getYRot(),
-                recipe
-        );
+                level, previewStack, target, player.getYRot(), recipe);
         if (plan == null) {
             return;
         }

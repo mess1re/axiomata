@@ -1,5 +1,6 @@
 package me.mss1r.axiomata.blueprint.client.screen;
 
+import me.mss1r.axiomata.blueprint.api.construction.ConstructionTarget;
 import me.mss1r.axiomata.blueprint.client.PlacementTargetHelper;
 import me.mss1r.axiomata.blueprint.internal.construction.ConstructionPlacementHelper;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition;
@@ -17,7 +18,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -177,17 +177,16 @@ public class BlueprintUseScreen extends AbstractContainerScreen<BlueprintUseMenu
             return null;
         }
 
-        BlockHitResult blockHitResult = PlacementTargetHelper.getPlacementTarget(minecraft, resultStack, recipe, 0.0F);
-        if (blockHitResult == null) {
+        ConstructionTarget target =
+                PlacementTargetHelper.getPlacementTarget(minecraft, resultStack, recipe, 0.0F);
+        if (target == null) {
             return null;
         }
 
         return ConstructionPlacementHelper.findPlacement(
                 minecraft.level,
                 resultStack,
-                blockHitResult.getBlockPos(),
-                blockHitResult.getDirection(),
-                blockHitResult.getLocation(),
+                target,
                 minecraft.player == null ? 0.0F : minecraft.player.getYRot(),
                 recipe
         );

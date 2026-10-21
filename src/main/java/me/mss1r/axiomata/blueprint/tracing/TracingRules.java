@@ -15,14 +15,14 @@ public final class TracingRules {
     // the line, and wandering off it is counted as before.
     public static final float COVER_RADIUS_PIXELS = 3.0F;
 
+    // A few stray cells of a large drawing may stay dry; a missed stretch of line may not.
+    public static final float COVERAGE_TARGET = 0.9975F;
+
     // A gap this small, left between inked parts of a line, is filled when the pen is lifted.
     public static final int MAX_GAP_CELLS = 4;
 
     // From this coverage on, the parts still to ink are pointed out on the sheet.
     public static final float HINT_COVERAGE = 0.9F;
-
-    // Leave a little room for isolated missed cells without accepting visibly unfinished sheets.
-    public static final float COVERAGE_TARGET = 0.9875F;
 
     // This counts off-line distance, not bad ticks. Crossing the outline while scribbling should
     // not reset the penalty, and larger drawings need proportionally more room for mistakes.

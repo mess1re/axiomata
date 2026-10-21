@@ -4,6 +4,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import me.mss1r.axiomata.ResourceIds;
 import me.mss1r.axiomata.blueprint.BlueprintModule;
 import me.mss1r.axiomata.blueprint.blockentity.DrawingTableBlockEntity;
+import me.mss1r.axiomata.blueprint.client.renderer.InkTextures;
 import me.mss1r.axiomata.blueprint.tracing.BlueprintOutline;
 import me.mss1r.axiomata.blueprint.tracing.TracingRules;
 import me.mss1r.axiomata.blueprint.tracing.OutlineCatalog;
@@ -302,7 +303,7 @@ public class DrawingTableScreen extends AbstractContainerScreen<DrawingTableMenu
                 if (runStart == x) {
                     continue;
                 }
-                guiGraphics.blit(outline.texture(),
+                guiGraphics.blit(InkTextures.white(outline.texture()),
                         DrawingTableLayout.SHEET_X + runStart * cell, DrawingTableLayout.SHEET_Y + y * cell,
                         runStart * cell, y * cell, (x - runStart) * cell, cell,
                         DrawingTableLayout.SHEET_SIZE, DrawingTableLayout.SHEET_SIZE);
@@ -597,5 +598,6 @@ public class DrawingTableScreen extends AbstractContainerScreen<DrawingTableMenu
     public void removed() {
         super.removed();
         ClientTracing.clear();
+        InkTextures.clear();
     }
 }

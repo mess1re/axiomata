@@ -23,6 +23,7 @@ public class BlueprintCreativeTab {
                         output.accept(BlueprintItems.INKWELL.get());
                         output.accept(BlueprintItems.BLUEPRINT.get());
                         output.accept(BlueprintItems.CONSTRUCTION_HAMMER.get());
+                        output.accept(BlueprintItems.ROPE.get());
                     }).build()
     );
 

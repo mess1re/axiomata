@@ -7,6 +7,7 @@
   "block.axiomata.inkwell": "Inkwell",
   "item.axiomata.blueprint": "Blueprint",
   "item.axiomata.construction_hammer": "Construction Hammer",
+  "item.axiomata.rope": "Rope",
   "item.axiomata.blueprint_name": "Blueprint: %s",
   "item.axiomata.result_with_sections": "%s (%s sections)",
   "itemGroup.axiomata": "Axiomata",

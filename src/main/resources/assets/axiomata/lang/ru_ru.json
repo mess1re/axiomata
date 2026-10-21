@@ -7,6 +7,7 @@
   "block.axiomata.inkwell": "Чернильница",
   "item.axiomata.blueprint": "Чертеж",
   "item.axiomata.construction_hammer": "Строительный молот",
+  "item.axiomata.rope": "Верёвка",
   "item.axiomata.blueprint_name": "Чертеж: %s",
   "item.axiomata.result_with_sections": "%s (%s секц.)",
   "itemGroup.axiomata": "Axiomata",

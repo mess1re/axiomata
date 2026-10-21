@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "sss"
+  ],
+  "key": {
+    "s": {
+      "item": "minecraft:string"
+    }
+  },
+  "result": {
+    "item": "axiomata:rope"
+  }
+}

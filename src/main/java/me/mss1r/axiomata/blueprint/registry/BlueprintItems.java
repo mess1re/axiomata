@@ -21,6 +21,8 @@ public class BlueprintItems {
     public static final RegistrySupplier<Item> BLUEPRINT = ITEMS.register("blueprint", BlueprintItem::new);
     public static final RegistrySupplier<Item> CONSTRUCTION_HAMMER = ITEMS.register("construction_hammer",
             () -> new ConstructionHammerItem(new Item.Properties().stacksTo(1).durability(2048)));
+    /** A shared building material; recipes and blueprints take any rope through {@code #c:ropes}. */
+    public static final RegistrySupplier<Item> ROPE = ITEMS.register("rope", () -> new Item(new Item.Properties()));
 
     public static void register() {
         ITEMS.register();

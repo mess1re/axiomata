@@ -36,7 +36,7 @@ public abstract class EntityCollisionMixin {
     private <T extends Entity & CollidableStructure> void axiomata$collideGeometry(
             Vec3 requested, CallbackInfoReturnable<Vec3> callbackInfo) {
         Entity self = (Entity) (Object) this;
-        if (self instanceof CollidableStructure structure && !self.noPhysics
+        if (self instanceof CollidableStructure structure && !self.noPhysics && structure.movesByGeometry()
                 && !structure.solidCollisionGroups().isEmpty()) {
             @SuppressWarnings("unchecked") T moving = (T) self;
             Vec3 allowed = StructureTerrainCollision.collideMotion(moving, requested);

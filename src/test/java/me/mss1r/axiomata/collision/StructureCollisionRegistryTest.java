@@ -103,6 +103,16 @@ class StructureCollisionRegistryTest {
         assertTrue(StructureCollisionRegistry.structuresNear(probe, around(0, 50), .01).isEmpty());
     }
 
+    @Test
+    void anUnboundedQueryMeetsEveryStructureWithoutWalkingTheWorld() {
+        Hull probe = hull(level, CRATE, -1000, -1000);
+        Hull near = hull(level, CRATE, 0, 0);
+        Hull far = hull(level, CRATE, 20000, -20000);
+        AABB everywhere = new AABB(Double.NEGATIVE_INFINITY, 0, Double.NEGATIVE_INFINITY,
+                Double.POSITIVE_INFINITY, 128, Double.POSITIVE_INFINITY);
+        assertEquals(List.of(near, far), StructureCollisionRegistry.structuresNear(probe, everywhere, .01));
+    }
+
     private static final class Hull extends Entity implements CollidableStructure {
         private final List<CollisionGroup> groups;
 

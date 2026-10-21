@@ -116,11 +116,20 @@ public final class StructureCollisionRegistry {
             Index index = INDEX.get(movingEntity.level());
             if (index == null) return new ArrayList<>();
             Set<Entry> seen = Collections.newSetFromMap(new IdentityHashMap<>());
-            for (int x = column(reach.minX); x <= column(reach.maxX); x++) {
-                for (int z = column(reach.minZ); z <= column(reach.maxZ); z++) {
-                    List<Entry> column = index.columns.get(ChunkPos.asLong(x, z));
-                    if (column != null) {
-                        for (Entry entry : column) if (seen.add(entry)) found.add(entry);
+            int minX = column(reach.minX), maxX = column(reach.maxX);
+            int minZ = column(reach.minZ), maxZ = column(reach.maxZ);
+            if ((long) (maxX - minX + 1) * (maxZ - minZ + 1) > index.columns.size()) {
+                // A query wider than the occupied columns, up to an unbounded one, walks those instead.
+                for (List<Entry> column : index.columns.values()) {
+                    for (Entry entry : column) if (seen.add(entry)) found.add(entry);
+                }
+            } else {
+                for (int x = minX; x <= maxX; x++) {
+                    for (int z = minZ; z <= maxZ; z++) {
+                        List<Entry> column = index.columns.get(ChunkPos.asLong(x, z));
+                        if (column != null) {
+                            for (Entry entry : column) if (seen.add(entry)) found.add(entry);
+                        }
                     }
                 }
             }
@@ -220,7 +229,8 @@ public final class StructureCollisionRegistry {
     }
 
     private static int column(double coordinate) {
-        return (int) Math.floor(coordinate) >> 4;
+        // Clamped so that an unbounded box cannot overflow the column arithmetic.
+        return (int) Math.floor(Math.max(-3.0E7D, Math.min(3.0E7D, coordinate))) >> 4;
     }
 
     private static boolean intersects(AABB first, AABB second, double margin) {

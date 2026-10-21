@@ -12,7 +12,8 @@ public final class TracingSession {
 
     private final int wanderBudget;
 
-    private final int brushCells;
+    private final float brushRadius;
+    private final int brushReach;
 
     private int coveredCells;
     private int wandered;
@@ -26,7 +27,8 @@ public final class TracingSession {
         this.toleranceCells = Math.max(1, tolerancePixels / scale);
         this.covered = new long[(mask.resolution() * mask.resolution() + 63) / 64];
         this.wanderBudget = TracingRules.wanderBudget(mask.cells());
-        this.brushCells = Math.max(1, TracingRules.COVER_RADIUS_PIXELS / scale);
+        this.brushRadius = Math.max(1.0F, TracingRules.COVER_RADIUS_PIXELS / scale);
+        this.brushReach = (int) Math.ceil(brushRadius);
     }
     public boolean apply(int x, int y) {
         boolean drawn = false;
@@ -68,26 +70,81 @@ public final class TracingSession {
     }
 
     private void paint(int centreX, int centreY) {
-        for (int y = centreY - brushCells; y <= centreY + brushCells; y++) {
-            for (int x = centreX - brushCells; x <= centreX + brushCells; x++) {
+        for (int y = centreY - brushReach; y <= centreY + brushReach; y++) {
+            for (int x = centreX - brushReach; x <= centreX + brushReach; x++) {
                 int dx = x - centreX;
                 int dy = y - centreY;
-                if (dx * dx + dy * dy > brushCells * brushCells || !mask.ink(x, y)) {
+                if (dx * dx + dy * dy > brushRadius * brushRadius || !mask.ink(x, y)) {
                     continue;
                 }
-                int index = y * mask.resolution() + x;
-                long bit = 1L << (index & 63);
-                if ((covered[index >> 6] & bit) == 0) {
-                    covered[index >> 6] |= bit;
-                    coveredCells++;
-                }
+                cover(x, y);
             }
+        }
+    }
+
+    private void cover(int x, int y) {
+        int index = y * mask.resolution() + x;
+        long bit = 1L << (index & 63);
+        if ((covered[index >> 6] & bit) == 0) {
+            covered[index >> 6] |= bit;
+            coveredCells++;
         }
     }
 
     public void lift() {
         lastX = Integer.MIN_VALUE;
         lastY = Integer.MIN_VALUE;
+        closeGaps();
+    }
+
+    /**
+     * Fills the few uninked cells of a line that inked parts already enclose, which are too small to
+     * see on the sheet. A separate mark nobody touched stays uninked.
+     */
+    private void closeGaps() {
+        if (coveredCells == 0) {
+            return;
+        }
+        int resolution = mask.resolution();
+        boolean[] seen = new boolean[resolution * resolution];
+        int[] component = new int[resolution * resolution];
+        for (int start = 0; start < seen.length; start++) {
+            int startX = start % resolution;
+            int startY = start / resolution;
+            if (seen[start] || !mask.ink(startX, startY) || covered(startX, startY)) {
+                continue;
+            }
+            int size = 0;
+            int head = 0;
+            boolean touchesInk = false;
+            seen[start] = true;
+            component[size++] = start;
+            while (head < size) {
+                int cell = component[head++];
+                int cellX = cell % resolution;
+                int cellY = cell / resolution;
+                for (int dy = -1; dy <= 1; dy++) {
+                    for (int dx = -1; dx <= 1; dx++) {
+                        int x = cellX + dx;
+                        int y = cellY + dy;
+                        if ((dx == 0 && dy == 0) || !mask.ink(x, y)) {
+                            continue;
+                        }
+                        if (covered(x, y)) {
+                            touchesInk = true;
+                        } else if (!seen[y * resolution + x]) {
+                            seen[y * resolution + x] = true;
+                            component[size++] = y * resolution + x;
+                        }
+                    }
+                }
+            }
+            if (touchesInk && size <= TracingRules.MAX_GAP_CELLS) {
+                for (int index = 0; index < size; index++) {
+                    cover(component[index] % resolution, component[index] / resolution);
+                }
+            }
+        }
     }
 
     public boolean covered(int x, int y) {

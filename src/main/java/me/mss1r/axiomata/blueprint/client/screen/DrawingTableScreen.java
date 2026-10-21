@@ -5,6 +5,7 @@ import me.mss1r.axiomata.ResourceIds;
 import me.mss1r.axiomata.blueprint.BlueprintModule;
 import me.mss1r.axiomata.blueprint.blockentity.DrawingTableBlockEntity;
 import me.mss1r.axiomata.blueprint.tracing.BlueprintOutline;
+import me.mss1r.axiomata.blueprint.tracing.TracingRules;
 import me.mss1r.axiomata.blueprint.tracing.OutlineCatalog;
 import me.mss1r.axiomata.blueprint.tracing.TracingSession;
 import me.mss1r.axiomata.blueprint.tracing.TracingState;
@@ -63,6 +64,8 @@ public class DrawingTableScreen extends AbstractContainerScreen<DrawingTableMenu
     private static final int COLOUR_TEXT_DIM = 0xFF9A8B6B;
     private static final int COLOUR_GUIDE = 0xFF141414;
     private static final int COLOUR_INK = 0xFF33488C;
+    private static final int COLOUR_HINT = 0xFFC8643C;
+    private static final long HINT_PERIOD_MILLIS = 1600L;
     private static final int COLOUR_SELECTED = 0x66E8DFC8;
     private static final int COLOUR_PLATE = 0xFF2A1C0F;
     private static final int COLOUR_PROGRESS = 0xFF6E8F4A;
@@ -246,7 +249,7 @@ public class DrawingTableScreen extends AbstractContainerScreen<DrawingTableMenu
         guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.disableBlend();
 
-        renderInk(guiGraphics);
+        renderInk(guiGraphics, outline);
 
         if (state == TracingState.RUINED) {
             guiGraphics.drawCenteredString(this.font,
@@ -258,32 +261,57 @@ public class DrawingTableScreen extends AbstractContainerScreen<DrawingTableMenu
         }
     }
 
-    private void renderInk(GuiGraphics guiGraphics) {
+    /**
+     * Inked cells show the drawing's own line in ink, so the ink keeps the shape and weight of the line rather
+     * than the mask's square cells. Near the end, what is still uninked pulses.
+     */
+    private void renderInk(GuiGraphics guiGraphics, BlueprintOutline outline) {
         TracingSession session = ClientTracing.session();
         if (session == null) {
             return;
         }
+        RenderSystem.enableBlend();
+        setTint(guiGraphics, COLOUR_INK);
+        renderCells(guiGraphics, outline, session, true);
+        if (session.coverage() >= TracingRules.HINT_COVERAGE && !session.complete()) {
+            double phase = (System.currentTimeMillis() % HINT_PERIOD_MILLIS) / (double) HINT_PERIOD_MILLIS;
+            float pulse = (float) (0.5D - 0.5D * Math.cos(phase * Math.PI * 2.0D));
+            guiGraphics.setColor(((COLOUR_HINT >> 16) & 0xFF) / 255.0F, ((COLOUR_HINT >> 8) & 0xFF) / 255.0F,
+                    (COLOUR_HINT & 0xFF) / 255.0F, 0.25F + 0.75F * pulse);
+            renderCells(guiGraphics, outline, session, false);
+        }
+        guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+        RenderSystem.disableBlend();
+    }
+
+    /** Draws the line under the inked cells, or under the cells of the line still uninked. */
+    private static void renderCells(GuiGraphics guiGraphics, BlueprintOutline outline, TracingSession session,
+                                    boolean inked) {
         int resolution = session.mask().resolution();
         int cell = DrawingTableLayout.SHEET_SIZE / resolution;
         for (int y = 0; y < resolution; y++) {
             int x = 0;
             while (x < resolution) {
-                while (x < resolution && !session.covered(x, y)) {
+                while (x < resolution && !wanted(session, x, y, inked)) {
                     x++;
                 }
                 int runStart = x;
-                while (x < resolution && session.covered(x, y)) {
+                while (x < resolution && wanted(session, x, y, inked)) {
                     x++;
                 }
                 if (runStart == x) {
                     continue;
                 }
-                int left = DrawingTableLayout.SHEET_X + runStart * cell;
-                int right = DrawingTableLayout.SHEET_X + x * cell;
-                int top = DrawingTableLayout.SHEET_Y + y * cell;
-                guiGraphics.fill(left, top, right, top + cell, COLOUR_INK);
+                guiGraphics.blit(outline.texture(),
+                        DrawingTableLayout.SHEET_X + runStart * cell, DrawingTableLayout.SHEET_Y + y * cell,
+                        runStart * cell, y * cell, (x - runStart) * cell, cell,
+                        DrawingTableLayout.SHEET_SIZE, DrawingTableLayout.SHEET_SIZE);
             }
         }
+    }
+
+    private static boolean wanted(TracingSession session, int x, int y, boolean inked) {
+        return inked ? session.covered(x, y) : session.mask().ink(x, y) && !session.covered(x, y);
     }
 
     private void renderPanel(GuiGraphics guiGraphics, double mouseX, double mouseY) {

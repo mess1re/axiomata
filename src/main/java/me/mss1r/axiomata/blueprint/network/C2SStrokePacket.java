@@ -65,7 +65,10 @@ public record C2SStrokePacket(boolean lift, byte[] points) implements CustomPack
                 menu.broadcastChanges();
             }
             if (packet.lift()) {
+                // Lifting the pen can close the last gaps and finish the sheet.
                 table.liftPen();
+                menu.refreshResult();
+                menu.broadcastChanges();
             }
         });
     }

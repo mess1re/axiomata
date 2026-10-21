@@ -196,6 +196,7 @@ public class DrawingTableBlockEntity extends BlockEntity implements ExtendedMenu
     public void liftPen() {
         if (session != null) {
             session.lift();
+            setChanged();
         }
     }
 

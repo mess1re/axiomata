@@ -4,11 +4,11 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 
 import java.util.Map;
-import java.util.WeakHashMap;
+import com.google.common.collect.MapMaker;
 
 public final class VirtualPlatformSupport {
     private static final long SUPPORT_GRACE_TICKS = 1L;
-    private static final Map<ServerPlayer, Long> SUPPORTED_PLAYERS = new WeakHashMap<>();
+    private static final Map<ServerPlayer, Long> SUPPORTED_PLAYERS = new MapMaker().weakKeys().makeMap();
 
     private VirtualPlatformSupport() {
     }

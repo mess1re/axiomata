@@ -1,10 +1,9 @@
 package me.mss1r.axiomata.collision.system;
 
 import java.lang.ref.WeakReference;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.WeakHashMap;
+import com.google.common.collect.MapMaker;
 import me.mss1r.axiomata.collision.ClimbableGroup;
 import me.mss1r.axiomata.collision.CollidableStructure;
 import me.mss1r.axiomata.collision.CollisionGroup;
@@ -33,9 +32,9 @@ public final class StructureClimbingSystem {
     private static final float CLIMB_POSE_HOLD_TICKS = 3.0F;
     private static final float CLIMB_POSE_FADE_OUT_TICKS = 5.0F;
     private static final Map<Entity, ClimbAttachment> CLIMB_ATTACHMENTS =
-            Collections.synchronizedMap(new WeakHashMap<>());
+            new MapMaker().weakKeys().makeMap();
     private static final Map<Entity, ClimbPoseAttachment> CLIMB_POSE_ATTACHMENTS =
-            Collections.synchronizedMap(new WeakHashMap<>());
+            new MapMaker().weakKeys().makeMap();
 
     private StructureClimbingSystem() {
     }
@@ -119,7 +118,7 @@ public final class StructureClimbingSystem {
     }
     // Guided movement discards sideways input and centres the entity on the ladder. The collision
     // system may ignore the climbed structure only for this exact tick, not for the grace period.
-    private static final Map<Entity, GuidedClimb> GUIDED_CLIMBS = new WeakHashMap<>();
+    private static final Map<Entity, GuidedClimb> GUIDED_CLIMBS = new MapMaker().weakKeys().makeMap();
     public static boolean isGuidedClimbing(Entity entity, CollidableStructure structure) {
         GuidedClimb guided = GUIDED_CLIMBS.get(entity);
         return guided != null

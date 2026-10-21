@@ -11,10 +11,9 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.WeakHashMap;
+import com.google.common.collect.MapMaker;
 
 // Path searches ask about far too many nodes for per-node SAT. Solid model geometry is rasterized
 // into block coordinates and kept until the structure changes placement. Touching a block corner
@@ -26,7 +25,7 @@ final class StructurePathOccupancy {
     private static final int MAX_BLOCKS = 40000;
 
     private static final Map<CollidableStructure, StructurePathOccupancy> CACHE =
-            Collections.synchronizedMap(new WeakHashMap<>());
+            new MapMaker().weakKeys().makeMap();
 
     private final long placement;
     private final LongOpenHashSet blocks;

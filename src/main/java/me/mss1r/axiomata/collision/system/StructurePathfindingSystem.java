@@ -8,7 +8,7 @@ import net.minecraft.world.phys.AABB;
 
 import java.util.List;
 import java.util.Map;
-import java.util.WeakHashMap;
+import com.google.common.collect.MapMaker;
 
 public final class StructurePathfindingSystem {
     private static final double GATHER_RADIUS = 48.0D;
@@ -19,7 +19,7 @@ public final class StructurePathfindingSystem {
             !"off".equalsIgnoreCase(System.getProperty("axiomata.structurePathfinding", "on"));
 
     private static final Map<Mob, Gathered> NEARBY =
-            java.util.Collections.synchronizedMap(new WeakHashMap<>());
+            new MapMaker().weakKeys().makeMap();
 
     private StructurePathfindingSystem() {
     }

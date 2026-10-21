@@ -1,6 +1,8 @@
 package me.mss1r.axiomata.collision;
 
 import java.util.List;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 
 public interface CollidableStructure {
     List<CollisionGroup> collisionGroups();
@@ -34,5 +36,16 @@ public interface CollidableStructure {
 
     default List<ClimbableGroup> climbableGroups() {
         return List.of();
+    }
+
+    /** Override when the consumer stores its root heading separately from Entity rotation. */
+    default void rotateWithSupport(float yawDelta) {
+        if (this instanceof Entity entity) {
+            entity.setYRot(entity.getYRot() + yawDelta);
+            if (entity instanceof LivingEntity living) {
+                living.setYBodyRot(living.yBodyRot + yawDelta);
+                living.setYHeadRot(living.yHeadRot + yawDelta);
+            }
+        }
     }
 }

@@ -2,6 +2,9 @@ package me.mss1r.axiomata.collision.system;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import com.google.common.collect.MapMaker;
 import me.mss1r.axiomata.collision.CollidableStructure;
 import me.mss1r.axiomata.collision.CollisionGroup;
 import me.mss1r.axiomata.collision.StructureCollisionResolver;
@@ -17,24 +20,50 @@ public final class StructureMotionSystem {
     private static final double BOUNDS_MARGIN = 0.25D;
     private static final double MOTION_EPSILON = 1.0E-10D;
     private static final double ASCENDING_EPSILON = 1.0E-4D;
+    // Entity.equals compares network IDs, which client and server copies share.
+    private static final Map<CollidableStructure, Snapshot> HISTORY = new MapMaker().weakKeys().makeMap();
+    private static final ThreadLocal<Set<CollidableStructure>> ACTIVE = ThreadLocal.withInitial(
+            () -> java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>()));
+
+    private record Snapshot(StructureTransform transform, List<CollisionGroup> groups) {
+    }
 
     private StructureMotionSystem() {
     }
 
     public static void tickStructure(CollidableStructure structure) {
+        tickStructure(structure, true);
+    }
+
+    /** {@code carryStructures} is false when this motion already moved every load as one assembly. */
+    static void tickStructure(CollidableStructure structure, boolean carryStructures) {
         StructureCollisionSystem.register(structure);
         if (!(structure instanceof Entity structureEntity) || structureEntity.isRemoved()) {
             return;
         }
+        Set<CollidableStructure> active = ACTIVE.get();
+        if (!active.add(structure)) return;
+        try {
+            Snapshot now = new Snapshot(structure.collisionTransform(), List.copyOf(structure.solidCollisionGroups()));
+            Snapshot previous;
+            synchronized (HISTORY) { previous = HISTORY.put(structure, now); }
+            if (previous == null) previous = new Snapshot(structure.previousCollisionTransform(), structure.previousSolidCollisionGroups());
+            tickMotion(structure, structureEntity, now.groups(), previous.groups(), now.transform(), previous.transform(),
+                    carryStructures);
+        } finally {
+            active.remove(structure);
+            if (active.isEmpty()) ACTIVE.remove();
+        }
+    }
 
-        List<CollisionGroup> currentGroups = structure.solidCollisionGroups();
-        List<CollisionGroup> previousGroups = structure.previousSolidCollisionGroups();
+    private static void tickMotion(CollidableStructure structure, Entity structureEntity,
+                                   List<CollisionGroup> currentGroups, List<CollisionGroup> previousGroups,
+                                   StructureTransform currentTransform, StructureTransform previousTransform,
+                                   boolean carryStructures) {
         if (currentGroups.isEmpty()) {
             return;
         }
 
-        StructureTransform currentTransform = structure.collisionTransform();
-        StructureTransform previousTransform = structure.previousCollisionTransform();
         List<CollisionGroup> locallyMovedGroups = locallyMovedGroups(currentGroups, previousGroups);
         boolean rootRotated = transformRotated(currentTransform, previousTransform);
         List<CollisionGroup> movedGroups = movedGroups(
@@ -48,6 +77,11 @@ public final class StructureMotionSystem {
         AABB searchBounds = combine(currentBounds, previousBounds);
         if (searchBounds == null) {
             return;
+        }
+
+        if (carryStructures) {
+            StructureCarrySystem.tick(structureEntity, structure, searchBounds.inflate(BOUNDS_MARGIN),
+                    previousTransform, previousGroups, currentTransform, currentGroups);
         }
 
         structureEntity.level().getEntities(structureEntity, searchBounds.inflate(BOUNDS_MARGIN),

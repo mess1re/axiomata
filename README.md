@@ -18,6 +18,19 @@ Blueprint integrations use `UnderConstruction`. Model collision integrations use
 `CollidableStructure`. Their supporting APIs are under `me.mss1r.axiomata.blueprint.api` and
 `me.mss1r.axiomata.collision`.
 
+Call `StructureMotionSystem.tickStructure(this)` after updating a structure's position and posed
+groups. It carries supported players and other `CollidableStructure` entities, including stacked
+loads. Structure-to-structure contact uses `solidCollisionGroups()` on both sides; picking-only
+geometry does not become a support surface. Cargo remains server-owned and is not a passenger.
+Consumers with a separate root-yaw field override `rotateWithSupport` to update that field too.
+
+`Entity.move` uses the solid geometry for translation. Code that moves with `setPos` instead must
+first constrain its displacement with `StructureTerrainCollision.clampMotion`. That method also
+checks clearance for supported loads. `clampYaw` checks the turning arc; `canOccupy` checks
+a single proposed root pose.
+`StructurePlacement.findOnTop` returns a candidate pose and its supporting group without spawning
+anything. Validate world clearance with `canOccupy` before applying it.
+
 Artillery integrations extend `BallisticProjectile` and provide their own projectile catalog and
 `ImpactResolver`. Block-damage policy and player attribution stay with the consuming mod.
 `ImpactResolver.contactImpact` handles blunt strikes using energy in joules and an oriented

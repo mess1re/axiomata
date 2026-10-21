@@ -1,6 +1,8 @@
 package me.mss1r.axiomata.mixin;
 
 import me.mss1r.axiomata.collision.system.StructureCollisionSystem;
+import me.mss1r.axiomata.collision.CollidableStructure;
+import me.mss1r.axiomata.collision.system.StructureTerrainCollision;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.phys.Vec3;
@@ -30,10 +32,26 @@ public abstract class EntityCollisionMixin {
         callbackInfo.setReturnValue(collision.allowed());
     }
 
+    @Inject(method = "collide", at = @At("HEAD"), cancellable = true)
+    private <T extends Entity & CollidableStructure> void axiomata$collideGeometry(
+            Vec3 requested, CallbackInfoReturnable<Vec3> callbackInfo) {
+        Entity self = (Entity) (Object) this;
+        if (self instanceof CollidableStructure structure && !self.noPhysics
+                && !structure.solidCollisionGroups().isEmpty()) {
+            @SuppressWarnings("unchecked") T moving = (T) self;
+            Vec3 allowed = StructureTerrainCollision.collideMotion(moving, requested);
+            axiomata$supportedByStructure |= requested.y < 0.0D && allowed.y > requested.y + 1.0E-8D;
+            callbackInfo.setReturnValue(allowed);
+        }
+    }
+
     @Inject(method = "move", at = @At("TAIL"))
     private void axiomata$applyStructureSupport(MoverType moverType, Vec3 movement, CallbackInfo callbackInfo) {
         if (axiomata$supportedByStructure) {
             StructureCollisionSystem.markSupported((Entity) (Object) this);
+        }
+        if ((Object) this instanceof CollidableStructure structure) {
+            StructureCollisionSystem.register(structure);
         }
     }
 }

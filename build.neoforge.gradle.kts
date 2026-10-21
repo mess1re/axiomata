@@ -41,6 +41,7 @@ dependencies {
     compileOnly("mezz.jei:jei-${sc.current.version}-neoforge-api:$jeiVersion")
     testImplementation(platform("org.junit:junit-bom:5.11.4"))
     testImplementation("org.junit.jupiter:junit-jupiter")
+    testImplementation("org.mockito:mockito-core:5.14.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

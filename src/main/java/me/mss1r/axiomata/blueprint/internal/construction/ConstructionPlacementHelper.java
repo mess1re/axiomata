@@ -25,6 +25,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashSet;
+import java.util.function.BiPredicate;
 
 public final class ConstructionPlacementHelper {
     private static final double WATER_HIT_EPSILON = 1.0E-4D;
@@ -128,8 +129,10 @@ public final class ConstructionPlacementHelper {
             bounds = previewEntity.getBoundingBox();
         }
 
+        BiPredicate<BlockPos, BlockState> accepted = (at, state) -> !(previewEntity instanceof UnderConstruction result)
+                || result.acceptsSupport(at, state);
         boolean valid = previewEntity != null
-                && hasGroundSupport(level, supportPos, bounds)
+                && hasGroundSupport(level, supportPos, bounds, accepted)
                 && !overlapsExistingConstructionSite(level, bounds)
                 && level.noCollision(previewEntity, bounds);
 
@@ -234,8 +237,15 @@ public final class ConstructionPlacementHelper {
     }
 
     public static boolean hasGroundSupport(Level level, BlockPos centerSupportPos, AABB bounds) {
+        return hasGroundSupport(level, centerSupportPos, bounds, (at, state) -> true);
+    }
+
+    /** Sturdy blocks the result accepts must carry enough of its footprint. */
+    public static boolean hasGroundSupport(Level level, BlockPos centerSupportPos, AABB bounds,
+                                           BiPredicate<BlockPos, BlockState> accepted) {
         BlockState centerState = level.getBlockState(centerSupportPos);
-        if (!centerState.isFaceSturdy(level, centerSupportPos, Direction.UP)) {
+        if (!centerState.isFaceSturdy(level, centerSupportPos, Direction.UP)
+                || !accepted.test(centerSupportPos, centerState)) {
             return false;
         }
 
@@ -252,7 +262,8 @@ public final class ConstructionPlacementHelper {
                 double overlapZ = Math.max(0.0D, Math.min(bounds.maxZ, z + 1.0D) - Math.max(bounds.minZ, z));
                 BlockPos supportPos = new BlockPos(x, centerSupportPos.getY(), z);
                 BlockState supportState = level.getBlockState(supportPos);
-                if (supportState.isFaceSturdy(level, supportPos, Direction.UP)) {
+                if (supportState.isFaceSturdy(level, supportPos, Direction.UP)
+                        && accepted.test(supportPos, supportState)) {
                     supportedArea += overlapX * overlapZ;
                 }
             }

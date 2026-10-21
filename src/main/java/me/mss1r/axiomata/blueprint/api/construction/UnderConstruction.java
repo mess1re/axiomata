@@ -1,11 +1,14 @@
 package me.mss1r.axiomata.blueprint.api.construction;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import me.mss1r.axiomata.blueprint.api.visual.BlueprintConstructionVisuals;
 import me.mss1r.axiomata.blueprint.internal.construction.ConstructionSync;
+import me.mss1r.axiomata.collision.CollidableStructure;
 
 
 /**
@@ -42,9 +45,19 @@ public interface UnderConstruction {
     default void onBuildProgressChanged() {
     }
 
-    /** Override when hammer hits should land on the section currently being assembled. */
-    default boolean acceptsBlowOnStage(Player builder, String section) {
+    /**
+     * Whether a block may carry this result while it is built on the ground, e.g. a slipway that refuses soil. Only
+     * sturdy blocks are asked; enough of the footprint must still rest on accepted ones.
+     */
+    default boolean acceptsSupport(BlockPos pos, BlockState state) {
         return true;
+    }
+
+    /** A blow counts when the builder's aim lands on the section being assembled, by the construction markup. */
+    default boolean acceptsBlowOnStage(Player builder, String section) {
+        ResourceLocation model = constructionModel();
+        return !(this instanceof CollidableStructure structure) || model == null
+                || ConstructionHitTesting.accepts(builder, structure, model, section);
     }
 
     default boolean isFullyBuilt() {

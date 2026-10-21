@@ -9,15 +9,15 @@
 - `CollidableStructure.walkStepHeight()` lets walkers climb a structure's own steps when they are taller than a vanilla step.
 - Clients learn the progress of every build from Axiomata. `UnderConstruction.constructionStatus()` and `isFullyBuilt()` work on both sides without synchronized fields in the result.
 - `ConstructionGeometry` makes the built sections of an unfinished build solid and its built ladders climbable, and tells whether a bone stands yet, e.g. for a rope between two sections.
-- `ConstructionGeoRenderer` draws unfinished GeckoLib results. Only a player holding a construction hammer sees the sections still to come and the stage sign.
+- `ConstructionGeoRenderer` draws unfinished GeckoLib results. Only a player holding a construction hammer sees the sections still to come and the stage sign. `stageSignHeight` raises the sign over a model taller than its hitbox.
 - The Build Sections Blockbench plugin exports the construction markup (File → Export → Construction Markup) and assigns sections to groups too, for bones without cubes.
 - `UnderConstruction.acceptsSupport` lets a result refuse blocks it cannot be built on, and `mayWork` decides who may build or take it apart.
 - `BuildProgress.workDone()` gives the share of a build's hammer work done. `MaterialAllocation`, which takes several materials from one inventory the way stages pay for themselves, moved to the public `blueprint.api.construction` package.
-- An unfinished result carries no one, ignores everything but the construction hammer, stays where it was placed and keeps its progress in its own save data. Destroyed, it leaves a quarter of what its built stages took and half of what was paid for the stage under way.
+- An unfinished result carries no one, and taking a finished one apart sets its riders down. It ignores everything but the construction hammer, stays where it was placed and keeps its progress in its own save data. Destroyed, it leaves a quarter of what its built stages took and half of what was paid for the stage under way.
 
 ### Changed
 
-- Hammer blows land on the active section by the construction markup without any code in the result. Any item in `axiomata:construction_hammers` builds, not only Axiomata's hammer.
+- Hammer blows land on the active section by the construction markup without any code in the result, including results without collision geometry, whose markup is placed by their position and yaw. Any item in `axiomata:construction_hammers` builds, not only Axiomata's hammer.
 - Stacks of resting structures cost far less per tick, and neighbour queries are indexed by chunk column.
 
 ### Removed

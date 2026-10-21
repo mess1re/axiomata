@@ -347,9 +347,11 @@
         }
 
         function part(cube, chain) {
-            const low = cube.from.map(v => v - cube.inflate), high = cube.to.map(v => v + cube.inflate);
+            // A cube may be drawn inside out, its "from" past its "to"; its extent is the same.
+            const low = cube.from.map((v, i) => Math.min(v, cube.to[i]) - cube.inflate);
+            const high = cube.from.map((v, i) => Math.max(v, cube.to[i]) + cube.inflate);
             let centre = low.map((v, i) => (v + high[i]) / 2);
-            const half = low.map((v, i) => (high[i] - v) / 2);
+            const half = low.map((v, i) => Math.max(0, high[i] - v) / 2);
             let turn = euler(cube.rotation);
             centre = about(turn, centre, cube.origin);
             for (let depth = chain.length - 1; depth >= 0; depth--) {
@@ -419,8 +421,10 @@
                     if (!found.has(entry.bone)) found.set(entry.bone, []);
                     found.get(entry.bone).push(entry.index);
                     parts.set(entry.bone + "#" + entry.index, part(entry.cube, entry.chain));
-                    low = low ? low.map((v, i) => Math.min(v, entry.cube.from[i])) : entry.cube.from.slice();
-                    high = high ? high.map((v, i) => Math.max(v, entry.cube.to[i])) : entry.cube.to.slice();
+                    const from = entry.cube.from.map((v, i) => Math.min(v, entry.cube.to[i]));
+                    const to = entry.cube.from.map((v, i) => Math.max(v, entry.cube.to[i]));
+                    low = low ? low.map((v, i) => Math.min(v, from[i])) : from;
+                    high = high ? high.map((v, i) => Math.max(v, to[i])) : to;
                 }
                 for (const [bone, group] of bones) {
                     if (group.section === name && !found.has(bone)) found.set(bone, []);

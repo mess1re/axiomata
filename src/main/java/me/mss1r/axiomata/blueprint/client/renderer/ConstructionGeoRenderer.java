@@ -72,6 +72,11 @@ public abstract class ConstructionGeoRenderer<T extends Entity & GeoAnimatable &
         super(context, model);
     }
 
+    /** Height of the stage sign above the entity's feet; raise it for a model that stands above its hitbox. */
+    protected double stageSignHeight(T entity) {
+        return entity.getBbHeight() + 0.7D;
+    }
+
     /** Whether the local player sees the plan: a construction hammer in hand, close enough to work. */
     protected boolean showsPlan(T entity) {
         Player player = Minecraft.getInstance().player;
@@ -232,7 +237,7 @@ public abstract class ConstructionGeoRenderer<T extends Entity & GeoAnimatable &
                         status.hits(), Math.max(1, status.stageHits()), stageIndex + 1, recipe.stageCount())));
 
         poseStack.pushPose();
-        poseStack.translate(0.0D, entity.getBbHeight() + 0.7D, 0.0D);
+        poseStack.translate(0.0D, stageSignHeight(entity), 0.0D);
         poseStack.mulPose(this.entityRenderDispatcher.cameraOrientation());
         poseStack.scale(-0.025F, -0.025F, 0.025F);
         Font font = getFont();

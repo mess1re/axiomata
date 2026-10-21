@@ -3,6 +3,7 @@ package me.mss1r.axiomata.blueprint.api.construction;
 import me.mss1r.axiomata.blueprint.internal.construction.ConstructionSync;
 import net.minecraft.world.Container;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition.Material;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
@@ -124,6 +125,10 @@ public final class ConstructionWork {
     }
 
     private static void changed(UnderConstruction machine) {
+        // Nobody rides an unfinished result, so taking a finished one apart sets its riders down.
+        if (machine instanceof Entity entity && entity.isVehicle() && !machine.buildProgress().complete()) {
+            entity.ejectPassengers();
+        }
         machine.onBuildProgressChanged();
         ConstructionSync.changed(machine);
     }

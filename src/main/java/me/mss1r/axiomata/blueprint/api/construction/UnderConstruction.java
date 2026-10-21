@@ -8,13 +8,12 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import me.mss1r.axiomata.blueprint.api.visual.BlueprintConstructionVisuals;
 import me.mss1r.axiomata.blueprint.internal.construction.ConstructionSync;
-import me.mss1r.axiomata.collision.CollidableStructure;
 
 
 /**
- * Implemented by the real entity being assembled. There is no temporary construction-site entity,
- * so consumers must gate riding, firing and animation on {@link #isFullyBuilt()} themselves.
- * Axiomata keeps clients informed of the progress; the entity only saves its {@link BuildProgress}.
+ * Implemented by the real entity being assembled. There is no temporary construction-site entity. While it is
+ * unfinished Axiomata keeps it still, lets no one ride it, saves and synchronizes its {@link BuildProgress} and leaves
+ * debris when it is killed; the result gates only its own actions, such as firing, on {@link #isFullyBuilt()}.
  */
 public interface UnderConstruction {
     BuildProgress buildProgress();
@@ -61,8 +60,8 @@ public interface UnderConstruction {
     /** A blow counts when the builder's aim lands on the section being assembled, by the construction markup. */
     default boolean acceptsBlowOnStage(Player builder, String section) {
         ResourceLocation model = constructionModel();
-        return !(this instanceof CollidableStructure structure) || model == null
-                || ConstructionHitTesting.accepts(builder, structure, model, section);
+        return !(this instanceof Entity result) || model == null
+                || ConstructionHitTesting.accepts(builder, result, model, section);
     }
 
     default boolean isFullyBuilt() {

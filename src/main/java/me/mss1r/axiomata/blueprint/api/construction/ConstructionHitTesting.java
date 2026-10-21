@@ -3,8 +3,10 @@ package me.mss1r.axiomata.blueprint.api.construction;
 import me.mss1r.axiomata.blueprint.api.visual.BlueprintConstructionVisuals;
 import me.mss1r.axiomata.collision.CollidableStructure;
 import me.mss1r.axiomata.collision.StructureCollisionResolver;
+import me.mss1r.axiomata.collision.StructureTransform;
 import me.mss1r.axiomata.structure.SectionBounds;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.HitResult;
@@ -30,6 +32,22 @@ public final class ConstructionHitTesting {
     public static boolean accepts(Player builder, CollidableStructure structure,
                                   ResourceLocation model, String section,
                                   double reachBonus, double collisionPadding, double marginPixels) {
+        return accepts(builder, structure.collisionTransform(), structure, model, section,
+                reachBonus, collisionPadding, marginPixels);
+    }
+
+    /** For a result without collision geometry: its markup is placed by the entity's position and yaw. */
+    public static boolean accepts(Player builder, Entity result, ResourceLocation model, String section) {
+        StructureTransform transform = result instanceof CollidableStructure structure
+                ? structure.collisionTransform()
+                : new StructureTransform(result.getX(), result.getY(), result.getZ(), result.getYRot());
+        return accepts(builder, transform, result, model, section,
+                DEFAULT_REACH_BONUS, DEFAULT_COLLISION_PADDING, DEFAULT_MARGIN_PIXELS);
+    }
+
+    private static boolean accepts(Player builder, StructureTransform transform, Object result,
+                                   ResourceLocation model, String section,
+                                   double reachBonus, double collisionPadding, double marginPixels) {
         SectionBounds bounds = BlueprintConstructionVisuals.bounds(model);
         SectionBounds.Section target = bounds == null ? null : bounds.find(section).orElse(null);
         if (bounds == null) {
@@ -49,11 +67,10 @@ public final class ConstructionHitTesting {
 
         Set<String> visible = new LinkedHashSet<>();
         visible.add(section);
-        if (structure instanceof UnderConstruction machine) {
+        if (result instanceof UnderConstruction machine) {
             visible.addAll(machine.constructionVisualState().builtSections());
         }
-        return bounds.firstHit(structure.collisionTransform().toLocal(start),
-                structure.collisionTransform().toLocal(end), visible,
+        return bounds.firstHit(transform.toLocal(start), transform.toLocal(end), visible,
                 Math.max(0, marginPixels) + Math.max(0, collisionPadding) * 16)
                 .map(hit -> hit.name().equals(section)).orElse(false);
     }

@@ -122,6 +122,20 @@ public final class BuildProgress {
         return complete() ? Integer.MAX_VALUE : stage();
     }
 
+    /** Share of the build's hammer work done, from 0 for a bare site to 1 once every stage stands. */
+    public float workDone() {
+        BlueprintConstructionPlan plan = plan();
+        int total = plan.totalHits();
+        if (total <= 0 || core.complete(plan.core())) {
+            return 1.0F;
+        }
+        int done = hits();
+        for (int stage = 0; stage < Math.min(stage(), plan.stageCount()); stage++) {
+            done += plan.stage(stage).hits();
+        }
+        return Math.min(1.0F, done / (float) total);
+    }
+
     /** Returns true only when this hit completed the current stage. */
     public boolean strike() {
         BlueprintConstructionPlan plan = plan();

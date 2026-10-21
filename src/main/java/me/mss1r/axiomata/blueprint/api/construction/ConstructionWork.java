@@ -1,7 +1,6 @@
 package me.mss1r.axiomata.blueprint.api.construction;
 
 import me.mss1r.axiomata.blueprint.internal.construction.ConstructionSync;
-import me.mss1r.axiomata.blueprint.internal.construction.MaterialAllocation;
 import net.minecraft.world.Container;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition.Material;
 import net.minecraft.world.item.ItemStack;

@@ -1,4 +1,4 @@
-package me.mss1r.axiomata.blueprint.internal.construction;
+package me.mss1r.axiomata.blueprint.api.construction;
 
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition.Material;
 import net.minecraft.world.item.ItemStack;

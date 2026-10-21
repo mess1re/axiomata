@@ -36,9 +36,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-// One file per model, written by the exporter: the cubes of each section for the client highlight, and their
-// placement for hits. The server loads it with the datapacks and sends it to clients. Files with only a
-// section envelope still load; such models are hit by the envelope and drawn finished.
+// One file per model, exported by the Build Sections Blockbench plugin: the cubes of each section for the client
+// highlight, and their placement for hits. The server loads it with the datapacks and sends it to clients. Files with
+// only a section envelope still load; such models are hit by the envelope and drawn finished.
 public final class ConstructionMarkupCatalog extends SimplePreparableReloadListener<Map<ResourceLocation, ConstructionMarkup>> {
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final String DIRECTORY = "construction";

@@ -12,6 +12,7 @@
 - `ConstructionGeoRenderer` draws unfinished GeckoLib results. Only a player holding a construction hammer sees the sections still to come and the stage sign.
 - The Build Sections Blockbench plugin exports the construction markup (File → Export → Construction Markup) and assigns sections to groups too, for bones without cubes.
 - `UnderConstruction.acceptsSupport` lets a result refuse blocks it cannot be built on, and `mayWork` decides who may build or take it apart.
+- `BuildProgress.workDone()` gives the share of a build's hammer work done. `MaterialAllocation`, which takes several materials from one inventory the way stages pay for themselves, moved to the public `blueprint.api.construction` package.
 - An unfinished result carries no one, ignores everything but the construction hammer, stays where it was placed and keeps its progress in its own save data. Destroyed, it leaves a quarter of what its built stages took and half of what was paid for the stage under way.
 
 ### Changed

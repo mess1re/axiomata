@@ -5,7 +5,7 @@ import me.mss1r.axiomata.ResourceIds;
 import me.mss1r.axiomata.blueprint.api.BlueprintPermissions;
 import me.mss1r.axiomata.blueprint.api.BlueprintTags;
 import me.mss1r.axiomata.blueprint.internal.construction.ConstructionPlacementHelper;
-import me.mss1r.axiomata.blueprint.internal.construction.MaterialAllocation;
+import me.mss1r.axiomata.blueprint.api.construction.MaterialAllocation;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition.Material;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinitions;

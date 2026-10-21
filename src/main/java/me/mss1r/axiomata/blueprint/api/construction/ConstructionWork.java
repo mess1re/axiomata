@@ -15,8 +15,7 @@ public final class ConstructionWork {
         PROGRESSED,
         ADVANCED,
         DONE,
-        MISSING_MATERIAL,
-        CANNOT_END
+        MISSING_MATERIAL
     }
 
     /** {@code missing} is the material that stopped the stage, or null. */
@@ -59,29 +58,8 @@ public final class ConstructionWork {
             machine.onBuildProgressChanged();
             return new Result(Status.PROGRESSED, null);
         }
-        if (progress.complete()) {
-            machine.applyBuiltData(progress.builtData());
-        }
         machine.onBuildProgressChanged();
         return new Result(Status.ADVANCED, null);
-    }
-
-    /**
-     * Ends an extendable build at its current stage and refunds materials already committed to that stage. A null
-     * container skips the refund, as for creative players.
-     */
-    public static Result endHere(UnderConstruction machine, Container materials) {
-        BuildProgress progress = machine.buildProgress();
-        if (!progress.canEndHere()) {
-            return new Result(Status.CANNOT_END, null);
-        }
-        if (progress.currentStage() != null && progress.materialsCommitted() && materials != null) {
-            progress.currentStageRefund().forEach(stack -> give(materials, stack));
-        }
-        progress.endHere();
-        machine.applyBuiltData(progress.builtData());
-        machine.onBuildProgressChanged();
-        return DONE;
     }
 
     public static Result dismantle(UnderConstruction machine, Container materials) {

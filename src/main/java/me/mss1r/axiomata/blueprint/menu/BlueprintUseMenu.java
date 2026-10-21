@@ -1,7 +1,6 @@
 package me.mss1r.axiomata.blueprint.menu;
 
 import me.mss1r.axiomata.blueprint.api.BlueprintTags;
-import me.mss1r.axiomata.blueprint.api.ConstructionStarters;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition;
 import me.mss1r.axiomata.blueprint.registry.BlueprintMenus;
 import net.minecraft.world.entity.player.Inventory;
@@ -26,7 +25,7 @@ public class BlueprintUseMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return recipeId.equals(ConstructionStarters.definitionOf(player.getOffhandItem()))
+        return recipeId.equals(me.mss1r.axiomata.blueprint.item.BlueprintItem.getRecipeId(player.getOffhandItem()))
                 && player.getMainHandItem().is(BlueprintTags.CONSTRUCTION_HAMMERS);
     }
 

@@ -62,7 +62,6 @@ public final class BlueprintModule {
         ReloadListenerRegistry.register(PackType.SERVER_DATA, new ConstructionMarkupCatalog(),
                 ResourceIds.id(MOD_ID, "construction_markup"));
         InteractionEvent.INTERACT_ENTITY.register(HammerWork::onEntityInteract);
-        PlayerEvent.ATTACK_ENTITY.register(HammerWork::onEntityAttack);
         CommandRegistrationEvent.EVENT.register(BlueprintCommands::register);
         LifecycleEvent.SERVER_STARTED.register(BlueprintDefinitionCatalog::validate);
         gameEventBus.addListener(BlueprintDefinitionCatalog::syncToClients);

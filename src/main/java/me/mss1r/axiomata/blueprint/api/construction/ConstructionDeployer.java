@@ -1,7 +1,6 @@
 package me.mss1r.axiomata.blueprint.api.construction;
 
 import com.mojang.logging.LogUtils;
-import me.mss1r.axiomata.blueprint.api.ConstructionStarters;
 import me.mss1r.axiomata.blueprint.internal.construction.ConstructionPlacementHelper;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinitions;
@@ -47,16 +46,7 @@ public final class ConstructionDeployer {
                     recipe.result().entity());
             return null;
         }
-        boolean started = ConstructionStarters.isStarter(blueprint);
-        // Starter items were never drawn, so they build at the blueprint's exact cost.
-        underConstruction.buildProgress().begin(blueprintId,
-                started ? BuildQuality.EXACT : BlueprintItem.getQuality(blueprint));
-        if (started) {
-            underConstruction.buildProgress().skipBuilt(ConstructionStarters.builtStages(recipe, blueprint));
-            if (underConstruction.buildProgress().complete()) {
-                underConstruction.applyBuiltData(underConstruction.buildProgress().builtData());
-            }
-        }
+        underConstruction.buildProgress().begin(blueprintId, BlueprintItem.getQuality(blueprint));
         underConstruction.onDeployed(yaw);
         underConstruction.onBuildProgressChanged();
 

@@ -4,7 +4,6 @@ import dev.architectury.networking.NetworkManager;
 import me.mss1r.axiomata.ResourceIds;
 import me.mss1r.axiomata.blueprint.api.BlueprintPermissions;
 import me.mss1r.axiomata.blueprint.api.BlueprintTags;
-import me.mss1r.axiomata.blueprint.api.ConstructionStarters;
 import me.mss1r.axiomata.blueprint.internal.construction.ConstructionPlacementHelper;
 import me.mss1r.axiomata.blueprint.internal.construction.MaterialAllocation;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition;
@@ -178,6 +177,6 @@ public record C2SUseBlueprintPacket(String recipeId) implements CustomPacketPayl
     }
 
     private static boolean isBlueprintForRecipe(ItemStack stack, String recipeId) {
-        return recipeId.equals(ConstructionStarters.definitionOf(stack));
+        return recipeId.equals(BlueprintItem.getRecipeId(stack));
     }
 }

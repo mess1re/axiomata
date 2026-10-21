@@ -1,6 +1,5 @@
 package me.mss1r.axiomata.blueprint.item;
 
-import me.mss1r.axiomata.blueprint.api.ConstructionStarters;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinitions;
 import me.mss1r.axiomata.blueprint.registry.BlueprintItems;
@@ -48,19 +47,6 @@ public final class ConstructionHammerItem extends Item {
             offhand.getItem().use(level, player, InteractionHand.OFF_HAND);
             return true;
         }
-        String startedBlueprint = ConstructionStarters.definitionFor(offhand);
-        if (startedBlueprint == null) {
-            return false;
-        }
-        if (player instanceof ServerPlayer serverPlayer) {
-            BlueprintDefinition definition = BlueprintDefinitions.get(startedBlueprint);
-            if (definition != null && ConstructionStarters.builtStages(definition, offhand) >= definition.stageCount()) {
-                serverPlayer.displayClientMessage(
-                        Component.translatable("message.axiomata.construction.starter_complete"), true);
-            } else {
-                BlueprintItem.openUseMenu(serverPlayer, startedBlueprint, offhand);
-            }
-        }
-        return true;
+        return false;
     }
 }

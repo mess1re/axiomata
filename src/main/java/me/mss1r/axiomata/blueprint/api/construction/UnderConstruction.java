@@ -6,7 +6,6 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import me.mss1r.axiomata.blueprint.api.visual.BlueprintConstructionVisuals;
 
-import java.util.Map;
 
 /**
  * Implemented by the real entity being assembled. There is no temporary construction-site entity,
@@ -35,12 +34,6 @@ public interface UnderConstruction {
     default void onBuildProgressChanged() {
     }
 
-    /**
-     * Called when a build is finished, whether every stage was built or it was ended early, with the summed
-     * {@code adds} of the built stages. Override to adjust the entity, e.g. a ladder's section count.
-     */
-    default void applyBuiltData(Map<String, Integer> data) {
-    }
     /** Override when hammer hits should land on the section currently being assembled. */
     default boolean acceptsBlowOnStage(Player builder, String section) {
         return true;

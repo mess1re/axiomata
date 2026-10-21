@@ -2,7 +2,6 @@ package me.mss1r.axiomata.blueprint.client.screen;
 
 import me.mss1r.axiomata.blueprint.client.PlacementTargetHelper;
 import me.mss1r.axiomata.blueprint.internal.construction.ConstructionPlacementHelper;
-import me.mss1r.axiomata.blueprint.api.ConstructionStarters;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition;
 import me.mss1r.axiomata.blueprint.item.BlueprintItem;
 import me.mss1r.axiomata.blueprint.menu.BlueprintUseMenu;
@@ -44,10 +43,7 @@ public class BlueprintUseScreen extends AbstractContainerScreen<BlueprintUseMenu
         this.imageHeight = 0;
 
         if (recipe != null) {
-            // A starter already covers its first stages, so only the remaining materials are listed.
-            ItemStack held = playerInv.player.getOffhandItem();
-            int from = ConstructionStarters.isStarter(held) ? ConstructionStarters.builtStages(recipe, held) : 0;
-            ingredientsDisplay.addAll(recipe.materialsFrom(from));
+            ingredientsDisplay.addAll(recipe.totals());
         }
     }
 

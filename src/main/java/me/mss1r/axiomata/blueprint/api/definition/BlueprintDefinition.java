@@ -21,18 +21,12 @@ public final class BlueprintDefinition {
 
     private final Result result;
     private final List<Stage> stages;
-    private final int minStages;
-    @Nullable
-    private final Starter starter;
     @Nullable
     private final ResourceLocation outline;
 
-    public BlueprintDefinition(Result result, List<Stage> stages, int minStages, @Nullable Starter starter,
-                               @Nullable ResourceLocation outline) {
+    public BlueprintDefinition(Result result, List<Stage> stages, @Nullable ResourceLocation outline) {
         this.result = result;
         this.stages = List.copyOf(stages);
-        this.minStages = minStages;
-        this.starter = starter;
         this.outline = outline;
     }
 
@@ -42,16 +36,6 @@ public final class BlueprintDefinition {
 
     public List<Stage> stages() {
         return stages;
-    }
-
-    /** Stages required before the build can be ended early; 0 means every stage is required. */
-    public int minStages() {
-        return minStages;
-    }
-
-    @Nullable
-    public Starter starter() {
-        return starter;
     }
 
     /** Outline id for the drawing table: {@code outline} if set, otherwise the blueprint id. */
@@ -72,24 +56,15 @@ public final class BlueprintDefinition {
         return stages.size();
     }
 
-    /** True when the build can be ended early, from {@link #minStages()} on. */
-    public boolean isExtendable() {
-        return minStages > 0 && minStages < stageCount();
-    }
-
-    /** Total materials of the stages from {@code from} onward, merged by key. */
-    public List<Material> materialsFrom(int from) {
+    /** Total materials of every stage, merged by key. */
+    public List<Material> totals() {
         Map<String, Material> totals = new LinkedHashMap<>();
-        for (int index = Math.max(0, from); index < stages.size(); index++) {
-            for (Material material : stages.get(index).materials()) {
+        for (Stage stage : stages) {
+            for (Material material : stage.materials()) {
                 totals.merge(material.key(), material, (have, more) -> have.withCount(have.count() + more.count()));
             }
         }
         return new ArrayList<>(totals.values());
-    }
-
-    public List<Material> totals() {
-        return materialsFrom(0);
     }
 
     public enum Placement {
@@ -107,15 +82,10 @@ public final class BlueprintDefinition {
         }
     }
 
-    public record Stage(String section, int hits, List<Material> materials, Map<String, Integer> adds) {
+    public record Stage(String section, int hits, List<Material> materials) {
         public Stage {
             materials = List.copyOf(materials);
-            adds = Map.copyOf(adds);
         }
-    }
-
-    /** Item that starts this build and counts as its first {@code builtStages} stages. */
-    public record Starter(ResourceLocation item, int builtStages) {
     }
 
     /**

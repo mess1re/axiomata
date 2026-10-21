@@ -111,59 +111,6 @@ public final class BuildProgress {
         return complete() ? Integer.MAX_VALUE : stage();
     }
 
-    public boolean isExtendable() {
-        BlueprintDefinition definition = definition();
-        return definition != null && definition.isExtendable();
-    }
-
-    /** Section that must be built before the build can be ended early, or null if it can be ended now. */
-    @Nullable
-    public String sectionNeededToEnd() {
-        BlueprintDefinition definition = definition();
-        if (definition == null || !definition.isExtendable() || stage() >= definition.minStages()) {
-            return null;
-        }
-        return definition.stages().get(definition.minStages() - 1).section();
-    }
-
-    /** True if the build is extendable, not complete, and has at least {@code minStages} stages built. */
-    public boolean canEndHere() {
-        BlueprintDefinition definition = definition();
-        return definition != null && definition.isExtendable() && !complete() && stage() >= definition.minStages();
-    }
-
-    /**
-     * Marks the build finished at the current stage. The caller must refund materials committed to that stage first.
-     */
-    public void endHere() {
-        core.endHere();
-        paid.clear();
-    }
-
-    /** Marks the first {@code stages} stages as built without doing their work. */
-    public void skipBuilt(int stages) {
-        core.advanceTo(stages);
-        paid.clear();
-    }
-
-    /** Sum of the {@code adds} values of all built stages. */
-    public Map<String, Integer> builtData() {
-        BlueprintDefinition definition = definition();
-        Map<String, Integer> data = new LinkedHashMap<>();
-        if (definition == null) {
-            return data;
-        }
-        int built = Math.min(stage(), definition.stageCount());
-        for (int index = 0; index < built; index++) {
-            definition.stages().get(index).adds().forEach((key, value) -> data.merge(key, value, Integer::sum));
-        }
-        return data;
-    }
-
-    @Nullable
-    private BlueprintDefinition definition() {
-        return BlueprintDefinitions.get(blueprintId());
-    }
     /** Returns true only when this hit completed the current stage. */
     public boolean strike() {
         BlueprintConstructionPlan plan = plan();

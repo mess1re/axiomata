@@ -166,7 +166,7 @@ public class BlueprintItem extends Item {
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
     }
 
-    /** Opens the use menu for a drawn blueprint or a starter item held in the off hand. */
+    /** Opens the use menu for a drawn blueprint held in the off hand. */
     public static void openUseMenu(ServerPlayer serverPlayer, String recipeId, ItemStack stack) {
         {
             BlueprintDefinition recipe = BlueprintDefinitions.get(recipeId);

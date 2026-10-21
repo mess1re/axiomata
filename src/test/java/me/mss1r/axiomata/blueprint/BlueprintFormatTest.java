@@ -23,11 +23,9 @@ class BlueprintFormatTest {
             {
               "formatVersion": 3,
               "result": { "item": "example:cart_spawner", "entity": "example:cart", "data": { "Wheels": 2 } },
-              "minStages": 1,
               "stages": [
                 { "section": "frame", "hits": 8, "materials": { "minecraft:oak_log": 6, "#minecraft:planks": 4 } },
-                { "section": "wheels", "materials": { "example:wheel": 2, "minecraft:oak_log": 1 },
-                  "adds": { "Wheels": 2 } }
+                { "section": "wheels", "materials": { "example:wheel": 2, "minecraft:oak_log": 1 } }
               ]
             }
             """;
@@ -40,11 +38,9 @@ class BlueprintFormatTest {
               },
               "result": { "item": "example:cart_spawner", "count": 1, "custom_data": { "Wheels": 2 },
                           "deployment": { "mode": "ground", "preview_entity": "example:cart" } },
-              "min_stages": 1,
               "construction": [
                 { "section": "frame", "hits": 8, "materials": [ { "key": "L", "count": 6 } ] },
-                { "section": "wheels", "materials": [ { "key": "W" }, { "key": "L", "count": 1 } ],
-                  "adds": { "Wheels": 2 } }
+                { "section": "wheels", "materials": [ { "key": "W" }, { "key": "L", "count": 1 } ] }
               ]
             }]
             """;
@@ -60,7 +56,7 @@ class BlueprintFormatTest {
         BlueprintDefinition definition = parsed.definition();
 
         assertEquals(2, definition.stageCount());
-        assertTrue(definition.buildsInWorld() && definition.isExtendable());
+        assertTrue(definition.buildsInWorld());
         assertEquals("#minecraft:planks", definition.stages().get(0).materials().get(1).key());
         assertEquals(7, definition.totals().stream()
                 .filter(material -> material.key().equals("minecraft:oak_log")).findFirst().orElseThrow().count(),
@@ -85,8 +81,8 @@ class BlueprintFormatTest {
 
     @Test
     void tagMaterialsAreGivenBackAsTheirReturnItem() {
-        String withReturns = CURRENT.replace("\"minStages\": 1,",
-                "\"minStages\": 1, \"returns\": { \"#minecraft:planks\": \"minecraft:oak_log\" },");
+        String withReturns = CURRENT.replace("\"stages\": [",
+                "\"returns\": { \"#minecraft:planks\": \"minecraft:oak_log\" }, \"stages\": [");
         BlueprintFormat.Parsed parsed = parse(withReturns);
         assertTrue(parsed.valid(), () -> String.join("; ", parsed.errors()));
         BlueprintDefinition.Material planks = parsed.definition().stages().get(0).materials().get(1);
@@ -110,7 +106,6 @@ class BlueprintFormatTest {
         assertError(CURRENT.replace("\"materials\": { \"example:wheel\"", "\"matrials\": { \"example:wheel\""),
                 "stages[1].matrials: not a field here");
         assertError(CURRENT.replace("\"hits\": 8", "\"hits\": \"8\""), "stages[0].hits: must be a whole number");
-        assertError(CURRENT.replace("\"minStages\": 1", "\"minStages\": 2"), "minStages: must be from 1 to 1");
         assertError(CURRENT.replace("\"example:wheel\": 2", "\"example:wheel\": 0"),
                 "stages[1].materials.example:wheel: count must be at least 1");
         assertError(CURRENT.replace("\"#minecraft:planks\"", "\"minecraft:planks\""),
@@ -126,14 +121,14 @@ class BlueprintFormatTest {
     }
 
     @Test
-    void earlyEndFieldsOnACraftAreWarnedAbout() {
-        assertTrue(BlueprintFormat.warnings(parse(CURRENT).definition()).isEmpty(),
-                "A build placed in the world was warned about its early end");
-        BlueprintFormat.Parsed craft = parse(CURRENT.replace("\"entity\": \"example:cart\", ", ""));
-        assertTrue(craft.valid(), () -> String.join("; ", craft.errors()));
-        assertEquals(List.of("minStages has no effect: only builds placed in the world can end early",
-                        "adds has no effect: only builds placed in the world can end early"),
-                BlueprintFormat.warnings(craft.definition()));
+    void buildsThatEndEarlyAreNoLongerRead() {
+        assertError(CURRENT.replace("\"stages\": [", "\"minStages\": 1, \"stages\": ["), "minStages: not a field here");
+        assertError(CURRENT.replace("\"stages\": [", "\"starter\": { \"item\": \"example:wheel\" }, \"stages\": ["),
+                "starter: not a field here");
+        assertError(CURRENT.replace("\"hits\": 8,", "\"hits\": 8, \"adds\": { \"Wheels\": 2 },"),
+                "stages[0].adds: not a field here");
+        assertError(OLD.replace("\"construction\": [", "\"min_stages\": 1, \"construction\": ["),
+                "min_stages and starter are no longer supported");
     }
 
     private static void assertError(String json, String expected) {

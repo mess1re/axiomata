@@ -9,7 +9,6 @@ import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition.Material;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition.Placement;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition.Result;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition.Stage;
-import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition.Starter;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,11 +25,9 @@ import java.util.function.Predicate;
  * the problem.
  */
 public final class BlueprintFormat {
-    private static final Set<String> ROOT_FIELDS = Set.of("formatVersion", "result", "stages", "minStages",
-            "starter", "outline", "returns");
+    private static final Set<String> ROOT_FIELDS = Set.of("formatVersion", "result", "stages", "outline", "returns");
     private static final Set<String> RESULT_FIELDS = Set.of("item", "count", "data", "entity", "placement");
-    private static final Set<String> STAGE_FIELDS = Set.of("section", "hits", "materials", "adds");
-    private static final Set<String> STARTER_FIELDS = Set.of("item", "builtStages");
+    private static final Set<String> STAGE_FIELDS = Set.of("section", "hits", "materials");
 
     private BlueprintFormat() {
     }
@@ -78,37 +75,6 @@ public final class BlueprintFormat {
         }
         Result result = result(object(root, "result", "", true, errors), ids, errors);
         List<Stage> stages = returns(root, stages(root, ids, errors), ids, errors);
-        int minStages = 0;
-        if (root.has("minStages")) {
-            Integer value = integer(root.get("minStages"), "minStages", errors);
-            if (value != null) {
-                if (value < 1 || value >= stages.size()) {
-                    errors.add("minStages: must be from 1 to " + Math.max(1, stages.size() - 1)
-                            + " (one less than the " + stages.size() + " stages); leave it out when every stage"
-                            + " must be built");
-                } else {
-                    minStages = value;
-                }
-            }
-        }
-        Starter starter = null;
-        JsonObject starterJson = object(root, "starter", "", false, errors);
-        if (starterJson != null) {
-            unknownFields(starterJson, STARTER_FIELDS, "starter.", errors);
-            ResourceLocation item = itemId(starterJson, "item", "starter.", ids, errors);
-            int built = 1;
-            if (starterJson.has("builtStages")) {
-                Integer value = integer(starterJson.get("builtStages"), "starter.builtStages", errors);
-                if (value != null && (value < 0 || value > stages.size())) {
-                    errors.add("starter.builtStages: must be from 0 to " + stages.size());
-                } else if (value != null) {
-                    built = value;
-                }
-            }
-            if (item != null) {
-                starter = new Starter(item, built);
-            }
-        }
         ResourceLocation outline = null;
         if (root.has("outline")) {
             outline = id(root.get("outline"), "outline", errors);
@@ -116,7 +82,7 @@ public final class BlueprintFormat {
         if (result == null || !errors.isEmpty()) {
             return new Parsed(null, errors, false);
         }
-        return new Parsed(new BlueprintDefinition(result, stages, minStages, starter, outline), errors, false);
+        return new Parsed(new BlueprintDefinition(result, stages, outline), errors, false);
     }
 
     @Nullable
@@ -219,7 +185,7 @@ public final class BlueprintFormat {
                     }
                 });
             }
-            stages.add(new Stage(section, hits, materials, adds(json, path, errors)));
+            stages.add(new Stage(section, hits, materials));
         }
         return stages;
     }
@@ -257,7 +223,7 @@ public final class BlueprintFormat {
                 materials.add(material.tag() != null && returns.containsKey(material.tag())
                         ? material.withReturns(returns.get(material.tag())) : material);
             }
-            result.add(new Stage(stage.section(), stage.hits(), materials, stage.adds()));
+            result.add(new Stage(stage.section(), stage.hits(), materials));
         }
         return result;
     }
@@ -282,22 +248,6 @@ public final class BlueprintFormat {
             return null;
         }
         return Material.ofItem(item, count);
-    }
-
-    private static Map<String, Integer> adds(JsonObject json, String path, List<String> errors) {
-        Map<String, Integer> adds = new LinkedHashMap<>();
-        JsonObject addsJson = object(json, "adds", path + ".", false, errors);
-        if (addsJson != null) {
-            addsJson.entrySet().forEach(entry -> {
-                Integer value = integer(entry.getValue(), path + ".adds." + entry.getKey(), errors);
-                if (value != null && value < 0) {
-                    errors.add(path + ".adds." + entry.getKey() + ": cannot be negative");
-                } else if (value != null) {
-                    adds.put(entry.getKey(), value);
-                }
-            });
-        }
-        return adds;
     }
 
     /** Legacy format: lettered ingredients in {@code key}, which stages refer to by letter. */
@@ -381,38 +331,21 @@ public final class BlueprintFormat {
                     }
                     materials.add(ingredient.withCount(part.getValue() > 0 ? part.getValue() : ingredient.count()));
                 }
-                stages.add(new Stage(section == null ? "" : section, Math.max(0, hits), materials,
-                        adds(json, path, errors)));
+                stages.add(new Stage(section == null ? "" : section, Math.max(0, hits), materials));
             }
         }
         if (stages.isEmpty()) {
             // Without stages, the old format took the whole key at once.
-            stages.add(new Stage("", 0, new ArrayList<>(key.values()), Map.of()));
+            stages.add(new Stage("", 0, new ArrayList<>(key.values())));
         }
 
-        int minStages = 0;
-        if (root.has("min_stages")) {
-            Integer value = integer(root.get("min_stages"), "min_stages", errors);
-            if (value != null && value > 0 && value < stages.size()) {
-                minStages = value;
-            } else if (value != null && value != 0) {
-                errors.add("min_stages: must be from 1 to " + Math.max(1, stages.size() - 1));
-            }
-        }
-        Starter starter = null;
-        JsonObject starterJson = object(root, "starter", "", false, errors);
-        if (starterJson != null) {
-            ResourceLocation item = itemId(starterJson, "item", "starter.", ids, errors);
-            int built = starterJson.has("built_stages")
-                    ? orZero(integer(starterJson.get("built_stages"), "starter.built_stages", errors)) : 1;
-            if (item != null) {
-                starter = new Starter(item, Math.max(0, Math.min(built, stages.size())));
-            }
+        if (root.has("min_stages") || root.has("starter")) {
+            errors.add("min_stages and starter are no longer supported: a build is finished when every stage stands");
         }
         if (result == null || !errors.isEmpty()) {
             return new Parsed(null, errors, true);
         }
-        return new Parsed(new BlueprintDefinition(result, stages, minStages, starter, null), errors, true);
+        return new Parsed(new BlueprintDefinition(result, stages, null), errors, true);
     }
 
     private static Map<String, Integer> legacyParts(JsonObject stage, String path, List<String> errors) {
@@ -431,20 +364,6 @@ public final class BlueprintFormat {
             parts.put(stage.get("key").getAsString(), 0);
         }
         return parts;
-    }
-
-    /** Fields that do nothing for this blueprint, for a warning: early ends only exist for builds in the world. */
-    public static List<String> warnings(BlueprintDefinition definition) {
-        List<String> warnings = new ArrayList<>();
-        if (!definition.buildsInWorld()) {
-            if (definition.minStages() > 0) {
-                warnings.add("minStages has no effect: only builds placed in the world can end early");
-            }
-            if (definition.stages().stream().anyMatch(stage -> !stage.adds().isEmpty())) {
-                warnings.add("adds has no effect: only builds placed in the world can end early");
-            }
-        }
-        return warnings;
     }
 
     public static JsonObject write(BlueprintDefinition definition) {
@@ -468,17 +387,6 @@ public final class BlueprintFormat {
             resultJson.addProperty("placement", result.placement().name().toLowerCase(Locale.ROOT));
         }
         root.add("result", resultJson);
-        if (definition.minStages() > 0) {
-            root.addProperty("minStages", definition.minStages());
-        }
-        if (definition.starter() != null) {
-            JsonObject starter = new JsonObject();
-            starter.addProperty("item", definition.starter().item().toString());
-            if (definition.starter().builtStages() != 1) {
-                starter.addProperty("builtStages", definition.starter().builtStages());
-            }
-            root.add("starter", starter);
-        }
         if (definition.outline() != null) {
             root.addProperty("outline", definition.outline().toString());
         }
@@ -492,11 +400,6 @@ public final class BlueprintFormat {
             JsonObject materials = new JsonObject();
             stage.materials().forEach(material -> materials.addProperty(material.key(), material.count()));
             json.add("materials", materials);
-            if (!stage.adds().isEmpty()) {
-                JsonObject adds = new JsonObject();
-                stage.adds().forEach(adds::addProperty);
-                json.add("adds", adds);
-            }
             stages.add(json);
         }
         root.add("stages", stages);

@@ -88,18 +88,6 @@ public final class ConstructionProgress {
         return true;
     }
 
-    /** Ends the build at the current stage. Work on that stage is dropped; the caller refunds its materials. */
-    public void endHere() {
-        cancelCurrentStage();
-        intrinsicallyFinished = true;
-    }
-
-    /** Marks the first {@code stages} stages as built, e.g. when starting from a starter item. */
-    public void advanceTo(int stages) {
-        cancelCurrentStage();
-        stage = Math.max(stage, stages);
-    }
-
     public int rollBackStage() {
         if (stage <= 0) {
             cancelCurrentStage();

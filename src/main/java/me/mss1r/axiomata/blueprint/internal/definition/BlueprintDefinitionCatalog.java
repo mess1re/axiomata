@@ -97,8 +97,6 @@ public final class BlueprintDefinitionCatalog extends SimplePreparableReloadList
                     LOGGER.error("Skipping {}: {}", source, String.join("; ", parsed.errors()));
                     continue;
                 }
-                BlueprintFormat.warnings(parsed.definition())
-                        .forEach(warning -> LOGGER.warn("In {}: {}", source, warning));
                 if (parsed.legacy()) {
                     LOGGER.info("{} uses the old blueprint format with lettered ingredients; it still loads, "
                             + "see https://github.com/mess1re/axiomata/wiki/Blueprint-Data for the current one", source);
@@ -122,8 +120,8 @@ public final class BlueprintDefinitionCatalog extends SimplePreparableReloadList
 
     /**
      * Checks what only a running world can tell. A build placed in the world must use an entity that supports
-     * construction; other blueprints are dropped so players never see them. A blueprint with neither an outline nor a
-     * starter cannot be obtained, which is only warned about.
+     * construction; other blueprints are dropped so players never see them. A blueprint without an outline cannot be
+     * obtained, which is only warned about.
      */
     public static void validate(MinecraftServer server) {
         ServerLevel level = server.overworld();
@@ -138,9 +136,9 @@ public final class BlueprintDefinitionCatalog extends SimplePreparableReloadList
                         definition.result().entity());
                 return;
             }
-            if (definition.starter() == null && OutlineCatalog.get(definition.outlineId(id)) == null) {
-                LOGGER.warn("Blueprint {} cannot be obtained: there is no outline {} to draw it at the drawing table"
-                        + " and no starter item", id, definition.outlineId(id));
+            if (OutlineCatalog.get(definition.outlineId(id)) == null) {
+                LOGGER.warn("Blueprint {} cannot be obtained: there is no outline {} to draw it at the drawing table",
+                        id, definition.outlineId(id));
             }
             kept.put(id, definition);
         });

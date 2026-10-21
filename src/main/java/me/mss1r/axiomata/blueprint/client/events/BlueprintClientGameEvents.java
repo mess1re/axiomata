@@ -7,7 +7,6 @@ import me.mss1r.axiomata.blueprint.client.renderer.ConstructionPreviewRenderer;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinitions;
 import me.mss1r.axiomata.blueprint.internal.construction.ConstructionPlacementHelper;
-import me.mss1r.axiomata.blueprint.api.ConstructionStarters;
 import me.mss1r.axiomata.blueprint.item.BlueprintItem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -42,13 +41,13 @@ public class BlueprintClientGameEvents {
             return;
         }
 
-        String recipeId = ConstructionStarters.definitionOf(blueprint);
+        String recipeId = BlueprintItem.getRecipeId(blueprint);
         BlueprintDefinition recipe = recipeId == null ? null : BlueprintDefinitions.get(recipeId);
         if (recipe == null || !recipe.buildsInWorld()) {
             return;
         }
 
-        // Include the result data so the preview has the finished size, e.g. a ladder's sections.
+        // Include the result data so the preview has the finished size.
         ItemStack previewStack = BlueprintItem.createResultStack(recipe);
         if (previewStack.isEmpty()) {
             return;
@@ -117,6 +116,6 @@ public class BlueprintClientGameEvents {
         }
 
         ItemStack offHand = player.getOffhandItem();
-        return ConstructionStarters.definitionOf(offHand) != null ? offHand : ItemStack.EMPTY;
+        return BlueprintItem.getRecipeId(offHand) != null ? offHand : ItemStack.EMPTY;
     }
 }

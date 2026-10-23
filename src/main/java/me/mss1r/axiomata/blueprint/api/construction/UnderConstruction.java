@@ -66,8 +66,16 @@ public interface UnderConstruction {
     }
 
     default boolean isFullyBuilt() {
-        return this instanceof Entity entity && entity.level().isClientSide()
-                ? constructionStatus().complete()
-                : buildProgress().complete();
+        if (this instanceof Entity entity) {
+            // Moonrise probes collision from Entity's constructor, before level/progress initialization.
+            if (entity.level() == null) {
+                return true;
+            }
+            if (entity.level().isClientSide()) {
+                return constructionStatus().complete();
+            }
+        }
+        BuildProgress progress = buildProgress();
+        return progress == null || progress.complete();
     }
 }

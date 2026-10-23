@@ -8,6 +8,7 @@ public final class BlueprintEvents {
     public static final Event<CreationCheck> CREATION_CHECK = EventFactory.createLoop();
     public static final Event<Created> CREATED = EventFactory.createLoop();
     public static final Event<Used> USED = EventFactory.createLoop();
+    public static final Event<Built> BUILT = EventFactory.createLoop();
 
     private BlueprintEvents() {
     }
@@ -30,5 +31,10 @@ public final class BlueprintEvents {
     @FunctionalInterface
     public interface Used {
         void used(BlueprintUsedEvent event);
+    }
+
+    @FunctionalInterface
+    public interface Built {
+        void built(BlueprintBuiltEvent event);
     }
 }

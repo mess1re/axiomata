@@ -1,9 +1,12 @@
 package me.mss1r.axiomata.blueprint.api.construction;
 
+import me.mss1r.axiomata.blueprint.api.event.BlueprintBuiltEvent;
+import me.mss1r.axiomata.blueprint.api.event.BlueprintEvents;
 import me.mss1r.axiomata.blueprint.internal.construction.ConstructionSync;
 import net.minecraft.world.Container;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition.Material;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +39,14 @@ public final class ConstructionWork {
     }
     /** A null material source means free construction, currently used by creative players. */
     public static Result strike(UnderConstruction machine, Container materials) {
+        return strike(machine, materials, null);
+    }
+
+    /**
+     * A blow by {@code worker}, who is named in {@link BlueprintEvents#BUILT} when the blow finishes the build.
+     * A null material source means free construction, currently used by creative players.
+     */
+    public static Result strike(UnderConstruction machine, Container materials, @Nullable LivingEntity worker) {
         BuildProgress progress = machine.buildProgress();
         BlueprintConstructionPlan.Stage stage = progress.currentStage();
         if (stage == null) {
@@ -60,6 +71,9 @@ public final class ConstructionWork {
             return new Result(Status.PROGRESSED, null);
         }
         changed(machine);
+        if (progress.complete()) {
+            BlueprintEvents.BUILT.invoker().built(new BlueprintBuiltEvent(machine, progress.blueprintId(), worker));
+        }
         return new Result(Status.ADVANCED, null);
     }
 

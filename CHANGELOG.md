@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.0-beta.10
+
+### Added
+
+- `BlueprintEvents.BUILT` fires when a blow finishes a build, with the result, its blueprint and who struck the blow. `ConstructionWork.strike` takes the worker; the hammer passes the player.
+
 ## 0.1.0-beta.9
 
 ### Added

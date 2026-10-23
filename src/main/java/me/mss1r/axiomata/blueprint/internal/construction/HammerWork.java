@@ -66,7 +66,7 @@ public final class HammerWork {
             }
             return;
         }
-        ConstructionWork.Result result = ConstructionWork.strike(machine, source(player));
+        ConstructionWork.Result result = ConstructionWork.strike(machine, source(player), player);
         if (result.status() == ConstructionWork.Status.MISSING_MATERIAL) {
             if (player instanceof ServerPlayer serverPlayer && stage != null) {
                 serverPlayer.displayClientMessage(Component.translatable(

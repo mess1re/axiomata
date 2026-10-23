@@ -5,10 +5,13 @@ import me.mss1r.axiomata.blueprint.internal.construction.ConstructionPlacementHe
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinitions;
 import me.mss1r.axiomata.blueprint.item.BlueprintItem;
+import me.mss1r.axiomata.blueprint.api.event.BlueprintEvents;
+import me.mss1r.axiomata.blueprint.api.event.BlueprintPlacementCheckEvent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -33,6 +36,12 @@ public final class ConstructionDeployer {
     @Nullable
     public static Entity deploy(ServerLevel level, String blueprintId, ItemStack blueprint, ItemStack result,
                                 ConstructionTarget target, float yaw) {
+        return deploy(level, blueprintId, blueprint, result, target, yaw, null);
+    }
+
+    @Nullable
+    public static Entity deploy(ServerLevel level, String blueprintId, ItemStack blueprint, ItemStack result,
+                                ConstructionTarget target, float yaw, @Nullable LivingEntity worker) {
         BlueprintDefinition recipe = BlueprintDefinitions.get(blueprintId);
         if (recipe == null) {
             return null;
@@ -58,6 +67,10 @@ public final class ConstructionDeployer {
         underConstruction.buildProgress().begin(blueprintId, BlueprintItem.getQuality(blueprint));
         underConstruction.onDeployed(yaw);
         underConstruction.onBuildProgressChanged();
+
+        BlueprintPlacementCheckEvent check = new BlueprintPlacementCheckEvent(underConstruction, blueprintId, worker);
+        BlueprintEvents.PLACEMENT_CHECK.invoker().check(check);
+        if (!check.allowed()) return null;
 
         return level.addFreshEntity(machine) ? machine : null;
     }

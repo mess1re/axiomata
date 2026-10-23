@@ -131,7 +131,8 @@ public record C2SUseBlueprintPacket(String recipeId) implements CustomPacketPayl
                         blueprint,
                         result,
                         target,
-                        player.getYRot()
+                        player.getYRot(),
+                        player
                 );
                 if (machine == null) {
                     player.displayClientMessage(Component.translatable("message.axiomata.construction_invalid_location"), false);

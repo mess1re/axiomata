@@ -6,6 +6,7 @@ public final class ConstructionProgress {
     private String planId = "";
     private String variantId = "";
     private int stage;
+    private int furthestStage;
     private double workUnits;
     private boolean materialsCommitted;
     private boolean intrinsicallyFinished = true;
@@ -17,6 +18,7 @@ public final class ConstructionProgress {
         this.planId = planId;
         this.variantId = variantId == null ? "" : variantId;
         stage = 0;
+        furthestStage = 0;
         workUnits = 0;
         materialsCommitted = false;
         intrinsicallyFinished = false;
@@ -26,6 +28,7 @@ public final class ConstructionProgress {
         planId = "";
         variantId = "";
         stage = 0;
+        furthestStage = 0;
         workUnits = 0;
         materialsCommitted = false;
         intrinsicallyFinished = true;
@@ -41,6 +44,11 @@ public final class ConstructionProgress {
 
     public int stage() {
         return stage;
+    }
+
+    /** Furthest completed boundary, retained when stages are taken apart. */
+    public int furthestStage() {
+        return furthestStage;
     }
 
     public int workUnits() {
@@ -92,6 +100,7 @@ public final class ConstructionProgress {
         }
         workUnits = 0;
         stage++;
+        furthestStage = Math.max(furthestStage, stage);
         materialsCommitted = false;
         return true;
     }
@@ -109,7 +118,7 @@ public final class ConstructionProgress {
 
     public Snapshot snapshot() {
         return new Snapshot(planId, variantId, stage, workUnits, materialsCommitted,
-                intrinsicallyFinished);
+                intrinsicallyFinished, furthestStage);
     }
 
     public void restore(Snapshot snapshot) {
@@ -117,13 +126,14 @@ public final class ConstructionProgress {
         planId = snapshot.planId();
         variantId = snapshot.variantId();
         stage = Math.max(0, snapshot.stage());
+        furthestStage = Math.max(stage, snapshot.furthestStage());
         workUnits = Double.isFinite(snapshot.workUnits()) ? Math.max(0, snapshot.workUnits()) : 0;
         materialsCommitted = snapshot.materialsCommitted();
         intrinsicallyFinished = snapshot.intrinsicallyFinished();
     }
 
     public record Snapshot(String planId, String variantId, int stage, double workUnits,
-                           boolean materialsCommitted, boolean intrinsicallyFinished) {
+                           boolean materialsCommitted, boolean intrinsicallyFinished, int furthestStage) {
         public Snapshot {
             planId = planId == null ? "" : planId;
             variantId = variantId == null ? "" : variantId;

@@ -19,6 +19,7 @@ import java.util.Map;
 public final class BuildProgress {
     private static final String BLUEPRINT_TAG = "Blueprint";
     private static final String STAGE_TAG = "BuildStage";
+    private static final String FURTHEST_STAGE_TAG = "BuildFurthestStage";
     private static final String HITS_TAG = "BuildHits";
     private static final String QUALITY_TAG = "BuildQuality";
     private static final String MATERIALS_COMMITTED_TAG = "BuildMaterialsCommitted";
@@ -52,6 +53,10 @@ public final class BuildProgress {
 
     public int stage() {
         return core.stage();
+    }
+
+    public int furthestStage() {
+        return core.furthestStage();
     }
 
     public int hits() {
@@ -160,6 +165,7 @@ public final class BuildProgress {
         ConstructionProgress.Snapshot snapshot = core.snapshot();
         tag.putString(BLUEPRINT_TAG, snapshot.planId());
         tag.putInt(STAGE_TAG, snapshot.stage());
+        tag.putInt(FURTHEST_STAGE_TAG, snapshot.furthestStage());
         tag.putDouble(HITS_TAG, snapshot.workUnits());
         tag.putString(QUALITY_TAG, snapshot.variantId());
         tag.putBoolean(MATERIALS_COMMITTED_TAG, snapshot.materialsCommitted());
@@ -184,7 +190,8 @@ public final class BuildProgress {
                 tag.getInt(STAGE_TAG),
                 tag.getDouble(HITS_TAG),
                 tag.getBoolean(MATERIALS_COMMITTED_TAG),
-                blueprintId.isEmpty() || tag.getBoolean(ENDED_TAG)));
+                blueprintId.isEmpty() || tag.getBoolean(ENDED_TAG),
+                tag.getInt(FURTHEST_STAGE_TAG)));
         paid.clear();
         for (Tag value : tag.getList(PAID_TAG, Tag.TAG_COMPOUND)) {
             CompoundTag entry = (CompoundTag) value;

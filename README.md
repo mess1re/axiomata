@@ -40,6 +40,15 @@ for server-side route planning with the same geometry and supported loads.
 server. Listeners can multiply work without changing the stage's materials.
 Fractional progress is saved; work stops at the stage boundary, so surplus
 cannot build the next stage without paying for it.
+
+`BlueprintEvents.STAGE_BUILT` identifies the worker, zero-based stage and whether
+this was its first completion. The furthest completed boundary is saved even
+when the structure is dismantled. Integrations awarding progress should use
+`firstCompletion`; `finished` also identifies the final stage.
+
+`BlueprintEvents.PLACEMENT_CHECK` can deny the final deployed pose, after support
+offsets but before entity addition or blueprint consumption. The deployment
+overload accepting a worker supplies attribution; player packets always use it.
 `ConstructionTarget.pick(player, reach, partialTick, fluids)` selects the nearest block or finished
 solid structure surface. It ignores decorative rigging and respects block occlusion; fluid targets
 remain block-only. Recompute the aim on the server. `StructurePlacement.findOnTop` returns a candidate

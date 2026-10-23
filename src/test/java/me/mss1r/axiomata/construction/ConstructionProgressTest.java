@@ -16,6 +16,36 @@ class ConstructionProgressTest {
     ));
 
     @Test
+    void completedBoundariesSurviveDismantlingAndReload() {
+        ConstructionProgress progress = new ConstructionProgress();
+        progress.begin("example:ship", "plain");
+        assertEquals(0, progress.furthestStage());
+        progress.applyWork(PLAN, 2);
+        assertEquals(1, progress.furthestStage());
+        progress.rollBackStage();
+        assertEquals(0, progress.stage());
+        assertEquals(1, progress.furthestStage());
+        ConstructionProgress restored = new ConstructionProgress();
+        restored.restore(progress.snapshot());
+        restored.applyWork(PLAN, 2);
+        assertEquals(1, restored.furthestStage());
+        restored.applyWork(PLAN);
+        assertEquals(2, restored.furthestStage());
+    }
+
+    @Test
+    void aNewBuildResetsItsCompletedBoundaries() {
+        ConstructionProgress progress = new ConstructionProgress();
+        progress.begin("example:first", "plain");
+        progress.applyWork(PLAN, 2);
+        progress.begin("example:second", "plain");
+        assertEquals(0, progress.furthestStage());
+        progress.applyWork(PLAN, 2);
+        progress.finishWithoutPlan();
+        assertEquals(0, progress.furthestStage());
+    }
+
+    @Test
     void thirtyPercentLessWorkTakesSevenHitsInsteadOfTen() {
         ConstructionPlan<String> plan = new ConstructionPlan<>(List.of(
                 new ConstructionPlan.Stage<>("hull", List.of("timber"), 10)));
@@ -100,7 +130,7 @@ class ConstructionProgressTest {
     @Test
     void aBuildEndedEarlyInAnOldSaveStaysFinishedUntilTakenApart() {
         ConstructionProgress progress = new ConstructionProgress();
-        progress.restore(new ConstructionProgress.Snapshot("example:structure", "plain", 1, 0, false, true));
+        progress.restore(new ConstructionProgress.Snapshot("example:structure", "plain", 1, 0, false, true, 1));
         assertTrue(progress.complete(PLAN));
 
         assertEquals(0, progress.rollBackStage());

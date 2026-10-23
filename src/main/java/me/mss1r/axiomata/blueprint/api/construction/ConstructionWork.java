@@ -3,6 +3,7 @@ package me.mss1r.axiomata.blueprint.api.construction;
 import me.mss1r.axiomata.blueprint.api.event.BlueprintBuiltEvent;
 import me.mss1r.axiomata.blueprint.api.event.BlueprintEvents;
 import me.mss1r.axiomata.blueprint.api.event.BlueprintWorkEvent;
+import me.mss1r.axiomata.blueprint.api.event.BlueprintStageBuiltEvent;
 import me.mss1r.axiomata.blueprint.internal.construction.ConstructionSync;
 import net.minecraft.world.Container;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition.Material;
@@ -69,11 +70,15 @@ public final class ConstructionWork {
 
         BlueprintWorkEvent work = new BlueprintWorkEvent(machine, worker);
         BlueprintEvents.WORK.invoker().work(work);
+        int completedStage = progress.stage();
+        boolean firstCompletion = completedStage >= progress.furthestStage();
         if (!progress.strike(work.workUnits())) {
             changed(machine);
             return new Result(Status.PROGRESSED, null);
         }
         changed(machine);
+        BlueprintEvents.STAGE_BUILT.invoker().built(new BlueprintStageBuiltEvent(
+                machine, progress.blueprintId(), worker, completedStage, firstCompletion, progress.complete()));
         if (progress.complete()) {
             BlueprintEvents.BUILT.invoker().built(new BlueprintBuiltEvent(machine, progress.blueprintId(), worker));
         }

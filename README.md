@@ -33,6 +33,13 @@ Consumers with a separate root-yaw field override `rotateWithSupport` to update 
 first constrain its displacement with `StructureTerrainCollision.clampMotion`. That method also
 checks clearance for supported loads. `clampYaw` checks the turning arc; `canOccupy` checks
 a single proposed root pose.
+`clampMotionAt` sweeps translation from a proposed pose without moving the entity,
+for server-side route planning with the same geometry and supported loads.
+
+`BlueprintEvents.WORK` quotes the work of each construction hammer blow on the
+server. Listeners can multiply work without changing the stage's materials.
+Fractional progress is saved; work stops at the stage boundary, so surplus
+cannot build the next stage without paying for it.
 `ConstructionTarget.pick(player, reach, partialTick, fluids)` selects the nearest block or finished
 solid structure surface. It ignores decorative rigging and respects block occlusion; fluid targets
 remain block-only. Recompute the aim on the server. `StructurePlacement.findOnTop` returns a candidate

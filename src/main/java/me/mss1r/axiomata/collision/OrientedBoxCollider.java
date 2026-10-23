@@ -60,7 +60,9 @@ public final class OrientedBoxCollider {
             }
 
             if (Math.abs(projectedMovement) <= AXIS_EPSILON) {
-                if (gap > CONTACT_EPSILON) {
+                // A stationary separating axis remains separate for the whole sweep, including
+                // tangential contact. Otherwise a floor tile's edge can stop a sliding hull.
+                if (gap >= -CONTACT_EPSILON) {
                     return null;
                 }
                 continue;

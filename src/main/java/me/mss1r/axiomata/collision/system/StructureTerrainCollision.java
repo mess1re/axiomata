@@ -43,6 +43,14 @@ public final class StructureTerrainCollision {
         return clampMotion(structure, wanted, StructureGeometry.solid(structure), -1.0D, ignored);
     }
 
+    /** Swept movement from a proposed pose, without moving the entity. Includes its supported loads. */
+    public static <T extends Entity & CollidableStructure> Vec3 clampMotionAt(
+            T structure, StructureTransform from, Vec3 wanted) {
+        SupportedStructures assembly = SupportedStructures.of(
+                structure, StructureGeometry.solid(structure), other -> false);
+        return resolveMotion(structure, from, assembly.groups(), wanted, -1, assembly::contains);
+    }
+
     /** Entity.move entry point, retaining the consumer's vanilla step height. */
     public static <T extends Entity & CollidableStructure> Vec3 collideMotion(
             T structure, Vec3 wanted) {

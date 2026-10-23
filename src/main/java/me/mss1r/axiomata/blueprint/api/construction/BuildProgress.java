@@ -138,8 +138,12 @@ public final class BuildProgress {
 
     /** Returns true only when this hit completed the current stage. */
     public boolean strike() {
+        return strike(1);
+    }
+
+    public boolean strike(double workUnits) {
         BlueprintConstructionPlan plan = plan();
-        boolean advanced = core.applyWork(plan.core());
+        boolean advanced = core.applyWork(plan.core(), workUnits);
         if (advanced) {
             paid.clear();
         }
@@ -156,7 +160,7 @@ public final class BuildProgress {
         ConstructionProgress.Snapshot snapshot = core.snapshot();
         tag.putString(BLUEPRINT_TAG, snapshot.planId());
         tag.putInt(STAGE_TAG, snapshot.stage());
-        tag.putInt(HITS_TAG, snapshot.workUnits());
+        tag.putDouble(HITS_TAG, snapshot.workUnits());
         tag.putString(QUALITY_TAG, snapshot.variantId());
         tag.putBoolean(MATERIALS_COMMITTED_TAG, snapshot.materialsCommitted());
         tag.putBoolean(ENDED_TAG, snapshot.intrinsicallyFinished() && !snapshot.planId().isEmpty());
@@ -178,7 +182,7 @@ public final class BuildProgress {
                 blueprintId,
                 quality.id(),
                 tag.getInt(STAGE_TAG),
-                tag.getInt(HITS_TAG),
+                tag.getDouble(HITS_TAG),
                 tag.getBoolean(MATERIALS_COMMITTED_TAG),
                 blueprintId.isEmpty() || tag.getBoolean(ENDED_TAG)));
         paid.clear();

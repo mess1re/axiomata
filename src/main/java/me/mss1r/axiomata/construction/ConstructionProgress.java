@@ -6,7 +6,7 @@ public final class ConstructionProgress {
     private String planId = "";
     private String variantId = "";
     private int stage;
-    private int workUnits;
+    private double workUnits;
     private boolean materialsCommitted;
     private boolean intrinsicallyFinished = true;
 
@@ -44,7 +44,7 @@ public final class ConstructionProgress {
     }
 
     public int workUnits() {
-        return workUnits;
+        return (int) workUnits;
     }
 
     public boolean materialsCommitted() {
@@ -74,12 +74,20 @@ public final class ConstructionProgress {
     }
 
     public boolean applyWork(ConstructionPlan<?> plan) {
+        return applyWork(plan, 1);
+    }
+
+    /** Work stops at the stage boundary: the next stage must pay for its own materials. */
+    public boolean applyWork(ConstructionPlan<?> plan, double amount) {
+        if (!Double.isFinite(amount) || amount <= 0) {
+            throw new IllegalArgumentException("Work must be finite and positive");
+        }
         ConstructionPlan.Stage<?> current = currentStage(plan);
         if (current == null) {
             return false;
         }
-        workUnits++;
-        if (workUnits < current.workUnits()) {
+        workUnits += amount;
+        if (workUnits + 1.0E-9 < current.workUnits()) {
             return false;
         }
         workUnits = 0;
@@ -109,12 +117,12 @@ public final class ConstructionProgress {
         planId = snapshot.planId();
         variantId = snapshot.variantId();
         stage = Math.max(0, snapshot.stage());
-        workUnits = Math.max(0, snapshot.workUnits());
+        workUnits = Double.isFinite(snapshot.workUnits()) ? Math.max(0, snapshot.workUnits()) : 0;
         materialsCommitted = snapshot.materialsCommitted();
         intrinsicallyFinished = snapshot.intrinsicallyFinished();
     }
 
-    public record Snapshot(String planId, String variantId, int stage, int workUnits,
+    public record Snapshot(String planId, String variantId, int stage, double workUnits,
                            boolean materialsCommitted, boolean intrinsicallyFinished) {
         public Snapshot {
             planId = planId == null ? "" : planId;

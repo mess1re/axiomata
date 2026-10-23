@@ -90,10 +90,19 @@ publishing {
             groupId = if (jitpackBuild) project.group.toString()
                 else System.getenv("GROUP") ?: project.group.toString()
             artifactId = if (jitpackBuild) project.name
-                else System.getenv("ARTIFACT") ?: modId
+                else System.getenv("ARTIFACT") ?: "$modId-${sc.current.version}"
             version = if (jitpackBuild) project.version.toString()
                 else System.getenv("VERSION") ?: project.version.toString()
             from(components["java"])
+        }
+    }
+    repositories {
+        maven("https://maven.pkg.github.com/mess1re/mod-maven") {
+            name = "ModMaven"
+            credentials {
+                username = providers.gradleProperty("gpr.user").orElse(providers.environmentVariable("GITHUB_ACTOR")).orNull
+                password = providers.gradleProperty("gpr.key").orElse(providers.environmentVariable("GITHUB_TOKEN")).orNull
+            }
         }
     }
 }

@@ -7,9 +7,31 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 class OrientedBoxColliderTest {
     private static final double EPSILON = 1.0E-7D;
+
+    @Test
+    void slidingAcrossATileEdgeDoesNotHitItsSideAtTangentialFloorContact() {
+        AABB floor = new AABB(0, 0, 0, 1, 1, 1);
+        for (double rounding : new double[] {0, -1.0E-10, 1.0E-10}) {
+            OrientedBox moving = new OrientedBox(new Vec3(-.75, 1.5 + rounding, .5),
+                    new Vec3(.5, .5, .5), Rotation3.IDENTITY);
+            assertNull(OrientedBoxCollider.separate(floor, moving, new Vec3(1, 0, 0)));
+        }
+    }
+
+    @Test
+    void tangentialContactStillBlocksMovementIntoTheFloor() {
+        AABB floor = new AABB(0, 0, 0, 1, 1, 1);
+        OrientedBox moving = new OrientedBox(new Vec3(.5, 1.5, .5),
+                new Vec3(.5, .5, .5), Rotation3.IDENTITY);
+        BoxSeparation contact = OrientedBoxCollider.separate(floor, moving, new Vec3(0, -.1, 0));
+        assertNotNull(contact);
+        assertEquals(0, contact.timeOfImpact(), EPSILON);
+        assertEquals(new Vec3(0, 1, 0), contact.contactNormal());
+    }
 
     @Test
     void reportsContinuousTimeOfImpact() {

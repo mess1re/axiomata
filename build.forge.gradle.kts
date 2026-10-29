@@ -108,8 +108,10 @@ publishing {
     }
 }
 
+// Plain JUnit runs without the game here: tests that load Minecraft classes such as Entity run on NeoForge only.
 sourceSets.test {
     java.exclude("**/collision/**")
+    java.exclude("**/UnderConstructionInitializationTest.java")
 }
 
 tasks.withType<JavaCompile>().configureEach {

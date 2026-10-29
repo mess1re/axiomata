@@ -182,7 +182,7 @@ public final class BuildProgress {
     }
 
     public void load(CompoundTag tag) {
-        String blueprintId = tag.getString(BLUEPRINT_TAG);
+        String blueprintId = BlueprintDefinitions.canonicalId(tag.getString(BLUEPRINT_TAG));
         BuildQuality quality = BuildQuality.byId(tag.getString(QUALITY_TAG));
         core.restore(new ConstructionProgress.Snapshot(
                 blueprintId,

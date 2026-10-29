@@ -270,7 +270,7 @@ public class DrawingTableBlockEntity extends BlockEntity implements ExtendedMenu
             }
         }
 
-        blueprintId = tag.getString(BLUEPRINT_TAG);
+        blueprintId = BlueprintDefinitions.canonicalId(tag.getString(BLUEPRINT_TAG));
         ruined = tag.getBoolean(RUINED_TAG);
         session = null;
         BlueprintOutline outline = outline();

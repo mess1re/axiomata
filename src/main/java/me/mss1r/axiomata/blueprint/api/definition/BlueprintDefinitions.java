@@ -15,6 +15,11 @@ public final class BlueprintDefinitions {
         return BlueprintDefinitionCatalog.get(id);
     }
 
+    /** The id a blueprint has now, for an id saved before the blueprint was renamed (see its {@code aliases}). */
+    public static String canonicalId(String id) {
+        return BlueprintDefinitionCatalog.canonicalId(id);
+    }
+
     public static Map<String, BlueprintDefinition> allById() {
         return BlueprintDefinitionCatalog.allById();
     }

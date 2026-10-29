@@ -48,6 +48,8 @@ public final class BlueprintDefinitionCatalog extends SimplePreparableReloadList
     private static final BlueprintFormat.Ids IDS = new BlueprintFormat.Ids(
             BuiltInRegistries.ITEM::containsKey, BuiltInRegistries.ENTITY_TYPE::containsKey);
     private static Map<String, BlueprintDefinition> definitions = Map.of();
+    // Former ids of renamed blueprints, each to the blueprint that now answers to it
+    private static Map<String, String> aliases = Map.of();
 
     public static void syncToClients(OnDatapackSyncEvent event) {
         if (event.getPlayer() == null) {
@@ -114,7 +116,7 @@ public final class BlueprintDefinitionCatalog extends SimplePreparableReloadList
 
     @Override
     protected void apply(Map<String, BlueprintDefinition> loaded, ResourceManager resourceManager, ProfilerFiller profiler) {
-        definitions = Collections.unmodifiableMap(new LinkedHashMap<>(loaded));
+        use(new LinkedHashMap<>(loaded));
         LOGGER.info("Loaded {} blueprint definitions", definitions.size());
     }
 
@@ -142,7 +144,7 @@ public final class BlueprintDefinitionCatalog extends SimplePreparableReloadList
             }
             kept.put(id, definition);
         });
-        definitions = Collections.unmodifiableMap(kept);
+        use(kept);
     }
 
     private static boolean supportsConstruction(ServerLevel level, @Nullable ResourceLocation entityId) {
@@ -155,8 +157,33 @@ public final class BlueprintDefinitionCatalog extends SimplePreparableReloadList
         return probe instanceof UnderConstruction;
     }
 
+    private static void use(Map<String, BlueprintDefinition> loaded) {
+        Map<String, String> former = new LinkedHashMap<>();
+        loaded.forEach((id, definition) -> {
+            for (ResourceLocation alias : definition.aliases()) {
+                String key = alias.toString();
+                if (loaded.containsKey(key)) {
+                    LOGGER.error("Blueprint {} lists {} as a former id, but a blueprint with that id exists; ignoring"
+                            + " the alias", id, key);
+                } else if (former.containsKey(key)) {
+                    LOGGER.error("Blueprints {} and {} both list {} as a former id; keeping {}", former.get(key), id,
+                            key, former.get(key));
+                } else {
+                    former.put(key, id);
+                }
+            }
+        });
+        definitions = Collections.unmodifiableMap(loaded);
+        aliases = Collections.unmodifiableMap(former);
+    }
+
     public static BlueprintDefinition get(String id) {
-        return definitions.get(id);
+        return definitions.get(canonicalId(id));
+    }
+
+    /** The id a blueprint has now: a former id listed in some blueprint's {@code aliases} becomes that blueprint's. */
+    public static String canonicalId(String id) {
+        return aliases.getOrDefault(id, id);
     }
 
     public static Map<String, BlueprintDefinition> allById() {
@@ -186,10 +213,10 @@ public final class BlueprintDefinitionCatalog extends SimplePreparableReloadList
                             String.join("; ", parsed.errors()));
                 }
             }
-            definitions = Collections.unmodifiableMap(synced);
+            use(synced);
         } catch (JsonParseException | IllegalStateException exception) {
             LOGGER.error("Failed to read the synced Axiomata blueprint catalog", exception);
-            definitions = Map.of();
+            use(Map.of());
         }
     }
 

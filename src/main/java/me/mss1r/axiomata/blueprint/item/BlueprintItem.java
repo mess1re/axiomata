@@ -125,7 +125,7 @@ public class BlueprintItem extends Item {
             return null;
         }
         String recipeId = readTag(stack).getString("RecipeId");
-        return recipeId.isBlank() ? null : recipeId;
+        return recipeId.isBlank() ? null : BlueprintDefinitions.canonicalId(recipeId);
     }
 
     public static ItemStack createResultStack(BlueprintDefinition recipe) {
@@ -161,7 +161,7 @@ public class BlueprintItem extends Item {
         }
 
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
-            openUseMenu(serverPlayer, readTag(stack).getString("RecipeId"), stack);
+            openUseMenu(serverPlayer, String.valueOf(getRecipeId(stack)), stack);
         }
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
     }

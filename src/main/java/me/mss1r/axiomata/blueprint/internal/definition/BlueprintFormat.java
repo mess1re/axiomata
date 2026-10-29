@@ -25,7 +25,8 @@ import java.util.function.Predicate;
  * the problem.
  */
 public final class BlueprintFormat {
-    private static final Set<String> ROOT_FIELDS = Set.of("formatVersion", "result", "stages", "outline", "returns");
+    private static final Set<String> ROOT_FIELDS = Set.of("formatVersion", "result", "stages", "outline", "returns",
+            "aliases");
     private static final Set<String> RESULT_FIELDS = Set.of("item", "count", "data", "entity", "placement");
     private static final Set<String> STAGE_FIELDS = Set.of("section", "hits", "materials");
 
@@ -79,10 +80,30 @@ public final class BlueprintFormat {
         if (root.has("outline")) {
             outline = id(root.get("outline"), "outline", errors);
         }
+        List<ResourceLocation> aliases = aliases(root, errors);
         if (result == null || !errors.isEmpty()) {
             return new Parsed(null, errors, false);
         }
-        return new Parsed(new BlueprintDefinition(result, stages, outline), errors, false);
+        return new Parsed(new BlueprintDefinition(result, stages, outline, aliases), errors, false);
+    }
+
+    private static List<ResourceLocation> aliases(JsonObject root, List<String> errors) {
+        List<ResourceLocation> aliases = new ArrayList<>();
+        if (!root.has("aliases")) {
+            return aliases;
+        }
+        if (!root.get("aliases").isJsonArray()) {
+            errors.add("aliases: must be a list of ids in square brackets");
+            return aliases;
+        }
+        JsonArray array = root.getAsJsonArray("aliases");
+        for (int index = 0; index < array.size(); index++) {
+            ResourceLocation alias = id(array.get(index), "aliases[" + index + "]", errors);
+            if (alias != null) {
+                aliases.add(alias);
+            }
+        }
+        return aliases;
     }
 
     @Nullable
@@ -389,6 +410,11 @@ public final class BlueprintFormat {
         root.add("result", resultJson);
         if (definition.outline() != null) {
             root.addProperty("outline", definition.outline().toString());
+        }
+        if (!definition.aliases().isEmpty()) {
+            JsonArray aliases = new JsonArray();
+            definition.aliases().forEach(alias -> aliases.add(alias.toString()));
+            root.add("aliases", aliases);
         }
         JsonArray stages = new JsonArray();
         for (Stage stage : definition.stages()) {

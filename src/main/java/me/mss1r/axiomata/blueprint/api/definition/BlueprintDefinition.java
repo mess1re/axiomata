@@ -23,11 +23,18 @@ public final class BlueprintDefinition {
     private final List<Stage> stages;
     @Nullable
     private final ResourceLocation outline;
+    private final List<ResourceLocation> aliases;
 
     public BlueprintDefinition(Result result, List<Stage> stages, @Nullable ResourceLocation outline) {
+        this(result, stages, outline, List.of());
+    }
+
+    public BlueprintDefinition(Result result, List<Stage> stages, @Nullable ResourceLocation outline,
+                               List<ResourceLocation> aliases) {
         this.result = result;
         this.stages = List.copyOf(stages);
         this.outline = outline;
+        this.aliases = List.copyOf(aliases);
     }
 
     public Result result() {
@@ -46,6 +53,11 @@ public final class BlueprintDefinition {
     @Nullable
     public ResourceLocation outline() {
         return outline;
+    }
+
+    /** Ids this blueprint was known by before a rename; blueprints, sites and tables saved with them read as this one. */
+    public List<ResourceLocation> aliases() {
+        return aliases;
     }
 
     public boolean buildsInWorld() {

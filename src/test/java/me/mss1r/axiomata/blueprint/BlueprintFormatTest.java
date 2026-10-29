@@ -131,6 +131,21 @@ class BlueprintFormatTest {
                 "min_stages and starter are no longer supported");
     }
 
+    @Test
+    void formerIdsOfARenamedBlueprintAreKept() {
+        BlueprintFormat.Parsed parsed = parse(CURRENT.replace("\"stages\": [", "\"aliases\": [\"example:wagon\"], \"stages\": ["));
+        assertTrue(parsed.valid(), () -> String.join("; ", parsed.errors()));
+        assertEquals(List.of(ResourceLocation.tryParse("example:wagon")), parsed.definition().aliases());
+        BlueprintFormat.Parsed again = BlueprintFormat.parse(BlueprintFormat.write(parsed.definition()), IDS);
+        assertEquals(parsed.definition().aliases(), again.definition().aliases());
+        assertTrue(parse(CURRENT).definition().aliases().isEmpty());
+
+        assertError(CURRENT.replace("\"stages\": [", "\"aliases\": \"example:wagon\", \"stages\": ["),
+                "aliases: must be a list");
+        assertError(CURRENT.replace("\"stages\": [", "\"aliases\": [\"Not An Id\"], \"stages\": ["),
+                "aliases[0]: 'Not An Id' is not an id");
+    }
+
     private static void assertError(String json, String expected) {
         BlueprintFormat.Parsed parsed = parse(json);
         assertFalse(parsed.valid(), "A broken file was read as valid: " + expected);

@@ -1,15 +1,15 @@
 # Changelog
 
-## 0.1.0-beta.10
-
-### Added
-
-- `BlueprintEvents.BUILT` fires when a blow finishes a build, with the result, its blueprint and who struck the blow. `ConstructionWork.strike` takes the worker; the hammer passes the player.
-
 ## 0.1.0-beta.9
 
 ### Added
 
+- `BlueprintEvents.BUILT` fires when a blow finishes a build, with the result, its blueprint and who struck the blow. `ConstructionWork.strike` takes the worker; the hammer passes the player.
+- `BlueprintEvents.WORK` quotes the work of each hammer blow on the server, so a listener can make building faster or slower without changing what a stage costs. Fractional progress is saved, and work stops at the stage boundary: surplus never builds the next stage before it is paid for.
+- `BlueprintEvents.STAGE_BUILT` names the worker and the stage built, and whether it was built for the first time; the furthest stage ever built is saved, even after the build is taken apart. Integrations that reward progress use `firstCompletion`.
+- `BlueprintEvents.PLACEMENT_CHECK` can refuse the final pose of a build placed in the world, before the entity is added or the blueprint used up. `ConstructionDeployer.deploy` takes the worker who places it; players always do.
+- `StructureTerrainCollision.clampMotionAt` sweeps a move from a proposed pose without moving the structure, with its supported loads, for planning routes on the server.
+- Blueprints can be renamed: `aliases` in the blueprint file lists its former IDs, and blueprint items, drawing tables and unfinished builds saved with them read as the renamed blueprint. `BlueprintDefinitions.canonicalId` gives the current ID for a saved one.
 - Structures carry the structures resting on them, including whole stacks, and turn them with their support.
 - `StructurePlacement.findOnTop` finds a pose on top of another structure, lowered from the aimed height so a mast above the deck does not take it; `StructurePlacement.isClear` checks a proposed pose against blocks, the world border, other structures and unfinished sites. `StructureTerrainCollision.clampMotion`, `clampYaw` and `canOccupy` check full geometry against terrain and other structures.
 - Blueprints place builds on the deck of a finished structure, such as a ship, which carries them through construction and reloads. `ConstructionTarget.pick` finds the aimed block or structure surface, for blueprints and other deployment items alike; `ConstructionDeployer.deploy` takes it.
@@ -33,6 +33,11 @@
 ### Removed
 
 - Builds that end early (`minStages`), starter items (`starter`) and stage `adds`, with `ConstructionStarters`, `BuildProgress.endHere` and `UnderConstruction.applyBuiltData`. A build is finished when every stage stands; results of variable size belong to item recipes. Blueprint files that use these fields no longer load.
+
+### Fixed
+
+- A build asked for its collision while its entity is still being constructed, as Moonrise does, no longer crashes.
+- A structure sliding along a floor is no longer stopped by the edge of a tile it only touches.
 
 ## 0.1.0-beta.8
 

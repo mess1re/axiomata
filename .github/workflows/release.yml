@@ -93,7 +93,7 @@ jobs:
       - name: Build
         run: |
           chmod +x gradlew
-          ./gradlew clean build
+          ./gradlew clean build :fabric:1.20.1:runGameTest :fabric:1.21.1:runGameTest
 
       - name: Create GitHub release
         if: env.PUBLISH_TARGET != 'modrinth'
@@ -105,6 +105,8 @@ jobs:
           tag="$RELEASE_TAG"
           forge_jar="forge/versions/1.20.1/build/libs/axiomata-forge-${tag}+1.20.1.jar"
           neoforge_jar="neoforge/versions/1.21.1/build/libs/axiomata-neoforge-${tag}+1.21.1.jar"
+          fabric_120_jar="fabric/versions/1.20.1/build/libs/axiomata-fabric-${tag}+1.20.1.jar"
+          fabric_121_jar="fabric/versions/1.21.1/build/libs/axiomata-fabric-${tag}+1.21.1.jar"
           release_flags=()
 
           if [[ "$tag" == *-* ]]; then
@@ -115,12 +117,16 @@ jobs:
             gh release upload "$tag" \
               "$forge_jar" \
               "$neoforge_jar" \
+              "$fabric_120_jar" \
+              "$fabric_121_jar" \
               --clobber
             gh release edit "$tag" --notes "$RELEASE_CHANGELOG"
           else
             gh release create "$tag" \
               "$forge_jar" \
               "$neoforge_jar" \
+              "$fabric_120_jar" \
+              "$fabric_121_jar" \
               --verify-tag \
               --title "$tag" \
               --notes "$RELEASE_CHANGELOG" \
@@ -142,6 +148,8 @@ jobs:
           tag="$RELEASE_TAG"
           forge_jar="forge/versions/1.20.1/build/libs/axiomata-forge-${tag}+1.20.1.jar"
           neoforge_jar="neoforge/versions/1.21.1/build/libs/axiomata-neoforge-${tag}+1.21.1.jar"
+          fabric_120_jar="fabric/versions/1.20.1/build/libs/axiomata-fabric-${tag}+1.20.1.jar"
+          fabric_121_jar="fabric/versions/1.21.1/build/libs/axiomata-fabric-${tag}+1.21.1.jar"
           changelog=$(gh release view "$tag" --json body --jq '.body // ""')
           release_type="release"
 
@@ -167,9 +175,12 @@ jobs:
                 ],
                 releaseType: $release_type,
                 relations: {
-                  projects: [
+                  projects: ([
                     {slug: "architectury-api", type: "requiredDependency"}
-                  ]
+                  ] + if $loader == "Fabric" then [
+                    {slug: "fabric-api", type: "requiredDependency"},
+                    {slug: "forge-config-api-port", type: "requiredDependency"}
+                  ] else [] end)
                 }
               }')
 
@@ -191,6 +202,9 @@ jobs:
             "1.21.1" \
             "NeoForge"
 
+          upload_file "$fabric_120_jar" "1.20.1" "Fabric"
+          upload_file "$fabric_121_jar" "1.21.1" "Fabric"
+
       - name: Publish to Modrinth
         shell: bash
         env:
@@ -205,6 +219,8 @@ jobs:
           tag="$RELEASE_TAG"
           forge_jar="forge/versions/1.20.1/build/libs/axiomata-forge-${tag}+1.20.1.jar"
           neoforge_jar="neoforge/versions/1.21.1/build/libs/axiomata-neoforge-${tag}+1.21.1.jar"
+          fabric_120_jar="fabric/versions/1.20.1/build/libs/axiomata-fabric-${tag}+1.20.1.jar"
+          fabric_121_jar="fabric/versions/1.21.1/build/libs/axiomata-fabric-${tag}+1.21.1.jar"
           version_type="release"
 
           if [[ "$tag" == *-alpha* ]]; then
@@ -249,9 +265,12 @@ jobs:
                 name: $name,
                 version_number: $version_number,
                 changelog: $changelog,
-                dependencies: [
+                dependencies: ([
                   {project_id: "lhGA9TYQ", dependency_type: "required"}
-                ],
+                ] + if $loader == "fabric" then [
+                  {project_id: "P7dR8mSH", dependency_type: "required"},
+                  {project_id: "ohNO6lps", dependency_type: "required"}
+                ] else [] end),
                 game_versions: [$game_version],
                 version_type: $version_type,
                 loaders: [$loader],
@@ -284,6 +303,9 @@ jobs:
             "NeoForge" \
             "neoforge"
 
+          upload_file "$fabric_120_jar" "1.20.1" "Fabric" "fabric"
+          upload_file "$fabric_121_jar" "1.21.1" "Fabric" "fabric"
+
   update-notices:
     if: github.repository == 'mess1re/axiomata'
     needs: release
@@ -307,7 +329,7 @@ jobs:
         env:
           DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
-          git add updates/forge.json updates/neoforge.json
+          git add updates/forge.json updates/neoforge.json updates/fabric.json
           if git diff --cached --quiet; then
             exit 0
           fi

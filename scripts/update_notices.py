@@ -34,16 +34,18 @@ def update_files(root: Path, version: str) -> None:
     project = properties["mod"]["id"]
     directory = root / "updates"
     directory.mkdir(exist_ok=True)
-    for loader in ("forge", "neoforge"):
+    for loader in ("forge", "neoforge", "fabric"):
+        if loader not in properties:
+            continue
         path = directory / f"{loader}.json"
         data = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
         promos = data.get("promos", {})
         for minecraft_version in properties[loader]:
             promos = advance(promos, minecraft_version, version)
         minecraft_version = next(iter(properties[loader]))
+        homepage = f"https://modrinth.com/mod/{project}/versions?l={loader}" if len(properties[loader]) > 1 else f"https://modrinth.com/mod/{project}/versions?g={minecraft_version}&l={loader}"
         data = {
-            "homepage": data.get("homepage")
-            or f"https://modrinth.com/mod/{project}/versions?g={minecraft_version}&l={loader}",
+            "homepage": data.get("homepage") or homepage,
             "promos": promos,
         }
         content = json.dumps(data, indent=2) + "\n"

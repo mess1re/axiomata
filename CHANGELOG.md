@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Fabric builds for Minecraft 1.20.1 and 1.21.1, including configuration, entity data persistence,
+  model collisions, projectile openings, client rendering and block-protection adapters.
+
+### Changed
+
+- Stonecutter selects Minecraft versions in the shared module; Architectury packages the shared
+  code for Forge, NeoForge and Fabric. Native loader extensions are isolated in their adapters.
+
 ## 0.1.0-beta.9
 
 ### Added

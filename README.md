@@ -14,6 +14,17 @@ in the world, beyond the usual item, block and single-hitbox entity systems. It 
 
 ## For mod developers
 
+| Minecraft | Loaders | Java |
+| --- | --- | --- |
+| 1.20.1 | Forge, Fabric | 17 |
+| 1.21.1 | NeoForge, Fabric | 21 |
+
+All builds require Architectury API. Fabric also requires Fabric API and Forge Config API Port.
+GeckoLib is optional for Axiomata itself; integrations using its model renderer must supply it.
+Common Protection API 1.x is embedded in the Fabric jar. Fabric block damage respects both its
+protection providers and `PlayerBlockBreakEvents.BEFORE`; block placement queries its providers
+at the destination before changing the world. Claim mods need to support those hooks.
+
 Blueprint integrations use `UnderConstruction`. Model collision integrations use
 `CollidableStructure`. Their supporting APIs are under `me.mss1r.axiomata.blueprint.api` and
 `me.mss1r.axiomata.collision`.
@@ -71,6 +82,8 @@ Call `DebrisPhysics.register()` during mod startup so saved debris can find your
 Entities with projectile openings implement `ProjectilePassThroughControl`; Axiomata installs
 the impact handler. Custom `ParticleSet`s need smoke sprite definitions and client providers;
 the flash core is registered and supplied by Axiomata.
+On Fabric, call `ParticleProviders.register(particles)` from your client entry point.
+On Forge and NeoForge, keep using the particle registration event overload.
 
 Add fixed-count components to the item tag `axiomata:quality_cost_exempt` to keep their blueprint
 cost independent of drawing quality. A material specified by a tag is exempt only when all its
@@ -92,15 +105,19 @@ dependencies {
 
 `minecraftVersion` and `loader` select the matching build; `axiomataVersion` is the release tag.
 ForgeGradle projects should pass the coordinate through `fg.deobf(...)`.
+Fabric Loom projects should use `modImplementation(...)` and also declare the repositories for
+Fabric API and Forge Config API Port. The Fabric artifact IDs are `1.20.1-fabric` and `1.21.1-fabric`.
 
 ## Building
 
 Run `./gradlew build` (`gradlew.bat build` on Windows). Version-specific jars are written to
-`forge/versions/1.20.1/build/libs` and `neoforge/versions/1.21.1/build/libs`.
+`forge/versions/1.20.1/build/libs`, `neoforge/versions/1.21.1/build/libs`, and
+`fabric/versions/<minecraft-version>/build/libs`.
 
 Stonecutter selects Minecraft versions in the shared module and each loader branch. Architectury
-transforms the shared module for Forge and NeoForge; loader events and extensions live in
-`forge/src` and `neoforge/src`. Run `:forge:1.20.1:build` or `:neoforge:1.21.1:build` to build one platform.
+transforms the shared module for Forge, NeoForge and Fabric; loader events and extensions live in
+`forge/src`, `neoforge/src` and `fabric/src`. Run `:forge:1.20.1:build`, `:neoforge:1.21.1:build`,
+`:fabric:1.20.1:build` or `:fabric:1.21.1:build` to build one platform.
 
 ## Blockbench tool
 

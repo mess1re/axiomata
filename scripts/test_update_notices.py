@@ -46,6 +46,16 @@ class UpdateNoticesTest(unittest.TestCase):
             self.assertEqual(json.loads((root / "updates/forge.json").read_text(encoding="utf-8"))["promos"],
                              {"1.20.1-latest": "0.1.0-beta.6"})
 
+    def test_fabric_updates_both_minecraft_versions(self):
+        with tempfile.TemporaryDirectory(prefix="axiomata-fabric-notices-") as temporary:
+            root = Path(temporary)
+            (root / "stonecutter.properties.toml").write_text(
+                'mod.id = "example"\n[fabric."1.20.1"]\n[fabric."1.21.1"]\n', encoding="utf-8")
+            update_files(root, "0.1.0-beta.10")
+            data = json.loads((root / "updates/fabric.json").read_text(encoding="utf-8"))
+            self.assertEqual(data["promos"], {"1.20.1-latest": "0.1.0-beta.10", "1.21.1-latest": "0.1.0-beta.10"})
+            self.assertEqual(data["homepage"], "https://modrinth.com/mod/example/versions?l=fabric")
+
 
 if __name__ == "__main__":
     unittest.main()

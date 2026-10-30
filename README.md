@@ -96,7 +96,11 @@ ForgeGradle projects should pass the coordinate through `fg.deobf(...)`.
 ## Building
 
 Run `./gradlew build` (`gradlew.bat build` on Windows). Version-specific jars are written to
-`versions/<target>/build/libs`.
+`forge/versions/1.20.1/build/libs` and `neoforge/versions/1.21.1/build/libs`.
+
+Stonecutter selects Minecraft versions in the shared module and each loader branch. Architectury
+transforms the shared module for Forge and NeoForge; loader events and extensions live in
+`forge/src` and `neoforge/src`. Run `:forge:1.20.1:build` or `:neoforge:1.21.1:build` to build one platform.
 
 ## Blockbench tool
 

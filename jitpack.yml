@@ -2,4 +2,4 @@ before_install:
   - sdk install java 21.0.12+1.1-tem
   - sdk use java 21.0.12+1.1-tem
 install:
-  - ./gradlew clean :1.20.1-forge:build :1.20.1-forge:publishToMavenLocal :1.21.1-neoforge:build :1.21.1-neoforge:publishToMavenLocal
+  - ./gradlew clean :forge:1.20.1:build :forge:1.20.1:publishToMavenLocal :neoforge:1.21.1:build :neoforge:1.21.1:publishToMavenLocal

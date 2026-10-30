@@ -103,8 +103,8 @@ jobs:
           RELEASE_CHANGELOG: ${{ steps.changelog.outputs.body }}
         run: |
           tag="$RELEASE_TAG"
-          forge_jar="versions/1.20.1-forge/build/libs/axiomata-forge-${tag}+1.20.1.jar"
-          neoforge_jar="versions/1.21.1-neoforge/build/libs/axiomata-neoforge-${tag}+1.21.1.jar"
+          forge_jar="forge/versions/1.20.1/build/libs/axiomata-forge-${tag}+1.20.1.jar"
+          neoforge_jar="neoforge/versions/1.21.1/build/libs/axiomata-neoforge-${tag}+1.21.1.jar"
           release_flags=()
 
           if [[ "$tag" == *-* ]]; then
@@ -140,8 +140,8 @@ jobs:
           fi
 
           tag="$RELEASE_TAG"
-          forge_jar="versions/1.20.1-forge/build/libs/axiomata-forge-${tag}+1.20.1.jar"
-          neoforge_jar="versions/1.21.1-neoforge/build/libs/axiomata-neoforge-${tag}+1.21.1.jar"
+          forge_jar="forge/versions/1.20.1/build/libs/axiomata-forge-${tag}+1.20.1.jar"
+          neoforge_jar="neoforge/versions/1.21.1/build/libs/axiomata-neoforge-${tag}+1.21.1.jar"
           changelog=$(gh release view "$tag" --json body --jq '.body // ""')
           release_type="release"
 
@@ -203,8 +203,8 @@ jobs:
           fi
 
           tag="$RELEASE_TAG"
-          forge_jar="versions/1.20.1-forge/build/libs/axiomata-forge-${tag}+1.20.1.jar"
-          neoforge_jar="versions/1.21.1-neoforge/build/libs/axiomata-neoforge-${tag}+1.21.1.jar"
+          forge_jar="forge/versions/1.20.1/build/libs/axiomata-forge-${tag}+1.20.1.jar"
+          neoforge_jar="neoforge/versions/1.21.1/build/libs/axiomata-neoforge-${tag}+1.21.1.jar"
           version_type="release"
 
           if [[ "$tag" == *-alpha* ]]; then
@@ -238,7 +238,7 @@ jobs:
             fi
 
             metadata=$(jq -n \
-              --arg name "Axiomata ${tag} — ${loader} ${minecraft_version}" \
+              --arg name "Axiomata ${tag} вЂ” ${loader} ${minecraft_version}" \
               --arg version_number "$version_number" \
               --arg changelog "$RELEASE_CHANGELOG" \
               --arg game_version "$minecraft_version" \

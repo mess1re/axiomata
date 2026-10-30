@@ -5,6 +5,7 @@ import me.mss1r.axiomata.collision.system.StructureInteractionPicker;
 import me.mss1r.axiomata.collision.system.VirtualPlatformSupport;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.world.entity.Entity;
 //? if neoforge {
 import net.minecraft.network.protocol.game.ServerboundInteractPacket;
@@ -27,6 +28,15 @@ public abstract class ServerGamePacketListenerImplMixin {
 
     @Inject(method = "tick", at = @At("HEAD"))
     private void axiomata$allowVirtualPlatformSupport(CallbackInfo callbackInfo) {
+        if (VirtualPlatformSupport.isSupported(player)) {
+            clientIsFloating = false;
+        }
+    }
+
+    // handleMovePlayer updates the floating flag after the regular tick hook.
+    // Exempt only movement with recent, server-confirmed geometry support.
+    @Inject(method = "handleMovePlayer", at = @At("TAIL"))
+    private void axiomata$acceptSupportedMovement(ServerboundMovePlayerPacket packet, CallbackInfo callbackInfo) {
         if (VirtualPlatformSupport.isSupported(player)) {
             clientIsFloating = false;
         }

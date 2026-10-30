@@ -87,7 +87,7 @@ public abstract class BallisticProjectile extends ThrowableItemProjectile {
     }
 
     @Override
-    //? if forge {
+    //? if <1.21 {
     /*protected void defineSynchedData() {
         super.defineSynchedData();
         SynchedEntityData data = this.entityData;
@@ -124,7 +124,7 @@ public abstract class BallisticProjectile extends ThrowableItemProjectile {
     }
 
     // Vanilla gravity is skipped: {@link #flyThroughAir} applies drag and gravity after the move.
-    //? if forge {
+    //? if <1.21 {
     /*@Override
     protected float getGravity() {
         return 0.0F;
@@ -239,7 +239,7 @@ public abstract class BallisticProjectile extends ThrowableItemProjectile {
     }
 
     @Override
-    //? if forge {
+    //? if <1.21 {
     /*public void lerpTo(double x, double y, double z, float yaw, float pitch, int interpolationSteps, boolean teleport) {
     *///?} else {
     public void lerpTo(double x, double y, double z, float yaw, float pitch, int interpolationSteps) {
@@ -269,7 +269,7 @@ public abstract class BallisticProjectile extends ThrowableItemProjectile {
         }
     }
 
-    //? if neoforge {
+    //? if >=1.21 {
     @Override
     public double lerpTargetX() {
         return lerpTarget().x;

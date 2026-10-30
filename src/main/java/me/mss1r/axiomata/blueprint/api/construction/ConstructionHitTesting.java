@@ -1,5 +1,7 @@
 package me.mss1r.axiomata.blueprint.api.construction;
 
+import me.mss1r.axiomata.platform.AxiomataPlatform;
+
 import me.mss1r.axiomata.blueprint.api.visual.BlueprintConstructionVisuals;
 import me.mss1r.axiomata.collision.CollidableStructure;
 import me.mss1r.axiomata.collision.StructureCollisionResolver;
@@ -93,8 +95,8 @@ public final class ConstructionHitTesting {
     }
 
     private static double interactionRange(Player player) {
-        //? if forge {
-        /*return player.getEntityReach();
+        //? if <1.21 {
+        /*return AxiomataPlatform.entityReach(player);
         *///?} else {
         return player.entityInteractionRange();
         //?}

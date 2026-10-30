@@ -1,12 +1,14 @@
 package me.mss1r.axiomata.mixin;
 
+import me.mss1r.axiomata.platform.AxiomataPlatform;
+
 import me.mss1r.axiomata.collision.CollidableStructure;
 import me.mss1r.axiomata.collision.system.StructureInteractionPicker;
 import me.mss1r.axiomata.collision.system.VirtualPlatformSupport;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.entity.Entity;
-//? if neoforge {
+//? if >=1.21 {
 import net.minecraft.network.protocol.game.ServerboundInteractPacket;
 import net.minecraft.world.phys.AABB;
 //?}
@@ -33,16 +35,16 @@ public abstract class ServerGamePacketListenerImplMixin {
     }
 
     @Redirect(method = "handleInteract", at = @At(value = "INVOKE",
-            //? if forge {
+            //? if <1.21 {
             /*target = "Lnet/minecraft/server/level/ServerPlayer;canReachRaw(Lnet/minecraft/world/entity/Entity;D)Z",
             remap = false
             *///?} else {
             target = "Lnet/minecraft/server/level/ServerPlayer;canInteractWithEntity(Lnet/minecraft/world/phys/AABB;D)Z"
             //?}
     ))
-    //? if forge {
+    //? if <1.21 {
     /*private boolean axiomata$validateStructureReach(ServerPlayer serverPlayer, Entity target, double padding) {
-        if (serverPlayer.canReachRaw(target, padding)) {
+        if (AxiomataPlatform.canReach(serverPlayer, target, padding)) {
             return true;
         }
     *///?} else {
@@ -62,8 +64,8 @@ public abstract class ServerGamePacketListenerImplMixin {
     }
 
     private static double interactionRange(ServerPlayer player) {
-        //? if forge {
-        /*return player.getEntityReach();
+        //? if <1.21 {
+        /*return AxiomataPlatform.entityReach(player);
         *///?} else {
         return player.entityInteractionRange();
         //?}

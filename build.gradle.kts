@@ -1,0 +1,118 @@
+plugins {
+    id("dev.architectury.loom")
+    id("architectury-plugin")
+}
+
+val minecraftVersion = stonecutter.current.version
+val architecturyVersion = project.property("deps.architectury") as String
+val fabricLoaderVersion = project.property("deps.fabric_loader") as String
+val javaVersion = project.property("mod.java").toString().toInt()
+
+group = "${project.property("mod.group")}.common"
+version = "${project.property("mod.version")}+$minecraftVersion"
+base { archivesName.set("${project.property("mod.id")}-common") }
+
+architectury.common(listOf(if (minecraftVersion == "1.20.1") "forge" else "neoforge"))
+
+loom {
+    silentMojangMappingsLicense()
+
+}
+
+repositories {
+    mavenCentral()
+    maven("https://maven.blamejared.com/")
+    maven("https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/") { content { includeGroupByRegex("software\\.bernie.*") } }
+    maven("https://maven.architectury.dev/")
+    maven("https://maven.fabricmc.net/")
+    maven("https://raw.githubusercontent.com/Fuzss/modresources/main/maven/") {
+        name = "Fuzs"
+        content { includeGroup("fuzs.forgeconfigapiport") }
+    }
+}
+
+dependencies {
+    minecraft("com.mojang:minecraft:$minecraftVersion")
+    mappings(loom.officialMojangMappings())
+    compileOnly("com.google.code.findbugs:jsr305:3.0.2")
+    modImplementation("net.fabricmc:fabric-loader:$fabricLoaderVersion")
+    modImplementation("dev.architectury:architectury:$architecturyVersion")
+    modCompileOnly(project.property("deps.forge_config_api_port") as String)
+    modCompileOnly("software.bernie.geckolib:geckolib-${if (minecraftVersion == "1.20.1") "fabric" else "common"}-$minecraftVersion:${project.property("deps.geckolib")}") { isTransitive = false }
+    modCompileOnly("mezz.jei:jei-$minecraftVersion-common-api:${project.property("deps.jei")}")
+    testRuntimeOnly(project.property("deps.forge_config_api_port") as String)
+    testRuntimeOnly("com.electronwill.night-config:core:${if (minecraftVersion == "1.20.1") "3.6.5" else "3.8.1"}")
+    testRuntimeOnly("com.electronwill.night-config:toml:${if (minecraftVersion == "1.20.1") "3.6.5" else "3.8.1"}")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.11.4")
+    testImplementation("org.mockito:mockito-core:5.15.2")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
+    maxHeapSize = "2G"
+}
+
+java {
+    withSourcesJar()
+    toolchain.languageVersion.set(JavaLanguageVersion.of(javaVersion))
+}
+
+tasks.withType<JavaCompile>().configureEach {
+    options.encoding = "UTF-8"
+    options.release.set(javaVersion)
+}
+
+tasks.named<ProcessResources>("processResources") {
+    val props = mapOf(
+        "pack_format" to project.property("mod.pack_format"),
+        "construction_highlight_iview_uniform" to if (stonecutter.current.parsed < "1.21")
+            """{ "name": "IViewRotMat", "type": "matrix3x3", "count": 9, "values": [ 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 ] },""" else ""
+    )
+    inputs.properties(props)
+    filesMatching(listOf("pack.mcmeta", "assets/axiomata/shaders/core/construction_highlight.json")) { expand(props) }
+    if (stonecutter.current.parsed >= "1.21") {
+        includeEmptyDirs = false
+        filesMatching(listOf("data/*/recipes/*.json", "data/*/recipe/*.json")) {
+            var insideResult = false
+            filter { line ->
+                if (line.contains("\"result\"")) insideResult = true
+                if (insideResult && line.contains("\"item\"")) {
+                    insideResult = false
+                    line.replace("\"item\"", "\"id\"")
+                } else line
+            }
+        }
+        eachFile {
+            path = path
+                .replace("/recipes/", "/recipe/")
+                .replace("/loot_tables/", "/loot_table/")
+                .replace("/structures/", "/structure/")
+                .replace("/tags/blocks/", "/tags/block/")
+                .replace("/tags/items/", "/tags/item/")
+        }
+    }
+}
+
+
+val commonJava = sourceSets.main.get().allJava
+val checkCommonBoundary = tasks.register("checkCommonBoundary") {
+    group = "verification"
+    description = "Reject loader APIs in the shared module, except portable config specs."
+    dependsOn("stonecutterGenerate")
+    inputs.files(commonJava)
+    doLast {
+        val loaderApi = Regex("\\b(net\\.(minecraftforge|neoforged|fabricmc\\.loader)|dev\\.architectury\\.platform\\.(forge|neoforge|fabric))\\.")
+        val configSpec = Regex("\\b(net\\.minecraftforge\\.common\\.ForgeConfigSpec|net\\.neoforged\\.neoforge\\.common\\.ModConfigSpec)\\b")
+        val violations = commonJava.files.filter { loaderApi.containsMatchIn(it.readText().replace(configSpec, "")) }
+        check(violations.isEmpty()) { "Loader APIs in common: ${violations.joinToString()}" }
+    }
+}
+tasks.named("check") { dependsOn(checkCommonBoundary) }
+tasks.withType<JavaCompile>().configureEach { dependsOn(checkCommonBoundary) }
+
+// Tests that instantiate entities need a bootstrapped game and mixin transformation.
+// They run against the assembled NeoForge jar in :test-runtime:test.
+sourceSets.test {
+    java.exclude("**/collision/**", "**/UnderConstructionInitializationTest.java")
+}

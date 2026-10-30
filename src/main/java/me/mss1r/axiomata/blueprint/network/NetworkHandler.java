@@ -5,13 +5,13 @@ import dev.architectury.utils.Env;
 import dev.architectury.utils.EnvExecutor;
 import io.netty.buffer.Unpooled;
 import me.mss1r.axiomata.ResourceIds;
-import me.mss1r.axiomata.blueprint.BlueprintModule;
+import me.mss1r.axiomata.blueprint.BlueprintCommon;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
-//? if neoforge {
+//? if >=1.21 {
 import net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 //?}
@@ -22,7 +22,7 @@ import java.util.function.Function;
 public final class NetworkHandler {
     public static final Sender INSTANCE = NetworkHandler::sendToServer;
 
-    //? if forge {
+    //? if <1.21 {
     /*private static final ResourceLocation BLUEPRINT_CATALOG = id("blueprint_catalog");
     private static final ResourceLocation CONSTRUCTION_BOUNDS = id("construction_bounds");
     private static final ResourceLocation USE_BLUEPRINT = id("use_blueprint");
@@ -39,7 +39,7 @@ public final class NetworkHandler {
     }
 
     public static void register() {
-        //? if forge {
+        //? if <1.21 {
         /*register(NetworkManager.c2s(), USE_BLUEPRINT,
                 C2SUseBlueprintPacket::decode, C2SUseBlueprintPacket::handle);
         register(NetworkManager.c2s(), SET_TABLE_SLOT,
@@ -78,7 +78,7 @@ public final class NetworkHandler {
     }
 
     private static void registerClientReceivers() {
-        //? if forge {
+        //? if <1.21 {
         /*register(NetworkManager.s2c(), BLUEPRINT_CATALOG,
                 S2CBlueprintCatalogPacket::decode, S2CBlueprintCatalogPacket::handle);
         register(NetworkManager.s2c(), TRACING_STATE,
@@ -103,7 +103,7 @@ public final class NetworkHandler {
         //?}
     }
 
-    //? if forge {
+    //? if <1.21 {
     /*private static <T> void register(NetworkManager.Side side, ResourceLocation id,
                                      Function<FriendlyByteBuf, T> decoder,
                                      BiConsumer<T, NetworkManager.PacketContext> handler) {
@@ -112,7 +112,7 @@ public final class NetworkHandler {
     *///?}
 
     public static void sendToServer(Object packet) {
-        //? if forge {
+        //? if <1.21 {
         /*FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.buffer());
         ResourceLocation id;
         if (packet instanceof C2SUseBlueprintPacket value) {
@@ -140,7 +140,7 @@ public final class NetworkHandler {
     }
 
     public static void sendToPlayer(ServerPlayer player, Object packet) {
-        //? if forge {
+        //? if <1.21 {
         /*FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.buffer());
         NetworkManager.sendToPlayer(player, encodeForClient(packet, buffer), buffer);
         *///?} else {
@@ -153,7 +153,7 @@ public final class NetworkHandler {
         if (!(entity.level() instanceof ServerLevel level)) {
             return;
         }
-        //? if forge {
+        //? if <1.21 {
         /*FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.buffer());
         ResourceLocation id = encodeForClient(packet, buffer);
         level.getChunkSource().broadcast(entity, NetworkManager.toPacket(NetworkManager.s2c(), id, buffer));
@@ -162,7 +162,7 @@ public final class NetworkHandler {
         //?}
     }
 
-    //? if forge {
+    //? if <1.21 {
     /*private static ResourceLocation encodeForClient(Object packet, FriendlyByteBuf buffer) {
         ResourceLocation id;
         if (packet instanceof S2CBlueprintCatalogPacket value) {
@@ -188,7 +188,7 @@ public final class NetworkHandler {
     *///?}
 
     private static ResourceLocation id(String path) {
-        return ResourceIds.id(BlueprintModule.MOD_ID, path);
+        return ResourceIds.id(BlueprintCommon.MOD_ID, path);
     }
 
     @FunctionalInterface

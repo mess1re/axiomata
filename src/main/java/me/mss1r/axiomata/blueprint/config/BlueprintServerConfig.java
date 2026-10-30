@@ -2,14 +2,14 @@ package me.mss1r.axiomata.blueprint.config;
 
 import me.mss1r.axiomata.Axiomata;
 
-//? if forge {
+//? if <1.21 {
 /*import net.minecraftforge.common.ForgeConfigSpec;
 *///?} else {
 import net.neoforged.neoforge.common.ModConfigSpec;
 //?}
 
 public final class BlueprintServerConfig {
-    //? if forge {
+    //? if <1.21 {
     /*public static final ForgeConfigSpec SPEC;
     private static final ForgeConfigSpec.DoubleValue HITS_PER_ITEM;
     private static final ForgeConfigSpec.IntValue MIN_STAGE_HITS;
@@ -24,7 +24,7 @@ public final class BlueprintServerConfig {
     //?}
 
     static {
-        //? if forge {
+        //? if <1.21 {
         /*ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
         *///?} else {
         ModConfigSpec.Builder builder = new ModConfigSpec.Builder();

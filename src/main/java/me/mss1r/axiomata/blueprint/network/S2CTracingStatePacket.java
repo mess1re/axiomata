@@ -10,23 +10,23 @@ import me.mss1r.axiomata.blueprint.tracing.TracingSession;
 import me.mss1r.axiomata.blueprint.client.ClientTracing;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
-//? if neoforge {
+//? if >=1.21 {
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import me.mss1r.axiomata.blueprint.BlueprintModule;
+import me.mss1r.axiomata.blueprint.BlueprintCommon;
 //?}
 
 // Data-pack outlines are server-side, so the chosen mask and the saved ink have to travel with
 // the table state. This is sent when a drawing is selected or an unfinished table is reopened.
-//? if forge {
+//? if <1.21 {
 /*public record S2CTracingStatePacket(String blueprintId, ResourceLocation texture, int resolution,
                                     byte[] mask, byte[] covered, int wandered) {
 *///?} else {
 public record S2CTracingStatePacket(String blueprintId, ResourceLocation texture, int resolution,
                                     byte[] mask, byte[] covered, int wandered) implements CustomPacketPayload {
     public static final Type<S2CTracingStatePacket> TYPE = new Type<>(
-            ResourceIds.id(BlueprintModule.MOD_ID, "tracing_state"));
+            ResourceIds.id(BlueprintCommon.MOD_ID, "tracing_state"));
     public static final StreamCodec<RegistryFriendlyByteBuf, S2CTracingStatePacket> STREAM_CODEC =
             StreamCodec.ofMember(S2CTracingStatePacket::write, S2CTracingStatePacket::decode);
 

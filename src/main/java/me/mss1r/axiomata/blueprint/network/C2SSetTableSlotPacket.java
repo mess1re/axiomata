@@ -11,20 +11,20 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-//? if neoforge {
+//? if >=1.21 {
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
-import me.mss1r.axiomata.blueprint.BlueprintModule;
+import me.mss1r.axiomata.blueprint.BlueprintCommon;
 //?}
 
-//? if forge {
+//? if <1.21 {
 /*public record C2SSetTableSlotPacket(int slot, boolean insert) {
 *///?} else {
 public record C2SSetTableSlotPacket(int slot, boolean insert) implements CustomPacketPayload {
     public static final Type<C2SSetTableSlotPacket> TYPE = new Type<>(
-            ResourceIds.id(BlueprintModule.MOD_ID, "set_table_slot"));
+            ResourceIds.id(BlueprintCommon.MOD_ID, "set_table_slot"));
     public static final StreamCodec<RegistryFriendlyByteBuf, C2SSetTableSlotPacket> STREAM_CODEC =
             StreamCodec.ofMember(C2SSetTableSlotPacket::write, C2SSetTableSlotPacket::decode);
 

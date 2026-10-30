@@ -7,20 +7,20 @@ import me.mss1r.axiomata.blueprint.tracing.TracingRules;
 import me.mss1r.axiomata.blueprint.menu.DrawingTableMenu;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-//? if neoforge {
+//? if >=1.21 {
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
-import me.mss1r.axiomata.blueprint.BlueprintModule;
+import me.mss1r.axiomata.blueprint.BlueprintCommon;
 //?}
 
-//? if forge {
+//? if <1.21 {
 /*public record C2SStrokePacket(boolean lift, byte[] points) {
 *///?} else {
 public record C2SStrokePacket(boolean lift, byte[] points) implements CustomPacketPayload {
     public static final Type<C2SStrokePacket> TYPE = new Type<>(
-            ResourceIds.id(BlueprintModule.MOD_ID, "stroke"));
+            ResourceIds.id(BlueprintCommon.MOD_ID, "stroke"));
     public static final StreamCodec<RegistryFriendlyByteBuf, C2SStrokePacket> STREAM_CODEC =
             StreamCodec.ofMember(C2SStrokePacket::write, C2SStrokePacket::decode);
 

@@ -2,7 +2,7 @@ package me.mss1r.axiomata.blueprint.blockentity;
 
 import dev.architectury.registry.menu.ExtendedMenuProvider;
 import me.mss1r.axiomata.blueprint.tracing.BlueprintOutline;
-import me.mss1r.axiomata.blueprint.tracing.OutlineCatalog;
+import me.mss1r.axiomata.blueprint.tracing.OutlineRepository;
 import me.mss1r.axiomata.blueprint.tracing.TracingRules;
 import me.mss1r.axiomata.blueprint.tracing.TracingSession;
 import me.mss1r.axiomata.blueprint.tracing.TracingState;
@@ -11,7 +11,7 @@ import me.mss1r.axiomata.blueprint.menu.DrawingTableMenu;
 import me.mss1r.axiomata.blueprint.registry.BlueprintBlockEntities;
 import me.mss1r.axiomata.blueprint.registry.BlueprintItems;
 import net.minecraft.core.BlockPos;
-//? if neoforge {
+//? if >=1.21 {
 import net.minecraft.core.HolderLookup;
 //?}
 import net.minecraft.nbt.CompoundTag;
@@ -117,7 +117,7 @@ public class DrawingTableBlockEntity extends BlockEntity implements ExtendedMenu
     }
 
     public BlueprintOutline outline() {
-        return blueprintId.isEmpty() ? null : OutlineCatalog.get(outlineId(blueprintId));
+        return blueprintId.isEmpty() ? null : OutlineRepository.get(outlineId(blueprintId));
     }
 
     /** Outline id for a blueprint, which may point at another blueprint's outline. */
@@ -150,7 +150,7 @@ public class DrawingTableBlockEntity extends BlockEntity implements ExtendedMenu
         return session != null && session.coverage() > 0.0F;
     }
     public boolean select(String id) {
-        if (id == null || BlueprintDefinitions.get(id) == null || OutlineCatalog.get(outlineId(id)) == null) {
+        if (id == null || BlueprintDefinitions.get(id) == null || OutlineRepository.get(outlineId(id)) == null) {
             return false;
         }
         // Changing the selection after the first stroke would silently throw work away. Taking
@@ -235,7 +235,7 @@ public class DrawingTableBlockEntity extends BlockEntity implements ExtendedMenu
     public boolean hasInk() {
         return container.getItem(SLOT_INK).getItem() == BlueprintItems.INK_BLOCK.get();
     }
-    //? if forge {
+    //? if <1.21 {
     /*@Override
     public void load(CompoundTag tag) {
         super.load(tag);
@@ -250,7 +250,7 @@ public class DrawingTableBlockEntity extends BlockEntity implements ExtendedMenu
     //?}
 
     private void loadBlueprintData(CompoundTag tag,
-            //? if forge {
+            //? if <1.21 {
             /*Object registries
             *///?} else {
             HolderLookup.Provider registries
@@ -262,7 +262,7 @@ public class DrawingTableBlockEntity extends BlockEntity implements ExtendedMenu
             CompoundTag stackTag = listTag.getCompound(i);
             int slot = stackTag.getByte("Slot") & 255;
             if (slot >= 0 && slot < container.getContainerSize()) {
-                //? if forge {
+                //? if <1.21 {
                 /*container.setItem(slot, ItemStack.of(stackTag));
                 *///?} else {
                 container.setItem(slot, ItemStack.parse(registries, stackTag).orElse(ItemStack.EMPTY));
@@ -281,7 +281,7 @@ public class DrawingTableBlockEntity extends BlockEntity implements ExtendedMenu
         }
     }
 
-    //? if forge {
+    //? if <1.21 {
     /*@Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
@@ -296,7 +296,7 @@ public class DrawingTableBlockEntity extends BlockEntity implements ExtendedMenu
     //?}
 
     private void saveBlueprintData(CompoundTag tag,
-            //? if forge {
+            //? if <1.21 {
             /*Object registries
             *///?} else {
             HolderLookup.Provider registries
@@ -306,7 +306,7 @@ public class DrawingTableBlockEntity extends BlockEntity implements ExtendedMenu
         for (int slot = 0; slot < container.getContainerSize(); slot++) {
             ItemStack stack = container.getItem(slot);
             if (!stack.isEmpty()) {
-                //? if forge {
+                //? if <1.21 {
                 /*CompoundTag stackTag = stack.save(new CompoundTag());
                 *///?} else {
                 CompoundTag stackTag = (CompoundTag) stack.save(registries, new CompoundTag());

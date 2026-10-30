@@ -1,6 +1,6 @@
 package me.mss1r.axiomata.blueprint.api.visual;
 
-import me.mss1r.axiomata.blueprint.internal.construction.ConstructionMarkupCatalog;
+import me.mss1r.axiomata.blueprint.internal.construction.ConstructionMarkupRepository;
 import me.mss1r.axiomata.blueprint.internal.construction.StageNames;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinitions;
@@ -23,12 +23,12 @@ public final class BlueprintConstructionVisuals {
     }
 
     public static StructureSections sections(ResourceLocation model) {
-        ConstructionMarkup markup = ConstructionMarkupCatalog.get(model);
+        ConstructionMarkup markup = ConstructionMarkupRepository.get(model);
         return markup == null ? null : markup.cubes();
     }
 
     public static SectionBounds bounds(ResourceLocation model) {
-        ConstructionMarkup markup = ConstructionMarkupCatalog.get(model);
+        ConstructionMarkup markup = ConstructionMarkupRepository.get(model);
         return markup == null ? null : markup.bounds();
     }
 

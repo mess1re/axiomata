@@ -6,6 +6,24 @@ mod.description = "Shared construction, model collision and artillery systems."
 mod.authors = "mss1r"
 mod.license = "LGPL-3.0-only"
 
+deps.fabric_loader = "0.16.14"
+
+[common."1.20.1"]
+mod.java = 17
+mod.pack_format = "15"
+deps.architectury = "9.2.14"
+deps.geckolib = "4.8.4"
+deps.jei = "15.20.0.129"
+deps.forge_config_api_port = "fuzs.forgeconfigapiport:forgeconfigapiport-common:8.0.3"
+
+[common."1.21.1"]
+mod.java = 21
+mod.pack_format = "34"
+deps.architectury = "13.0.11"
+deps.geckolib = "4.9.2"
+deps.jei = "19.22.0.315"
+deps.forge_config_api_port = "fuzs.forgeconfigapiport:forgeconfigapiport-common-neoforgeapi:21.1.6"
+
 [forge."1.20.1"]
 mod.minecraft_range = "[1.20.1,1.21)"
 mod.loader_range = "[47,)"

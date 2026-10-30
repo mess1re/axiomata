@@ -7,7 +7,7 @@ import me.mss1r.axiomata.collision.StructurePlacement;
 import me.mss1r.axiomata.collision.StructureCollisionResolver;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition;
 import net.minecraft.core.BlockPos;
-//? if neoforge {
+//? if >=1.21 {
 import net.minecraft.core.component.DataComponents;
 //?}
 import net.minecraft.core.Direction;
@@ -122,7 +122,7 @@ public final class ConstructionPlacementHelper {
         }
 
         if (
-                //? if forge {
+                //? if <1.21 {
                 /*stack.hasCustomHoverName()
                 *///?} else {
                 stack.has(DataComponents.CUSTOM_NAME)

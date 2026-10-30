@@ -1,26 +1,17 @@
 package me.mss1r.axiomata.ballistics;
 
+import me.mss1r.axiomata.platform.AxiomataPlatform;
+
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
-//? if forge {
-/*import net.minecraftforge.entity.PartEntity;
-import net.minecraftforge.common.ToolActions;
-*///?} else {
-import net.neoforged.neoforge.entity.PartEntity;
-import net.neoforged.neoforge.common.ItemAbilities;
-//?}
-
 public final class ProjectileCombat {
     private ProjectileCombat() {}
 
     @Nullable
     public static Entity logicalTarget(@Nullable Entity target) {
-        if (target instanceof PartEntity<?> part) {
-            return part.getParent();
-        }
-        return target;
+        return AxiomataPlatform.logicalTarget(target);
     }
 
     @Nullable
@@ -39,19 +30,15 @@ public final class ProjectileCombat {
         }
 
         ItemStack activeItem = target.getUseItem();
-        //? if forge {
-        /*if (!activeItem.canPerformAction(ToolActions.SHIELD_BLOCK)) {
-        *///?} else {
-        if (!activeItem.canPerformAction(ItemAbilities.SHIELD_BLOCK)) {
-        //?}
+        if (!AxiomataPlatform.blocksWithShield(activeItem)) {
             return;
         }
 
-        //? if neoforge {
+        //? if >=1.21 {
         target.onEquippedItemBroken(activeItem.getItem(), LivingEntity.getSlotForHand(target.getUsedItemHand()));
         //?}
         activeItem.shrink(1);
-        //? if forge {
+        //? if <1.21 {
         /*target.broadcastBreakEvent(target.getUsedItemHand());
         *///?}
         target.stopUsingItem();

@@ -1,7 +1,7 @@
 package me.mss1r.axiomata.blueprint.client;
 
 import me.mss1r.axiomata.blueprint.tracing.BlueprintOutline;
-import me.mss1r.axiomata.blueprint.tracing.OutlineCatalog;
+import me.mss1r.axiomata.blueprint.tracing.OutlineRepository;
 import me.mss1r.axiomata.blueprint.tracing.OutlineMask;
 import me.mss1r.axiomata.blueprint.tracing.TracingRules;
 import me.mss1r.axiomata.blueprint.tracing.TracingSession;
@@ -28,7 +28,7 @@ public final class ClientTracing {
             OutlineMask mask = new OutlineMask(packet.resolution(), packet.mask());
             outline = new BlueprintOutline(packet.texture(), mask);
             blueprintId = packet.blueprintId();
-            OutlineCatalog.remember(blueprintId, outline);
+            OutlineRepository.remember(blueprintId, outline);
             session = outline.openSession(TracingRules.TOLERANCE_PIXELS);
             if (packet.covered().length > 0) {
                 session.restore(packet.covered(), packet.wandered());

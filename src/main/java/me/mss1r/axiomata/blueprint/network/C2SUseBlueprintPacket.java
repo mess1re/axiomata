@@ -1,5 +1,7 @@
 package me.mss1r.axiomata.blueprint.network;
 
+import me.mss1r.axiomata.platform.AxiomataPlatform;
+
 import me.mss1r.axiomata.blueprint.api.construction.ConstructionTarget;
 import dev.architectury.networking.NetworkManager;
 import me.mss1r.axiomata.ResourceIds;
@@ -19,26 +21,26 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
-//? if forge {
-/*import net.minecraftforge.common.ForgeMod;
+//? if <1.21 {
+/*import me.mss1r.axiomata.platform.AxiomataPlatform;
 *///?}
-//? if neoforge {
+//? if >=1.21 {
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import me.mss1r.axiomata.blueprint.BlueprintModule;
+import me.mss1r.axiomata.blueprint.BlueprintCommon;
 //?}
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-//? if forge {
+//? if <1.21 {
 /*public record C2SUseBlueprintPacket(String recipeId) {
 *///?} else {
 public record C2SUseBlueprintPacket(String recipeId) implements CustomPacketPayload {
     public static final Type<C2SUseBlueprintPacket> TYPE = new Type<>(
-            ResourceIds.id(BlueprintModule.MOD_ID, "use_blueprint"));
+            ResourceIds.id(BlueprintCommon.MOD_ID, "use_blueprint"));
     public static final StreamCodec<RegistryFriendlyByteBuf, C2SUseBlueprintPacket> STREAM_CODEC =
             StreamCodec.ofMember(C2SUseBlueprintPacket::write, C2SUseBlueprintPacket::decode);
 
@@ -108,8 +110,8 @@ public record C2SUseBlueprintPacket(String recipeId) implements CustomPacketPayl
                 ConstructionTarget target = ConstructionPlacementHelper.target(
                         player,
                         recipe,
-                        //? if forge {
-                        /*player.getAttributeValue(ForgeMod.BLOCK_REACH.get()),
+                        //? if <1.21 {
+                        /*AxiomataPlatform.blockReach(player),
                         *///?} else {
                         player.blockInteractionRange(),
                         //?}

@@ -2,8 +2,8 @@ package me.mss1r.axiomata.blueprint.network;
 
 import dev.architectury.networking.NetworkManager;
 import me.mss1r.axiomata.ResourceIds;
-import me.mss1r.axiomata.blueprint.BlueprintModule;
-import me.mss1r.axiomata.blueprint.internal.construction.ConstructionMarkupCatalog;
+import me.mss1r.axiomata.blueprint.BlueprintCommon;
+import me.mss1r.axiomata.blueprint.internal.construction.ConstructionMarkupRepository;
 import me.mss1r.axiomata.collision.OrientedBox;
 import me.mss1r.axiomata.collision.Rotation3;
 import me.mss1r.axiomata.geometry.LocalBox;
@@ -13,7 +13,7 @@ import me.mss1r.axiomata.structure.StructureSections;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
-//? if neoforge {
+//? if >=1.21 {
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -21,12 +21,12 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 
 import java.util.Map;
 
-//? if forge {
+//? if <1.21 {
 /*public record S2CConstructionMarkupPacket(Map<ResourceLocation, ConstructionMarkup> markup) {
 *///?} else {
 public record S2CConstructionMarkupPacket(Map<ResourceLocation, ConstructionMarkup> markup) implements CustomPacketPayload {
     public static final Type<S2CConstructionMarkupPacket> TYPE = new Type<>(
-            ResourceIds.id(BlueprintModule.MOD_ID, "construction_markup"));
+            ResourceIds.id(BlueprintCommon.MOD_ID, "construction_markup"));
     public static final StreamCodec<RegistryFriendlyByteBuf, S2CConstructionMarkupPacket> STREAM_CODEC =
             StreamCodec.ofMember(S2CConstructionMarkupPacket::write, S2CConstructionMarkupPacket::decode);
 
@@ -95,7 +95,7 @@ public record S2CConstructionMarkupPacket(Map<ResourceLocation, ConstructionMark
     }
 
     public static void handle(S2CConstructionMarkupPacket packet, NetworkManager.PacketContext context) {
-        context.queue(() -> ConstructionMarkupCatalog.applySynced(packet.markup));
+        context.queue(() -> ConstructionMarkupRepository.applySynced(packet.markup));
     }
 
     private static void writeVector(FriendlyByteBuf buffer, Vec3 value) {

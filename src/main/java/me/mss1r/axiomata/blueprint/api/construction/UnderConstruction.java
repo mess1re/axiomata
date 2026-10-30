@@ -7,7 +7,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import me.mss1r.axiomata.blueprint.api.visual.BlueprintConstructionVisuals;
-import me.mss1r.axiomata.blueprint.internal.construction.ConstructionSync;
+import me.mss1r.axiomata.blueprint.internal.construction.ConstructionStateSync;
 
 
 /**
@@ -26,7 +26,7 @@ public interface UnderConstruction {
 
     /** The progress on the server, or on a client the progress Axiomata last sent it. */
     default ConstructionStatus constructionStatus() {
-        return ConstructionSync.status(this);
+        return ConstructionStateSync.status(this);
     }
 
     default BlueprintConstructionVisuals.State constructionVisualState() {

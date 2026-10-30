@@ -1,0 +1,8 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "me.mss1r.axiomata.neoforge.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": ["EntityLifecycleMixin"],
+  "injectors": {"defaultRequire": 1}
+}

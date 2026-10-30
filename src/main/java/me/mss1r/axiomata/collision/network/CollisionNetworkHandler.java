@@ -9,12 +9,12 @@ import me.mss1r.axiomata.ResourceIds;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-//? if neoforge {
+//? if >=1.21 {
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 //?}
 
 public final class CollisionNetworkHandler {
-    //? if forge {
+    //? if <1.21 {
     /*private static final ResourceLocation SET_COLLISION_DEBUG = id("set_collision_debug");
     *///?}
 
@@ -22,7 +22,7 @@ public final class CollisionNetworkHandler {
     }
 
     public static void register() {
-        //? if neoforge {
+        //? if >=1.21 {
         EnvExecutor.runInEnv(Env.SERVER, () -> () ->
                 NetworkManager.registerS2CPayloadType(
                         SetCollisionDebugS2CPacket.TYPE,
@@ -32,7 +32,7 @@ public final class CollisionNetworkHandler {
     }
 
     private static void registerClientReceiver() {
-        //? if forge {
+        //? if <1.21 {
         /*NetworkManager.registerReceiver(
                 NetworkManager.s2c(), SET_COLLISION_DEBUG,
                 (buffer, context) -> SetCollisionDebugS2CPacket.handle(
@@ -47,7 +47,7 @@ public final class CollisionNetworkHandler {
     }
 
     public static void sendToPlayer(ServerPlayer player, SetCollisionDebugS2CPacket packet) {
-        //? if forge {
+        //? if <1.21 {
         /*FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.buffer());
         SetCollisionDebugS2CPacket.encode(packet, buffer);
         NetworkManager.sendToPlayer(player, SET_COLLISION_DEBUG, buffer);

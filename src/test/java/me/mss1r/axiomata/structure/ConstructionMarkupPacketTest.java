@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class ConstructionMarkupPacketTest {
     // Forge 1.20.1 unit tests can fail to load FriendlyByteBuf with a jar signer SecurityException on a clean
     // machine. The packet code is the same on both loaders, so NeoForge covers it.
-    //? if neoforge {
+    //? if >=1.21 {
     @Test
     //?}
     void keepsCubesPlacementAndLegacyBoundsWhenSentToAClient() {

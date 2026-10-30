@@ -16,7 +16,7 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity> {
     @Inject(method = "setupRotations", at = @At("TAIL"))
     private void axiomata$faceClimbedStructure(T entity, PoseStack poseStack, float ageInTicks,
                                                float rotationYaw, float partialTicks,
-                                               //? if neoforge {
+                                               //? if >=1.21 {
                                                float scale,
                                                //?}
                                                CallbackInfo callbackInfo) {

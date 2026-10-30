@@ -4,23 +4,23 @@ import dev.architectury.networking.NetworkManager;
 import dev.architectury.utils.Env;
 import dev.architectury.utils.EnvExecutor;
 import me.mss1r.axiomata.blueprint.api.construction.ConstructionStatus;
-import me.mss1r.axiomata.blueprint.internal.construction.ConstructionSync;
+import me.mss1r.axiomata.blueprint.internal.construction.ConstructionStateSync;
 import net.minecraft.network.FriendlyByteBuf;
-//? if neoforge {
+//? if >=1.21 {
 import me.mss1r.axiomata.ResourceIds;
-import me.mss1r.axiomata.blueprint.BlueprintModule;
+import me.mss1r.axiomata.blueprint.BlueprintCommon;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 //?}
 
 // Sent when a build comes into a player's view and whenever its progress changes.
-//? if forge {
+//? if <1.21 {
 /*public record S2CConstructionStatePacket(int entityId, ConstructionStatus status) {
 *///?} else {
 public record S2CConstructionStatePacket(int entityId, ConstructionStatus status) implements CustomPacketPayload {
     public static final Type<S2CConstructionStatePacket> TYPE = new Type<>(
-            ResourceIds.id(BlueprintModule.MOD_ID, "construction_state"));
+            ResourceIds.id(BlueprintCommon.MOD_ID, "construction_state"));
     public static final StreamCodec<RegistryFriendlyByteBuf, S2CConstructionStatePacket> STREAM_CODEC =
             StreamCodec.ofMember(S2CConstructionStatePacket::write, S2CConstructionStatePacket::decode);
 
@@ -55,7 +55,7 @@ public record S2CConstructionStatePacket(int entityId, ConstructionStatus status
             var level = context.getPlayer() == null ? null : context.getPlayer().level();
             var entity = level == null ? null : level.getEntity(packet.entityId);
             if (entity != null) {
-                ConstructionSync.receive(entity, packet.status);
+                ConstructionStateSync.receive(entity, packet.status);
             }
         }));
     }

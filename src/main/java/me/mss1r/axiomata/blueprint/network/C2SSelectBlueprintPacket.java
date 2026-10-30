@@ -6,20 +6,20 @@ import me.mss1r.axiomata.blueprint.blockentity.DrawingTableBlockEntity;
 import me.mss1r.axiomata.blueprint.menu.DrawingTableMenu;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-//? if neoforge {
+//? if >=1.21 {
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
-import me.mss1r.axiomata.blueprint.BlueprintModule;
+import me.mss1r.axiomata.blueprint.BlueprintCommon;
 //?}
 
-//? if forge {
+//? if <1.21 {
 /*public record C2SSelectBlueprintPacket(String blueprintId) {
 *///?} else {
 public record C2SSelectBlueprintPacket(String blueprintId) implements CustomPacketPayload {
     public static final Type<C2SSelectBlueprintPacket> TYPE = new Type<>(
-            ResourceIds.id(BlueprintModule.MOD_ID, "select_blueprint"));
+            ResourceIds.id(BlueprintCommon.MOD_ID, "select_blueprint"));
     public static final StreamCodec<RegistryFriendlyByteBuf, C2SSelectBlueprintPacket> STREAM_CODEC =
             StreamCodec.ofMember(C2SSelectBlueprintPacket::write, C2SSelectBlueprintPacket::decode);
 

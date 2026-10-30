@@ -8,7 +8,7 @@ import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinitions;
 import me.mss1r.axiomata.blueprint.api.construction.BuildQuality;
 import me.mss1r.axiomata.blueprint.registry.BlueprintItems;
 import net.minecraft.core.registries.BuiltInRegistries;
-//? if neoforge {
+//? if >=1.21 {
 import net.minecraft.core.component.DataComponents;
 //?}
 import net.minecraft.nbt.CompoundTag;
@@ -20,7 +20,7 @@ import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-//? if neoforge {
+//? if >=1.21 {
 import net.minecraft.world.item.component.CustomData;
 //?}
 import net.minecraft.world.level.Level;
@@ -63,7 +63,7 @@ public class BlueprintItem extends Item {
         return readTag(stack).getString(AUTHOR_TAG);
     }
 
-    //? if forge {
+    //? if <1.21 {
     /*@Override
     public void appendHoverText(ItemStack stack, @javax.annotation.Nullable net.minecraft.world.level.Level level,
                                 java.util.List<net.minecraft.network.chat.Component> lines,
@@ -110,7 +110,7 @@ public class BlueprintItem extends Item {
         // Store the catalogue id, not a copy of the recipe. Existing blueprints should follow a
         // data-pack rebalance instead of carrying stale costs forever.
         updateTag(stack, tag -> tag.putString("RecipeId", id));
-        //? if forge {
+        //? if <1.21 {
         /*stack.setHoverName(Component.translatable("item.axiomata.blueprint_name", getResultName(recipe)));
         *///?} else {
         stack.set(DataComponents.CUSTOM_NAME,
@@ -141,7 +141,7 @@ public class BlueprintItem extends Item {
         if (!recipe.result().data().isEmpty()) {
             CompoundTag tag = new CompoundTag();
             recipe.result().data().forEach(tag::putInt);
-            //? if forge {
+            //? if <1.21 {
             /*result.setTag(tag);
             *///?} else {
             CustomData.update(DataComponents.CUSTOM_DATA, result, customData -> customData.merge(tag));
@@ -196,7 +196,7 @@ public class BlueprintItem extends Item {
     }
 
     private static CompoundTag readTag(ItemStack stack) {
-        //? if forge {
+        //? if <1.21 {
         /*CompoundTag tag = stack.getTag();
         return tag == null ? new CompoundTag() : tag;
         *///?} else {
@@ -205,7 +205,7 @@ public class BlueprintItem extends Item {
     }
 
     private static void updateTag(ItemStack stack, Consumer<CompoundTag> updater) {
-        //? if forge {
+        //? if <1.21 {
         /*updater.accept(stack.getOrCreateTag());
         *///?} else {
         CustomData.update(DataComponents.CUSTOM_DATA, stack, updater);

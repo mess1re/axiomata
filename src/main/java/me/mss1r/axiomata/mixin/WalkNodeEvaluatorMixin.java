@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-//? if forge {
+//? if <1.21 {
 /*import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
 *///?} else {
@@ -20,7 +20,7 @@ import net.minecraft.world.level.pathfinder.PathfindingContext;
 // Stonecutter branches below. Both injections only replace otherwise-walkable structure nodes.
 @Mixin(WalkNodeEvaluator.class)
 public abstract class WalkNodeEvaluatorMixin {
-    //? if forge {
+    //? if <1.21 {
     /*@Inject(method = "getBlockPathType(Lnet/minecraft/world/level/BlockGetter;IIILnet/minecraft/world/entity/Mob;)Lnet/minecraft/world/level/pathfinder/BlockPathTypes;",
             at = @At("RETURN"), cancellable = true)
     private void axiomata$blockStructureNodes(BlockGetter level, int x, int y, int z, Mob mob,

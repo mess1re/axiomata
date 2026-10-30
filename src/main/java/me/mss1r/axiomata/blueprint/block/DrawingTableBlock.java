@@ -1,6 +1,6 @@
 package me.mss1r.axiomata.blueprint.block;
 
-//? if neoforge {
+//? if >=1.21 {
 import com.mojang.serialization.MapCodec;
 //?}
 import dev.architectury.registry.menu.MenuRegistry;
@@ -37,7 +37,7 @@ import net.minecraft.server.level.ServerPlayer;
 import java.util.Locale;
 
 public class DrawingTableBlock extends HorizontalDirectionalBlock implements EntityBlock {
-    //? if neoforge {
+    //? if >=1.21 {
     public static final MapCodec<DrawingTableBlock> CODEC = simpleCodec(DrawingTableBlock::new);
 
     @Override
@@ -111,7 +111,7 @@ public class DrawingTableBlock extends HorizontalDirectionalBlock implements Ent
         }
     }
 
-    //? if forge {
+    //? if <1.21 {
     /*@Override
     public void playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
         removeOtherHalf(level, pos, state);
@@ -170,7 +170,7 @@ public class DrawingTableBlock extends HorizontalDirectionalBlock implements Ent
         return null;
     }
 
-    //? if forge {
+    //? if <1.21 {
     /*@Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player,
                                  InteractionHand hand, BlockHitResult hit) {

@@ -1,6 +1,6 @@
 package me.mss1r.axiomata.blueprint.registry;
 
-import me.mss1r.axiomata.blueprint.BlueprintModule;
+import me.mss1r.axiomata.blueprint.BlueprintCommon;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinitions;
 import me.mss1r.axiomata.blueprint.menu.BlueprintUseMenu;
@@ -13,7 +13,7 @@ import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
 
 public class BlueprintMenus {
-    public static final DeferredRegister<MenuType<?>> MENUS = DeferredRegister.create(BlueprintModule.MOD_ID, Registries.MENU);
+    public static final DeferredRegister<MenuType<?>> MENUS = DeferredRegister.create(BlueprintCommon.MOD_ID, Registries.MENU);
 
     public static final RegistrySupplier<MenuType<DrawingTableMenu>> DRAWING_TABLE_MENU = MENUS.register("drawing_table",
             () -> MenuRegistry.ofExtended((id, inv, data) -> new DrawingTableMenu(id, inv, data.readBlockPos())));

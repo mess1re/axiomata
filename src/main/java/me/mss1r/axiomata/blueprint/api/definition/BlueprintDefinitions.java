@@ -1,6 +1,6 @@
 package me.mss1r.axiomata.blueprint.api.definition;
 
-import me.mss1r.axiomata.blueprint.internal.definition.BlueprintDefinitionCatalog;
+import me.mss1r.axiomata.blueprint.internal.definition.BlueprintDefinitionRepository;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -12,19 +12,19 @@ public final class BlueprintDefinitions {
 
     @Nullable
     public static BlueprintDefinition get(String id) {
-        return BlueprintDefinitionCatalog.get(id);
+        return BlueprintDefinitionRepository.get(id);
     }
 
     /** The id a blueprint has now, for an id saved before the blueprint was renamed (see its {@code aliases}). */
     public static String canonicalId(String id) {
-        return BlueprintDefinitionCatalog.canonicalId(id);
+        return BlueprintDefinitionRepository.canonicalId(id);
     }
 
     public static Map<String, BlueprintDefinition> allById() {
-        return BlueprintDefinitionCatalog.allById();
+        return BlueprintDefinitionRepository.allById();
     }
 
     public static List<BlueprintDefinition> all() {
-        return BlueprintDefinitionCatalog.all();
+        return BlueprintDefinitionRepository.all();
     }
 }

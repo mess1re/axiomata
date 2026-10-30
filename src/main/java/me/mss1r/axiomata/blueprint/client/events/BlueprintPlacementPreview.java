@@ -1,0 +1,100 @@
+package me.mss1r.axiomata.blueprint.client.events;
+
+import me.mss1r.axiomata.blueprint.api.construction.ConstructionTarget;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import me.mss1r.axiomata.blueprint.api.BlueprintTags;
+import me.mss1r.axiomata.blueprint.client.PlacementTargetHelper;
+import me.mss1r.axiomata.blueprint.client.renderer.ConstructionPreviewRenderer;
+import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition;
+import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinitions;
+import me.mss1r.axiomata.blueprint.internal.construction.ConstructionPlacementHelper;
+import me.mss1r.axiomata.blueprint.item.BlueprintItem;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
+public class BlueprintPlacementPreview {
+    public static void render(com.mojang.blaze3d.vertex.PoseStack poses, Vec3 cameraPos, float partialTick) {
+
+        Minecraft minecraft = Minecraft.getInstance();
+        LocalPlayer player = minecraft.player;
+        ClientLevel level = minecraft.level;
+        if (player == null || level == null) {
+            return;
+        }
+
+        ItemStack blueprint = getHeldBlueprint(player);
+        if (blueprint.isEmpty()) {
+            return;
+        }
+
+        String recipeId = BlueprintItem.getRecipeId(blueprint);
+        BlueprintDefinition recipe = recipeId == null ? null : BlueprintDefinitions.get(recipeId);
+        if (recipe == null || !recipe.buildsInWorld()) {
+            return;
+        }
+
+        // Include the result data so the preview has the finished size.
+        ItemStack previewStack = BlueprintItem.createResultStack(recipe);
+        if (previewStack.isEmpty()) {
+            return;
+        }
+        ConstructionTarget target =
+                PlacementTargetHelper.getPlacementTarget(minecraft, previewStack, recipe, partialTick);
+        if (target == null) {
+            return;
+        }
+        ConstructionPlacementHelper.PlacementPlan plan = ConstructionPlacementHelper.findPlacement(
+                level, previewStack, target, player.getYRot(), recipe);
+        if (plan == null) {
+            return;
+        }
+
+        MultiBufferSource.BufferSource bufferSource = minecraft.renderBuffers().bufferSource();
+
+        ConstructionPreviewRenderer.renderPreview(
+                minecraft,
+                level,
+                previewStack,
+                recipe,
+                poses,
+                bufferSource,
+                0xF000F0,
+                plan.worldPos(),
+                new Vec3(
+                        plan.worldPos().x - cameraPos.x,
+                        plan.worldPos().y - cameraPos.y,
+                        plan.worldPos().z - cameraPos.z
+                ),
+                player.getYRot(),
+                partialTick,
+                plan.valid() ? 0.45F : 0.30F
+        );
+
+        VertexConsumer lineConsumer = bufferSource.getBuffer(RenderType.lines());
+        LevelRenderer.renderLineBox(
+                poses,
+                lineConsumer,
+                plan.bounds().move(-cameraPos.x, -cameraPos.y, -cameraPos.z),
+                plan.valid() ? 0.45F : 1.0F,
+                plan.valid() ? 0.8F : 0.2F,
+                plan.valid() ? 1.0F : 0.2F,
+                0.85F
+        );
+
+        bufferSource.endBatch();
+    }
+
+    private static ItemStack getHeldBlueprint(LocalPlayer player) {
+        if (!player.getMainHandItem().is(BlueprintTags.CONSTRUCTION_HAMMERS)) {
+            return ItemStack.EMPTY;
+        }
+
+        ItemStack offHand = player.getOffhandItem();
+        return BlueprintItem.getRecipeId(offHand) != null ? offHand : ItemStack.EMPTY;
+    }
+}

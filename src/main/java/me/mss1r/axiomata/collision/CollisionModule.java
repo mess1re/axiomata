@@ -4,7 +4,7 @@ import dev.architectury.event.events.client.ClientPlayerEvent;
 import dev.architectury.event.events.common.CommandRegistrationEvent;
 import dev.architectury.utils.Env;
 import dev.architectury.utils.EnvExecutor;
-import me.mss1r.axiomata.collision.client.StructureCollisionDebugRenderer;
+import me.mss1r.axiomata.collision.client.StructureCollisionDebugDraw;
 import me.mss1r.axiomata.collision.command.CollisionCommands;
 import me.mss1r.axiomata.collision.network.CollisionNetworkHandler;
 
@@ -26,6 +26,6 @@ public final class CollisionModule {
 
     private static void initializeClient() {
         ClientPlayerEvent.CLIENT_PLAYER_QUIT.register(player ->
-                StructureCollisionDebugRenderer.setEnabled(false));
+                StructureCollisionDebugDraw.setEnabled(false));
     }
 }

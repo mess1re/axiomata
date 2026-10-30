@@ -4,7 +4,7 @@ import me.mss1r.axiomata.blueprint.api.event.BlueprintBuiltEvent;
 import me.mss1r.axiomata.blueprint.api.event.BlueprintEvents;
 import me.mss1r.axiomata.blueprint.api.event.BlueprintWorkEvent;
 import me.mss1r.axiomata.blueprint.api.event.BlueprintStageBuiltEvent;
-import me.mss1r.axiomata.blueprint.internal.construction.ConstructionSync;
+import me.mss1r.axiomata.blueprint.internal.construction.ConstructionStateSync;
 import net.minecraft.world.Container;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition.Material;
 import net.minecraft.world.entity.Entity;
@@ -152,7 +152,7 @@ public final class ConstructionWork {
             entity.ejectPassengers();
         }
         machine.onBuildProgressChanged();
-        ConstructionSync.changed(machine);
+        ConstructionStateSync.changed(machine);
     }
 
     private static List<ItemStack> slots(Container container) {
@@ -186,7 +186,7 @@ public final class ConstructionWork {
         for (int slot = 0; slot < container.getContainerSize() && !material.isEmpty(); slot++) {
             ItemStack stack = container.getItem(slot);
             if (
-                    //? if forge {
+                    //? if <1.21 {
                     /*ItemStack.isSameItemSameTags(stack, material)
                     *///?} else {
                     ItemStack.isSameItemSameComponents(stack, material)

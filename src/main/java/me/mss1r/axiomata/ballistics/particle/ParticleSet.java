@@ -2,7 +2,7 @@ package me.mss1r.axiomata.ballistics.particle;
 
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
-//? if forge {
+//? if <1.21 {
 /*import com.mojang.serialization.Codec;
 *///?} else {
 import com.mojang.serialization.MapCodec;
@@ -32,14 +32,14 @@ public final class ParticleSet {
     public ParticleSet(String namespace, String smokePath, String heavySmokePath) {
         particleTypes = DeferredRegister.create(namespace, Registries.PARTICLE_TYPE);
         SMOKE =
-            particleTypes.register(smokePath, () -> new SimpleParticleType(false));
+            particleTypes.register(smokePath, () -> new SimpleParticleType(false) {});
         HEAVY_SMOKE =
-            particleTypes.register(heavySmokePath, () -> new SimpleParticleType(false));
+            particleTypes.register(heavySmokePath, () -> new SimpleParticleType(false) {});
         MUZZLE_PLUME =
-            particleTypes.register("muzzle_plume", () -> new SimpleParticleType(false));
+            particleTypes.register("muzzle_plume", () -> new SimpleParticleType(false) {});
         IMPACT_SMOKE_PLUME =
-            particleTypes.register("impact_smoke_plume", () -> new SimpleParticleType(false));
-        //? if forge {
+            particleTypes.register("impact_smoke_plume", () -> new SimpleParticleType(false) {});
+        //? if <1.21 {
         /*FRAGMENT = particleTypes.register("fragment", FragmentParticleType::new);
         *///?} else {
         FRAGMENT =
@@ -57,7 +57,7 @@ public final class ParticleSet {
         //?}
     }
 
-    //? if forge {
+    //? if <1.21 {
     /*private static final class FragmentParticleType extends ParticleType<BlockParticleOption> {
         private FragmentParticleType() {
             super(false, BlockParticleOption.DESERIALIZER);

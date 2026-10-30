@@ -1,5 +1,7 @@
 package me.mss1r.axiomata.mixin.client;
 
+import me.mss1r.axiomata.platform.AxiomataPlatform;
+
 import me.mss1r.axiomata.collision.system.StructureInteractionPicker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
@@ -54,8 +56,8 @@ public abstract class GameRendererMixin {
     }
 
     private static double interactionRange(net.minecraft.world.entity.player.Player player) {
-        //? if forge {
-        /*return player.getEntityReach();
+        //? if <1.21 {
+        /*return AxiomataPlatform.entityReach(player);
         *///?} else {
         return player.entityInteractionRange();
         //?}

@@ -29,7 +29,7 @@ public record ProjectilePhysicsProfile(
         Blast blast,
         Fire fire
 ) {
-    /** Air at sea level, in kg/m³. */
+    /** Air at sea level, in kg/mР В Р’В Р вЂ™Р’В Р В Р вЂ Р В РІР‚С™Р Р†РІР‚С›РЎС›Р В Р’В Р В Р вЂ№Р В Р вЂ Р В РІР‚С™Р Р†Р вЂљРЎС™. */
     private static final double AIR_DENSITY = 1.225D;
 
     public static final ProjectilePhysicsProfile DEFAULT = new ProjectilePhysicsProfile(
@@ -93,7 +93,7 @@ public record ProjectilePhysicsProfile(
     }
 
     /**
-     * Speed lost per block travelled at 1 block/tick: quadratic drag, {@code ρ·Cd·A / 2m} per metre (1 block = 1 m).
+     * Speed lost per block travelled at 1 block/tick: quadratic drag, {@code Р В Р’В Р вЂ™Р’В Р В Р Р‹Р РЋРЎСџР В Р’В Р вЂ™Р’В Р В Р Р‹Р Р†Р вЂљРЎС™Р В Р’В Р вЂ™Р’В Р В Р вЂ Р В РІР‚С™Р Р†РІР‚С›РЎС›Р В Р’В Р Р†Р вЂљРІвЂћСћР В РІР‚в„ўР вЂ™Р’В·CdР В Р’В Р вЂ™Р’В Р В Р вЂ Р В РІР‚С™Р Р†РІР‚С›РЎС›Р В Р’В Р Р†Р вЂљРІвЂћСћР В РІР‚в„ўР вЂ™Р’В·A / 2m} per metre (1 block = 1 m).
      */
     public double airDrag(double diameter) {
         double area = Math.PI * diameter * diameter / 4.0D;

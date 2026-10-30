@@ -71,7 +71,7 @@ public class BlueprintUseScreen extends AbstractContainerScreen<BlueprintUseMenu
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        //? if forge {
+        //? if <1.21 {
         /*this.renderBackground(guiGraphics);
         *///?} else {
         this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
@@ -154,7 +154,7 @@ public class BlueprintUseScreen extends AbstractContainerScreen<BlueprintUseMenu
             }
         }
 
-        for (var widget : this.renderables) {
+        for (var widget : this.children()) {
             if (widget instanceof Button btn) {
                 btn.render(guiGraphics, mouseX, mouseY, partialTick);
             }

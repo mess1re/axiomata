@@ -1,5 +1,7 @@
 package me.mss1r.axiomata.ballistics;
 
+import me.mss1r.axiomata.platform.AxiomataPlatform;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
@@ -56,7 +58,7 @@ public final class DebrisPhysics {
     /** Null means an ordinary falling block, not artillery debris. */
     @Nullable
     public static Boolean handleLanding(ServerLevel level, FallingBlockEntity debris, BlockPos pos, BlockState state) {
-        DebrisPhysics handler = handlerFor(debris.getPersistentData());
+        DebrisPhysics handler = handlerFor(AxiomataPlatform.persistentData(debris));
         return handler == null ? null : handler.placeDebris(level, debris, pos, state);
     }
 
@@ -170,10 +172,10 @@ public final class DebrisPhysics {
                 ? state.setValue(BlockStateProperties.WATERLOGGED, false)
                 : state));
         debris.load(saved);
-        debris.getPersistentData().putBoolean(debrisTag, true);
-        debris.getPersistentData().putString(TAG_CONTEXT, namespace);
+        AxiomataPlatform.persistentData(debris).putBoolean(debrisTag, true);
+        AxiomataPlatform.persistentData(debris).putString(TAG_CONTEXT, namespace);
         if (breaker != null) {
-            debris.getPersistentData().putUUID(playerTag, breaker.getUUID());
+            AxiomataPlatform.persistentData(debris).putUUID(playerTag, breaker.getUUID());
         }
         debris.setPos(from.x, from.y - 0.5D, from.z);
         debris.setOldPosAndRot();
@@ -186,7 +188,7 @@ public final class DebrisPhysics {
     }
 
     public boolean placeDebris(ServerLevel level, FallingBlockEntity debris, BlockPos pos, BlockState state) {
-        var data = debris.getPersistentData();
+        var data = AxiomataPlatform.persistentData(debris);
         Player breaker = data.hasUUID(playerTag) ? blocks.attributedPlayer(level, data.getUUID(playerTag)) : null;
         boolean placed = blocks.placeBlock(level, pos, state, breaker);
         if (!placed) {

@@ -2,25 +2,25 @@ package me.mss1r.axiomata.blueprint.network;
 
 import dev.architectury.networking.NetworkManager;
 import me.mss1r.axiomata.ResourceIds;
-import me.mss1r.axiomata.blueprint.tracing.OutlineCatalog;
+import me.mss1r.axiomata.blueprint.tracing.OutlineRepository;
 import net.minecraft.network.FriendlyByteBuf;
-//? if neoforge {
+//? if >=1.21 {
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
-import me.mss1r.axiomata.blueprint.BlueprintModule;
+import me.mss1r.axiomata.blueprint.BlueprintCommon;
 //?}
 
 import java.util.ArrayList;
 import java.util.List;
 
-//? if forge {
+//? if <1.21 {
 /*public record S2COutlineIndexPacket(List<String> blueprintIds) {
 *///?} else {
 public record S2COutlineIndexPacket(List<String> blueprintIds) implements CustomPacketPayload {
     public static final Type<S2COutlineIndexPacket> TYPE = new Type<>(
-            ResourceIds.id(BlueprintModule.MOD_ID, "outline_index"));
+            ResourceIds.id(BlueprintCommon.MOD_ID, "outline_index"));
     public static final StreamCodec<RegistryFriendlyByteBuf, S2COutlineIndexPacket> STREAM_CODEC =
             StreamCodec.ofMember(S2COutlineIndexPacket::write, S2COutlineIndexPacket::decode);
 
@@ -51,6 +51,6 @@ public record S2COutlineIndexPacket(List<String> blueprintIds) implements Custom
     }
 
     public static void handle(S2COutlineIndexPacket packet, NetworkManager.PacketContext context) {
-        context.queue(() -> OutlineCatalog.setDrawable(packet.blueprintIds()));
+        context.queue(() -> OutlineRepository.setDrawable(packet.blueprintIds()));
     }
 }

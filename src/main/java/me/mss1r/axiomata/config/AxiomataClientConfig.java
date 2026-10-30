@@ -1,14 +1,14 @@
 package me.mss1r.axiomata.config;
 
 import me.mss1r.axiomata.Axiomata;
-//? if forge {
+//? if <1.21 {
 /*import net.minecraftforge.common.ForgeConfigSpec;
 *///?} else {
 import net.neoforged.neoforge.common.ModConfigSpec;
 //?}
 
 public final class AxiomataClientConfig {
-    //? if forge {
+    //? if <1.21 {
     /*public static final ForgeConfigSpec SPEC;
     private static final ForgeConfigSpec.BooleanValue SHOW_UPDATE_NOTICE;
     *///?} else {
@@ -17,7 +17,7 @@ public final class AxiomataClientConfig {
     //?}
 
     static {
-        //? if forge {
+        //? if <1.21 {
         /*ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
         *///?} else {
         ModConfigSpec.Builder builder = new ModConfigSpec.Builder();

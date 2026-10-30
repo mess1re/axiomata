@@ -43,7 +43,7 @@ public final class ImpactResolver implements ImpactResults {
     private static final double STONE_HARDNESS = 1.5D;
     private static final double HARDNESS_EXPONENT = 0.3D;
     private static final double RESISTANCE_CAP = 1200.0D;
-    /** Reference stone strength (Pa) and Poncelet drag (kg/m³). */
+    /** Reference stone strength (Pa) and Poncelet drag (kg/mР В Р’В Р вЂ™Р’В Р В Р вЂ Р В РІР‚С™Р Р†РІР‚С›РЎС›Р В Р’В Р В Р вЂ№Р В Р вЂ Р В РІР‚С™Р Р†Р вЂљРЎС™). */
     private static final double STONE_STRENGTH = 16_700_000.0D;
     private static final double STONE_DRAG = 625.0D;
     /** Light opacity of a solid block; translucent blocks count as proportionally less material. */
@@ -194,7 +194,7 @@ public final class ImpactResolver implements ImpactResults {
             Vec3 start = end.subtract(axis.scale(contact.halfExtent().z * 2.0D + 2.0D));
             var hit = level.clip(new ClipContext(start, end, ClipContext.Block.COLLIDER,
                     ClipContext.Fluid.NONE,
-                    //? if forge {
+                    //? if <1.21 {
                     /*null));
                     *///?} else {
                     CollisionContext.empty()));

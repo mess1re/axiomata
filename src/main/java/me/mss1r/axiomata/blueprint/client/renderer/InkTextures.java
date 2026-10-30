@@ -3,7 +3,7 @@ package me.mss1r.axiomata.blueprint.client.renderer;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.logging.LogUtils;
 import me.mss1r.axiomata.ResourceIds;
-import me.mss1r.axiomata.blueprint.BlueprintModule;
+import me.mss1r.axiomata.blueprint.BlueprintCommon;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.ResourceLocation;
@@ -44,7 +44,7 @@ public final class InkTextures {
                     image.setPixelRGBA(x, y, image.getPixelRGBA(x, y) | 0x00FFFFFF);
                 }
             }
-            ResourceLocation white = ResourceIds.id(BlueprintModule.MOD_ID,
+            ResourceLocation white = ResourceIds.id(BlueprintCommon.MOD_ID,
                     "ink/" + drawing.getNamespace() + "/" + drawing.getPath());
             minecraft.getTextureManager().register(white, new DynamicTexture(image));
             return white;

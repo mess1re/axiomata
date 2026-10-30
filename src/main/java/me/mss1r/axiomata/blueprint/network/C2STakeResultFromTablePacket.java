@@ -8,20 +8,20 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.ItemStack;
-//? if neoforge {
+//? if >=1.21 {
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
-import me.mss1r.axiomata.blueprint.BlueprintModule;
+import me.mss1r.axiomata.blueprint.BlueprintCommon;
 //?}
 
-//? if forge {
+//? if <1.21 {
 /*public record C2STakeResultFromTablePacket() {
 *///?} else {
 public record C2STakeResultFromTablePacket() implements CustomPacketPayload {
     public static final Type<C2STakeResultFromTablePacket> TYPE = new Type<>(
-            ResourceIds.id(BlueprintModule.MOD_ID, "take_table_result"));
+            ResourceIds.id(BlueprintCommon.MOD_ID, "take_table_result"));
     public static final StreamCodec<RegistryFriendlyByteBuf, C2STakeResultFromTablePacket> STREAM_CODEC =
             StreamCodec.ofMember(C2STakeResultFromTablePacket::write, C2STakeResultFromTablePacket::decode);
 

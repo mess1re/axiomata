@@ -8,7 +8,7 @@ final class LoadingTools {
     private LoadingTools() {}
 
     static void damageHeldItem(ItemStack stack, int amount, LivingEntity owner, InteractionHand hand) {
-        //? if forge {
+        //? if <1.21 {
         /*stack.hurtAndBreak(amount, owner, entity -> entity.broadcastBreakEvent(hand));
         *///?} else {
         stack.hurtAndBreak(amount, owner, LivingEntity.getSlotForHand(hand));

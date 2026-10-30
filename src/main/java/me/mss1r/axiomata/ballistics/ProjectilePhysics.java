@@ -9,7 +9,7 @@ import net.minecraft.world.entity.LivingEntity;
 
 /** Direct-hit damage, armor penetration and speed retained after passing through a body. */
 public final class ProjectilePhysics {
-    /** Body material for penetration: strength in Pa, drag in kg/m³, same as blocks. */
+    /** Body material for penetration: strength in Pa, drag in kg/mР В Р’В Р вЂ™Р’В Р В Р вЂ Р В РІР‚С™Р Р†РІР‚С›РЎС›Р В Р’В Р В Р вЂ№Р В Р вЂ Р В РІР‚С™Р Р†Р вЂљРЎС™, same as blocks. */
     private static final double BODY_STRENGTH = 300_000.0D;
     private static final double BODY_DRAG = 1000.0D;
     /** Strength added per armor point, in Pa. */
@@ -62,7 +62,7 @@ public final class ProjectilePhysics {
     }
 
     private static float armorAdjustedDamage(LivingEntity target, float damage, float armor, float toughness) {
-        //? if forge {
+        //? if <1.21 {
         /*return CombatRules.getDamageAfterAbsorb(damage, armor, toughness);
         *///?} else {
         return CombatRules.getDamageAfterAbsorb(

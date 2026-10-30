@@ -1,6 +1,6 @@
 package me.mss1r.axiomata.blueprint.registry;
 
-import me.mss1r.axiomata.blueprint.BlueprintModule;
+import me.mss1r.axiomata.blueprint.BlueprintCommon;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import net.minecraft.network.chat.Component;
@@ -11,10 +11,10 @@ import net.minecraft.world.item.ItemStack;
 public class BlueprintCreativeTab {
 
     public static final DeferredRegister<CreativeModeTab> TABS =
-            DeferredRegister.create(BlueprintModule.MOD_ID, Registries.CREATIVE_MODE_TAB);
+            DeferredRegister.create(BlueprintCommon.MOD_ID, Registries.CREATIVE_MODE_TAB);
 
     public static final RegistrySupplier<CreativeModeTab> MAIN = TABS.register("axiomata",
-            () -> CreativeModeTab.builder()
+            () -> dev.architectury.registry.CreativeTabRegistry.create(builder -> builder
                     .icon(() -> new ItemStack(BlueprintItems.DRAWING_TABLE.get()))
                     .title(Component.translatable("itemGroup.axiomata"))
                     .displayItems((params, output) -> {
@@ -24,7 +24,7 @@ public class BlueprintCreativeTab {
                         output.accept(BlueprintItems.BLUEPRINT.get());
                         output.accept(BlueprintItems.CONSTRUCTION_HAMMER.get());
                         output.accept(BlueprintItems.ROPE.get());
-                    }).build()
+                    }))
     );
 
     public static void register() {

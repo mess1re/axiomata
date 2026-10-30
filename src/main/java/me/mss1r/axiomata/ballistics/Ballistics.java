@@ -4,7 +4,7 @@ import net.minecraft.world.phys.Vec3;
 
 /** Firing solutions using the same integration order as projectile flight. */
 public final class Ballistics {
-    /** Gravity, 9.81 m/s², in blocks/tick² (1 block = 1 m). */
+    /** Gravity, 9.81 m/sР В Р’В Р вЂ™Р’В Р В Р вЂ Р В РІР‚С™Р Р†РІР‚С›РЎС›Р В Р’В Р вЂ™Р’В Р В Р вЂ Р В РІР‚С™Р вЂ™Р’В , in blocks/tickР В Р’В Р вЂ™Р’В Р В Р вЂ Р В РІР‚С™Р Р†РІР‚С›РЎС›Р В Р’В Р вЂ™Р’В Р В Р вЂ Р В РІР‚С™Р вЂ™Р’В  (1 block = 1 m). */
     public static final double GRAVITY = 9.81D / 400.0D;
     private static final int MAX_FLIGHT_TICKS = 600;
     private static final double LOWEST_ELEVATION = -60.0D;
@@ -17,7 +17,7 @@ public final class Ballistics {
 
     /**
      * Matches the projectile tick order: motor thrust, movement, quadratic air drag, then gravity.
-     * Velocity is in blocks/tick; gravity and thrust are in blocks/tick².
+     * Velocity is in blocks/tick; gravity and thrust are in blocks/tickР В Р’В Р вЂ™Р’В Р В Р вЂ Р В РІР‚С™Р Р†РІР‚С›РЎС›Р В Р’В Р вЂ™Р’В Р В Р вЂ Р В РІР‚С™Р вЂ™Р’В .
      */
     public record Flight(double gravity, double airDrag, double thrust, int thrustTicks) {
         /** Ballistic flight under gravity only. */

@@ -2,12 +2,12 @@ package me.mss1r.axiomata.blueprint.client.screen;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import me.mss1r.axiomata.ResourceIds;
-import me.mss1r.axiomata.blueprint.BlueprintModule;
+import me.mss1r.axiomata.blueprint.BlueprintCommon;
 import me.mss1r.axiomata.blueprint.blockentity.DrawingTableBlockEntity;
 import me.mss1r.axiomata.blueprint.client.renderer.InkTextures;
 import me.mss1r.axiomata.blueprint.tracing.BlueprintOutline;
 import me.mss1r.axiomata.blueprint.tracing.TracingRules;
-import me.mss1r.axiomata.blueprint.tracing.OutlineCatalog;
+import me.mss1r.axiomata.blueprint.tracing.OutlineRepository;
 import me.mss1r.axiomata.blueprint.tracing.TracingSession;
 import me.mss1r.axiomata.blueprint.tracing.TracingState;
 import me.mss1r.axiomata.blueprint.client.ClientTracing;
@@ -38,25 +38,25 @@ import java.util.Map;
 // converted back into that space as well; vanilla slot coordinates are intentionally not used.
 public class DrawingTableScreen extends AbstractContainerScreen<DrawingTableMenu> {
     private static final ResourceLocation BACKGROUND =
-            ResourceIds.id(BlueprintModule.MOD_ID, "textures/gui/background.png");
+            ResourceIds.id(BlueprintCommon.MOD_ID, "textures/gui/background.png");
     private static final ResourceLocation PAPER =
-            ResourceIds.id(BlueprintModule.MOD_ID, "textures/gui/paper.png");
+            ResourceIds.id(BlueprintCommon.MOD_ID, "textures/gui/paper.png");
     private static final ResourceLocation SLOT =
-            ResourceIds.id(BlueprintModule.MOD_ID, "textures/gui/slot.png");
+            ResourceIds.id(BlueprintCommon.MOD_ID, "textures/gui/slot.png");
     private static final ResourceLocation QUILL =
-            ResourceIds.id(BlueprintModule.MOD_ID, "textures/gui/quill.png");
+            ResourceIds.id(BlueprintCommon.MOD_ID, "textures/gui/quill.png");
     private static final ResourceLocation PANEL_LIST =
-            ResourceIds.id(BlueprintModule.MOD_ID, "textures/gui/panel_list.png");
+            ResourceIds.id(BlueprintCommon.MOD_ID, "textures/gui/panel_list.png");
     private static final ResourceLocation PANEL_MATERIALS =
-            ResourceIds.id(BlueprintModule.MOD_ID, "textures/gui/panel_materials.png");
+            ResourceIds.id(BlueprintCommon.MOD_ID, "textures/gui/panel_materials.png");
     private static final ResourceLocation GROOVE =
-            ResourceIds.id(BlueprintModule.MOD_ID, "textures/gui/groove.png");
+            ResourceIds.id(BlueprintCommon.MOD_ID, "textures/gui/groove.png");
     private static final ResourceLocation FILL_PROGRESS =
-            ResourceIds.id(BlueprintModule.MOD_ID, "textures/gui/fill_progress.png");
+            ResourceIds.id(BlueprintCommon.MOD_ID, "textures/gui/fill_progress.png");
     private static final ResourceLocation FILL_WANDER =
-            ResourceIds.id(BlueprintModule.MOD_ID, "textures/gui/fill_wander.png");
+            ResourceIds.id(BlueprintCommon.MOD_ID, "textures/gui/fill_wander.png");
     private static final ResourceLocation ARROW =
-            ResourceIds.id(BlueprintModule.MOD_ID, "textures/gui/arrow.png");
+            ResourceIds.id(BlueprintCommon.MOD_ID, "textures/gui/arrow.png");
 
     private static final int QUILL_NIB_X = 1;
     private static final int QUILL_NIB_Y = 14;
@@ -102,7 +102,7 @@ public class DrawingTableScreen extends AbstractContainerScreen<DrawingTableMenu
     private void rebuildEntries() {
         entries.clear();
         for (Map.Entry<String, BlueprintDefinition> entry : BlueprintDefinitions.allById().entrySet()) {
-            if (!OutlineCatalog.isDrawable(entry.getValue().outlineId(entry.getKey()))) {
+            if (!OutlineRepository.isDrawable(entry.getValue().outlineId(entry.getKey()))) {
                 continue;
             }
             ItemStack icon = BlueprintItem.createResultStack(entry.getValue());
@@ -131,7 +131,7 @@ public class DrawingTableScreen extends AbstractContainerScreen<DrawingTableMenu
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        //? if forge {
+        //? if <1.21 {
         /*renderBackground(guiGraphics);
         *///?} else {
         renderBackground(guiGraphics, mouseX, mouseY, partialTick);
@@ -574,7 +574,7 @@ public class DrawingTableScreen extends AbstractContainerScreen<DrawingTableMenu
         return super.mouseReleased(mouseX, mouseY, button);
     }
 
-    //? if forge {
+    //? if <1.21 {
     /*@Override
     public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
     *///?} else {
@@ -587,7 +587,7 @@ public class DrawingTableScreen extends AbstractContainerScreen<DrawingTableMenu
             scrollIndex = Math.max(0, Math.min(maximum, scrollIndex - (int) Math.signum(delta)));
             return true;
         }
-        //? if forge {
+        //? if <1.21 {
         /*return super.mouseScrolled(mouseX, mouseY, delta);
         *///?} else {
         return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);

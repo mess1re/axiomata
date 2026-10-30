@@ -9,7 +9,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.saveddata.SavedData;
-//? if neoforge {
+//? if >=1.21 {
 import net.minecraft.core.HolderLookup;
 import net.minecraft.util.datafix.DataFixTypes;
 //?}
@@ -108,7 +108,7 @@ public final class StructuralDamageSystem {
         private final Map<BlockPos, Crack> cracks = new HashMap<>();
 
         static Cracks of(ServerLevel level) {
-            //? if forge {
+            //? if <1.21 {
             /*return level.getDataStorage().computeIfAbsent(Cracks::load, Cracks::new, DATA_NAME);
             *///?} else {
             return level.getDataStorage().computeIfAbsent(
@@ -117,7 +117,7 @@ public final class StructuralDamageSystem {
             //?}
         }
 
-        //? if forge {
+        //? if <1.21 {
         /*private static Cracks load(CompoundTag tag) {
         *///?} else {
         private static Cracks load(CompoundTag tag, HolderLookup.Provider registries) {
@@ -136,7 +136,7 @@ public final class StructuralDamageSystem {
         }
 
         @Override
-        //? if forge {
+        //? if <1.21 {
         /*public CompoundTag save(CompoundTag tag) {
         *///?} else {
         public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {

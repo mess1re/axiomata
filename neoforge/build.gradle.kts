@@ -1,0 +1,232 @@
+import org.gradle.api.tasks.compile.JavaCompile
+import org.gradle.jvm.tasks.Jar
+import org.gradle.language.jvm.tasks.ProcessResources
+
+plugins {
+    `maven-publish`
+    id("dev.architectury.loom")
+    id("architectury-plugin")
+    id("com.gradleup.shadow")
+}
+
+val modId = project.property("mod.id") as String
+val modName = project.property("mod.name") as String
+val modVersion = project.property("mod.version") as String
+val modGroup = project.property("mod.group") as String
+val modDescription = project.property("mod.description") as String
+val modAuthors = project.property("mod.authors") as String
+
+val modLicense = project.property("mod.license") as String
+
+
+val minecraftRange = project.property("mod.minecraft_range") as String
+val loaderRange = project.property("mod.loader_range") as String
+val packFormat = project.property("mod.pack_format") as String
+val architecturyVersion = project.property("deps.architectury") as String
+val mcVersion = sc.current.version
+
+val commonPath = ":$mcVersion"
+evaluationDependsOn(commonPath)
+val commonProject = project(commonPath)
+
+group = modGroup
+version = "$modVersion+$mcVersion"
+
+base {
+    archivesName.set("$modId-neoforge")
+}
+
+architectury {
+    platformSetupLoomIde()
+    neoForge {
+        // The common jar belongs to the same mod in development; a fake second
+        // mod would make Java reject packages shared with native API facades.
+        val commonJar = commonProject.tasks.named<Jar>("jar").get().archiveFile.get().asFile.toPath()
+        transformers.removeIf { it.apply(commonJar).clazz.simpleName == "GenerateFakeNeoForgeMod" }
+    }
+}
+
+loom {
+    silentMojangMappingsLicense()
+
+
+
+    runs {
+        named("client") {
+            client()
+            runDir(rootProject.file("run/$mcVersion-neoforge").relativeTo(projectDir).path)
+        }
+        named("server") {
+            server()
+            runDir(rootProject.file("run/$mcVersion-neoforge").relativeTo(projectDir).path)
+            programArg("--nogui")
+        }
+    }
+}
+
+val common: Configuration by configurations.creating {
+    isCanBeConsumed = false
+    isCanBeResolved = true
+}
+val shadowBundle: Configuration by configurations.creating {
+    isCanBeConsumed = false
+    isCanBeResolved = true
+}
+configurations {
+    compileClasspath.get().extendsFrom(common)
+    runtimeClasspath.get().extendsFrom(common)
+    named("developmentNeoForge").get().extendsFrom(common)
+}
+
+repositories {
+    maven("https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/") { content { includeGroupByRegex("software\\.bernie.*") } }
+    mavenCentral()
+    maven("https://maven.architectury.dev/") { name = "Architectury" }
+    maven("https://maven.fabricmc.net/") { name = "Fabric" }
+    maven("https://maven.neoforged.net/releases/") { name = "NeoForged" }
+    maven("https://api.modrinth.com/maven") {
+        name = "Modrinth"
+        content { includeGroup("maven.modrinth") }
+    }
+}
+
+dependencies {
+    testImplementation("org.junit.jupiter:junit-jupiter:5.11.4")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    minecraft("com.mojang:minecraft:$mcVersion")
+    mappings(loom.officialMojangMappings())
+    neoForge("net.neoforged:neoforge:${project.property("deps.neoforge")}")
+
+    modCompileOnly("software.bernie.geckolib:geckolib-neoforge-$mcVersion:${project.property("deps.geckolib")}") { isTransitive = false }
+    modImplementation("dev.architectury:architectury-neoforge:$architecturyVersion")
+
+    common(project(path = commonPath, configuration = "namedElements")) { isTransitive = false }
+    shadowBundle(project(path = commonPath, configuration = "transformProductionNeoForge"))
+
+}
+
+java {
+    withSourcesJar()
+    toolchain.languageVersion.set(JavaLanguageVersion.of(21))
+}
+
+tasks.withType<JavaCompile>().configureEach {
+    options.encoding = "UTF-8"
+    options.release.set(21)
+}
+
+tasks.named<ProcessResources>("processResources") {
+    val props = mapOf(
+        "mod_id" to modId,
+        "mod_name" to modName,
+        "mod_version" to modVersion,
+        "mod_description" to modDescription,
+        "mod_authors" to modAuthors,
+        
+        "mod_license" to modLicense,
+        
+        
+        "minecraft_range" to minecraftRange,
+        "loader_range" to loaderRange,
+        "architectury_version" to architecturyVersion,
+        "pack_format" to packFormat,
+        "java_compatibility" to "JAVA_21"
+    )
+    inputs.properties(props)
+    filesMatching(listOf("META-INF/neoforge.mods.toml", "pack.mcmeta", "mixins.axiomata.neoforge.json")) {
+        expand(props)
+    }
+}
+
+tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
+    configurations = listOf(shadowBundle)
+    archiveClassifier.set("dev-shadow")
+    exclude("architectury.common.json")
+}
+
+tasks.named<net.fabricmc.loom.task.RemapJarTask>("remapJar") {
+    inputFile.set(tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar").flatMap { it.archiveFile })
+    archiveClassifier.set(null as String?)
+}
+
+tasks.withType<Jar>().configureEach {
+    manifest {
+        attributes(
+            "MixinConfigs" to "$modId.mixins.json,$modId.neoforge.mixins.json",
+            "Specification-Title" to modId,
+            "Specification-Vendor" to modAuthors,
+            "Specification-Version" to "1",
+            "Implementation-Title" to modName,
+            "Implementation-Version" to modVersion,
+            "Implementation-Vendor" to modAuthors
+        )
+    }
+}
+
+tasks.named<JavaExec>("runServer") {
+    standardInput = System.`in`
+}
+
+tasks.register<Copy>("buildAndCollect") {
+    dependsOn("build")
+    from(tasks.named("remapJar"), tasks.named("remapSourcesJar"))
+    into(rootProject.layout.buildDirectory.dir("libs/$modVersion"))
+}
+
+// One artifact per loader and Minecraft version, so the Fabric and NeoForge 1.21.1 builds do not share a name.
+publishing {
+    publications {
+        create<MavenPublication>("mod") {
+            val jitpackBuild = System.getenv("JITPACK") == "true"
+            groupId = if (jitpackBuild) project.group.toString() else System.getenv("GROUP") ?: project.group.toString()
+            artifactId = if (jitpackBuild) "$mcVersion-neoforge" else System.getenv("ARTIFACT") ?: "$modId-$mcVersion"
+            version = if (jitpackBuild) project.version.toString() else System.getenv("VERSION") ?: project.version.toString()
+            pom.withXml {
+                val dep = asNode().appendNode("dependencies").appendNode("dependency")
+                dep.appendNode("groupId", "dev.architectury")
+                dep.appendNode("artifactId", "architectury-neoforge")
+                dep.appendNode("version", architecturyVersion)
+                dep.appendNode("scope", "runtime")
+            }
+            artifact(tasks.named("remapJar"))
+            artifact(tasks.named("remapSourcesJar")) { classifier = "sources" }
+        }
+    }
+}
+
+// Consumer source jars include the API, not just the loader's entry point.
+tasks.named<Jar>("sourcesJar") {
+    from(commonProject.sourceSets.main.get().allSource)
+}
+
+tasks.withType<Test>().configureEach { useJUnitPlatform() }
+
+// Native API and lifecycle tests run with the assembled jar and real mixins.
+sourceSets.test { java.setSrcDirs(emptyList<String>()) }
+tasks.named("test") { dependsOn(":test-runtime:test") }
+
+publishing.repositories {
+    maven("https://maven.pkg.github.com/mess1re/mod-maven") {
+        name = "ModMaven"
+        credentials {
+            username = providers.gradleProperty("gpr.user").orElse(providers.environmentVariable("GITHUB_ACTOR")).orNull
+            password = providers.gradleProperty("gpr.key").orElse(providers.environmentVariable("GITHUB_TOKEN")).orNull
+        }
+    }
+}
+
+tasks.withType<Jar>().configureEach {
+    if (!name.startsWith("remap")) {
+        from(rootProject.file("LICENSE")) { into("META-INF") }
+        from(rootProject.file("LICENSE-ASSETS.md")) { into("META-INF") }
+    }
+}
+
+// Common APIs and their native compatibility facades share packages. Group them
+// as one development mod, just as they are packaged into one production jar.
+loom.mods {
+    maybeCreate("main").apply {
+        sourceSet(sourceSets.main.get())
+        configuration(common)
+    }
+}

@@ -1,5 +1,7 @@
 package me.mss1r.axiomata.ballistics;
 
+import me.mss1r.axiomata.platform.AxiomataPlatform;
+
 import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
@@ -14,18 +16,6 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
-//? if forge {
-/*import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.util.BlockSnapshot;
-import net.minecraftforge.common.util.FakePlayerFactory;
-import net.minecraftforge.event.level.BlockEvent;
-*///?} else {
-import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.common.util.BlockSnapshot;
-import net.neoforged.neoforge.common.util.FakePlayerFactory;
-import net.neoforged.neoforge.event.level.BlockEvent;
-//?}
-
 import java.util.UUID;
 
 public final class ProtectedBlockAccess {
@@ -61,13 +51,7 @@ public final class ProtectedBlockAccess {
     }
 
     private static boolean breakCancelled(ServerLevel level, BlockPos pos, BlockState state, Player breaker) {
-        BlockEvent.BreakEvent event = new BlockEvent.BreakEvent(level, pos, state, breaker);
-        //? if forge {
-        /*MinecraftForge.EVENT_BUS.post(event);
-        *///?} else {
-        NeoForge.EVENT_BUS.post(event);
-        //?}
-        return event.isCanceled();
+        return AxiomataPlatform.breakCancelled(level, pos, state, breaker);
     }
 
     /** Fire is a placement, so it also has to pass the claim mod's placement event. */
@@ -86,31 +70,7 @@ public final class ProtectedBlockAccess {
         if (policy.get() == Policy.EVERYWHERE) {
             return level.setBlockAndUpdate(pos, placed);
         }
-        BlockSnapshot snapshot = BlockSnapshot.create(level.dimension(), level, pos);
-        boolean accepted = false;
-        try {
-            // Hold back neighbours and client updates until the placement is accepted.
-            if (!level.setBlock(pos, placed, Block.UPDATE_KNOWN_SHAPE)) {
-                return false;
-            }
-            BlockEvent.EntityPlaceEvent event = new BlockEvent.EntityPlaceEvent(snapshot,
-                    level.getBlockState(pos.below()), breaker);
-            //? if forge {
-            /*MinecraftForge.EVENT_BUS.post(event);
-            *///?} else {
-            NeoForge.EVENT_BUS.post(event);
-            //?}
-            accepted = !event.isCanceled();
-        } finally {
-            if (!accepted) {
-                level.setBlock(pos, previous, Block.UPDATE_KNOWN_SHAPE);
-            }
-        }
-        if (accepted) {
-            level.sendBlockUpdated(pos, previous, placed, Block.UPDATE_ALL);
-            level.updateNeighborsAt(pos, placed.getBlock());
-        }
-        return accepted;
+        return AxiomataPlatform.placeProtectedBlock(level, pos, placed, breaker);
     }
 
     public boolean breakBlock(ServerLevel level, BlockPos pos, @Nullable Player breaker) {
@@ -122,13 +82,7 @@ public final class ProtectedBlockAccess {
             return level.destroyBlock(pos, false);
         }
 
-        boolean removed = state.onDestroyedByPlayer(level, pos, breaker, false, level.getFluidState(pos));
-        //? if neoforge {
-        if (removed) {
-            level.levelEvent(BLOCK_BREAK_EFFECT, pos, Block.getId(state));
-        }
-        //?}
-        return removed;
+        return AxiomataPlatform.destroyByPlayer(level, pos, state, breaker);
     }
 
     public static float damageResistance(Level level, BlockPos pos, BlockState state, Explosion probe) {
@@ -136,7 +90,7 @@ public final class ProtectedBlockAccess {
         if (hardness < 0.0F) {
             return hardness;
         }
-        return Math.min(hardness, Math.max(0.0F, state.getExplosionResistance(level, pos, probe)));
+        return Math.min(hardness, Math.max(0.0F, AxiomataPlatform.explosionResistance(level, pos, state, probe)));
     }
 
     public static Explosion damageProbe(Level level, Vec3 center, @Nullable Entity source) {
@@ -166,6 +120,6 @@ public final class ProtectedBlockAccess {
         }
         GameProfileCache cache = server.getProfileCache();
         GameProfile profile = cache == null ? null : cache.get(playerId).orElse(null);
-        return FakePlayerFactory.get(level, profile != null ? profile : new GameProfile(playerId, offlineName));
+        return AxiomataPlatform.fakePlayer(level, profile != null ? profile : new GameProfile(playerId, offlineName));
     }
 }

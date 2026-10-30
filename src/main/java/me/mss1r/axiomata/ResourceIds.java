@@ -12,7 +12,7 @@ public final class ResourceIds {
 
     @SuppressWarnings("removal")
     public static ResourceLocation id(String namespace, String path) {
-        //? if forge {
+        //? if <1.21 {
         /*return new ResourceLocation(namespace, path);
         *///?} else {
         return ResourceLocation.fromNamespaceAndPath(namespace, path);
@@ -21,7 +21,7 @@ public final class ResourceIds {
 
     @SuppressWarnings("removal")
     public static ResourceLocation parse(String location) {
-        //? if forge {
+        //? if <1.21 {
         /*return new ResourceLocation(location);
         *///?} else {
         return ResourceLocation.parse(location);

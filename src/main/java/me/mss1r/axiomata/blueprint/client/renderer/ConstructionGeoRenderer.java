@@ -24,7 +24,7 @@ import net.minecraft.world.entity.player.Player;
 import org.slf4j.Logger;
 import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.cache.object.GeoCube;
-//? if forge {
+//? if <1.21 {
 /*import software.bernie.geckolib.core.animatable.GeoAnimatable;
 import software.bernie.geckolib.core.object.Color;
 *///?} else {
@@ -121,7 +121,7 @@ public abstract class ConstructionGeoRenderer<T extends Entity & GeoAnimatable &
     }
 
     @Override
-    //? if forge {
+    //? if <1.21 {
     /*public void renderRecursively(PoseStack poseStack, T entity, GeoBone bone, RenderType renderType,
                                   MultiBufferSource buffers, VertexConsumer buffer, boolean isReRender,
                                   float partialTick, int packedLight, int packedOverlay,
@@ -140,7 +140,7 @@ public abstract class ConstructionGeoRenderer<T extends Entity & GeoAnimatable &
             bone.updateScale(initial.getScaleX(), initial.getScaleY(), initial.getScaleZ());
         }
         try {
-            //? if forge {
+            //? if <1.21 {
             /*super.renderRecursively(poseStack, entity, bone, renderType, buffers, buffer, isReRender,
                     partialTick, packedLight, packedOverlay, red, green, blue, alpha);
             *///?} else {
@@ -157,7 +157,7 @@ public abstract class ConstructionGeoRenderer<T extends Entity & GeoAnimatable &
     }
 
     @Override
-    //? if forge {
+    //? if <1.21 {
     /*public void renderCubesOfBone(PoseStack poseStack, GeoBone bone, VertexConsumer buffer,
                                   int packedLight, int packedOverlay,
                                   float red, float green, float blue, float alpha) {
@@ -166,7 +166,7 @@ public abstract class ConstructionGeoRenderer<T extends Entity & GeoAnimatable &
                                   int packedLight, int packedOverlay, int packedColor) {
     //?}
         if (!building) {
-            //? if forge {
+            //? if <1.21 {
             /*super.renderCubesOfBone(poseStack, bone, buffer, packedLight, packedOverlay, red, green, blue, alpha);
             *///?} else {
             super.renderCubesOfBone(poseStack, bone, buffer, packedLight, packedOverlay, packedColor);
@@ -187,7 +187,7 @@ public abstract class ConstructionGeoRenderer<T extends Entity & GeoAnimatable &
             int color;
             if (builtSections.contains(section.name())) {
                 target = bufferSource.getBuffer(builtType);
-                //? if forge {
+                //? if <1.21 {
                 /*color = packColor(red, green, blue, alpha);
                 *///?} else {
                 color = packedColor;
@@ -203,7 +203,7 @@ public abstract class ConstructionGeoRenderer<T extends Entity & GeoAnimatable &
                 continue;
             }
             poseStack.pushPose();
-            //? if forge {
+            //? if <1.21 {
             /*renderCube(poseStack, cubes.get(index), target, packedLight, packedOverlay,
                     (color >> 16 & 0xFF) / 255.0F, (color >> 8 & 0xFF) / 255.0F, (color & 0xFF) / 255.0F,
                     (color >>> 24) / 255.0F);
@@ -233,7 +233,7 @@ public abstract class ConstructionGeoRenderer<T extends Entity & GeoAnimatable &
 
         Component line = Component.empty()
                 .append(BlueprintConstructionVisuals.stageName(status.blueprintId(), stage.section()))
-                .append(Component.literal(String.format("  %d/%d  ·  %d/%d",
+                .append(Component.literal(String.format("  %d/%d  Р В Р’В Р вЂ™Р’В Р В Р вЂ Р В РІР‚С™Р Р†РІР‚С›РЎС›Р В Р’В Р Р†Р вЂљРІвЂћСћР В РІР‚в„ўР вЂ™Р’В·  %d/%d",
                         status.hits(), Math.max(1, status.stageHits()), stageIndex + 1, recipe.stageCount())));
 
         poseStack.pushPose();

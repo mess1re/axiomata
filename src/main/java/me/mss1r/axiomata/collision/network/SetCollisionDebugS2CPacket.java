@@ -4,14 +4,14 @@ import dev.architectury.networking.NetworkManager;
 import me.mss1r.axiomata.Axiomata;
 import me.mss1r.axiomata.ResourceIds;
 import net.minecraft.network.FriendlyByteBuf;
-//? if neoforge {
+//? if >=1.21 {
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 //?}
 
-//? if forge {
+//? if <1.21 {
 /*public record SetCollisionDebugS2CPacket(boolean enabled) {
 *///?} else {
 public record SetCollisionDebugS2CPacket(boolean enabled) implements CustomPacketPayload {
@@ -44,7 +44,7 @@ public record SetCollisionDebugS2CPacket(boolean enabled) implements CustomPacke
 
     private static final class ClientHandler {
         private static void setEnabled(boolean enabled) {
-            me.mss1r.axiomata.collision.client.StructureCollisionDebugRenderer.setEnabled(enabled);
+            me.mss1r.axiomata.collision.client.StructureCollisionDebugDraw.setEnabled(enabled);
         }
     }
 }

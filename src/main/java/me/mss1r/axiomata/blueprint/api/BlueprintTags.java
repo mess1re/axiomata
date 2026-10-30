@@ -1,7 +1,7 @@
 package me.mss1r.axiomata.blueprint.api;
 
 import me.mss1r.axiomata.ResourceIds;
-import me.mss1r.axiomata.blueprint.BlueprintModule;
+import me.mss1r.axiomata.blueprint.BlueprintCommon;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
@@ -10,7 +10,7 @@ import net.minecraft.world.item.Item;
 public final class BlueprintTags {
     public static final TagKey<Item> CONSTRUCTION_HAMMERS = TagKey.create(
             Registries.ITEM,
-            ResourceIds.id(BlueprintModule.MOD_ID, "construction_hammers")
+            ResourceIds.id(BlueprintCommon.MOD_ID, "construction_hammers")
     );
 
     private BlueprintTags() {

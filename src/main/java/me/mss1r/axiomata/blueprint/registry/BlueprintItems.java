@@ -1,6 +1,6 @@
 package me.mss1r.axiomata.blueprint.registry;
 
-import me.mss1r.axiomata.blueprint.BlueprintModule;
+import me.mss1r.axiomata.blueprint.BlueprintCommon;
 import me.mss1r.axiomata.blueprint.item.BlueprintItem;
 import me.mss1r.axiomata.blueprint.item.ConstructionHammerItem;
 import dev.architectury.registry.registries.DeferredRegister;
@@ -10,7 +10,7 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 
 public class BlueprintItems {
-    public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(BlueprintModule.MOD_ID, Registries.ITEM);
+    public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(BlueprintCommon.MOD_ID, Registries.ITEM);
 
     public static final RegistrySupplier<Item> DRAWING_TABLE = ITEMS.register("drawing_table",
             () -> new BlockItem(BlueprintBlocks.DRAWING_TABLE.get(), new Item.Properties()));

@@ -29,8 +29,8 @@ public final class StructurePlacement {
     }
 
     /**
-     * Lowers the candidate from just above {@code fromY} onto the first solid surface under its footprint, e.g. the
-     * deck a player aims at rather than the top of a mast above it. {@code NaN} starts above the whole support.
+     * Lowers the candidate from just above {@code fromY} onto the first solid surface under its footprint,
+     * so higher parts of the supporting structure do not take it. {@code NaN} starts above the whole support.
      */
     public static Optional<Result> findOnTop(CollidableStructure candidate, CollidableStructure support,
                                               double x, double fromY, double z, float yawDegrees) {

@@ -32,7 +32,7 @@ public final class ConstructionDeployer {
                 new BlockHitResult(hitLocation, targetFace, targetPos, false)), yaw);
     }
 
-    /** Deploys on the aimed block or on the deck of the aimed structure, which then carries the build. */
+    /** Deploys on the aimed block or solid surface of an Axiomata structure, which then carries the build. */
     @Nullable
     public static Entity deploy(ServerLevel level, String blueprintId, ItemStack blueprint, ItemStack result,
                                 ConstructionTarget target, float yaw) {

@@ -52,8 +52,8 @@ overload accepting a worker supplies attribution; player packets always use it.
 `ConstructionTarget.pick(player, reach, partialTick, fluids)` selects the nearest block or finished
 solid structure surface. It ignores decorative rigging and respects block occlusion; fluid targets
 remain block-only. Recompute the aim on the server. `StructurePlacement.findOnTop` returns a candidate
-pose and supporting group without spawning anything; pass the hit's Y coordinate to place on a deck
-below a mast rather than above the whole structure. Validate the proposed pose with
+pose and supporting group without spawning anything; pass the hit's Y coordinate to place on the
+aimed supporting surface below higher parts of the structure. Validate the proposed pose with
 `StructurePlacement.isClear` before applying it: it checks blocks, the world border, other structures
 and the space reserved by unfinished sites. Consume the item only after successful entity addition.
 `ConstructionDeployer.deploy` accepts a `ConstructionTarget`; its block-based overload is retained.

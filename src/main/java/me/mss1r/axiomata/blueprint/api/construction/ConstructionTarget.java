@@ -15,7 +15,7 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Where a build is placed: on a block, or on the surface of a finished structure such as a ship's deck, which then
+ * Where a build is placed: on a block, or on the solid geometry of a finished Axiomata structure, which then
  * carries the build with it.
  */
 public record ConstructionTarget(@Nullable BlockHitResult block, @Nullable CollidableStructure structure,

@@ -12,7 +12,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 //? if >=1.21 {
-import net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 //?}
 
@@ -158,7 +157,8 @@ public final class NetworkHandler {
         ResourceLocation id = encodeForClient(packet, buffer);
         level.getChunkSource().broadcast(entity, NetworkManager.toPacket(NetworkManager.s2c(), id, buffer));
         *///?} else {
-        level.getChunkSource().broadcast(entity, new ClientboundCustomPayloadPacket((CustomPacketPayload) packet));
+        level.getChunkSource().broadcast(entity,
+                NetworkManager.toPacket(NetworkManager.s2c(), (CustomPacketPayload) packet, level.registryAccess()));
         //?}
     }
 

@@ -1,7 +1,5 @@
 package me.mss1r.axiomata.mixin;
 
-import me.mss1r.axiomata.platform.AxiomataPlatform;
-
 import me.mss1r.axiomata.collision.CollidableStructure;
 import me.mss1r.axiomata.collision.system.StructureInteractionPicker;
 import me.mss1r.axiomata.collision.system.VirtualPlatformSupport;
@@ -34,20 +32,9 @@ public abstract class ServerGamePacketListenerImplMixin {
         }
     }
 
+    //? if >=1.21 {
     @Redirect(method = "handleInteract", at = @At(value = "INVOKE",
-            //? if <1.21 {
-            /*target = "Lnet/minecraft/server/level/ServerPlayer;canReachRaw(Lnet/minecraft/world/entity/Entity;D)Z",
-            remap = false
-            *///?} else {
-            target = "Lnet/minecraft/server/level/ServerPlayer;canInteractWithEntity(Lnet/minecraft/world/phys/AABB;D)Z"
-            //?}
-    ))
-    //? if <1.21 {
-    /*private boolean axiomata$validateStructureReach(ServerPlayer serverPlayer, Entity target, double padding) {
-        if (AxiomataPlatform.canReach(serverPlayer, target, padding)) {
-            return true;
-        }
-    *///?} else {
+            target = "Lnet/minecraft/server/level/ServerPlayer;canInteractWithEntity(Lnet/minecraft/world/phys/AABB;D)Z"))
     private boolean axiomata$validateStructureReach(ServerPlayer serverPlayer, AABB bounds, double padding,
                                                     ServerboundInteractPacket packet) {
         if (serverPlayer.canInteractWithEntity(bounds, padding)) {
@@ -57,17 +44,11 @@ public abstract class ServerGamePacketListenerImplMixin {
         if (target == null) {
             return false;
         }
-    //?}
         return target instanceof CollidableStructure structure
                 && StructureInteractionPicker.isWithinReach(
-                        serverPlayer, structure, interactionRange(serverPlayer) + padding);
+                        serverPlayer, structure, serverPlayer.entityInteractionRange() + padding);
     }
 
-    private static double interactionRange(ServerPlayer player) {
-        //? if <1.21 {
-        /*return AxiomataPlatform.entityReach(player);
-        *///?} else {
-        return player.entityInteractionRange();
-        //?}
-    }
+    //?}
+
 }

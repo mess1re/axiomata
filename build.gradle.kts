@@ -12,7 +12,7 @@ group = "${project.property("mod.group")}.common"
 version = "${project.property("mod.version")}+$minecraftVersion"
 base { archivesName.set("${project.property("mod.id")}-common") }
 
-architectury.common(listOf(if (minecraftVersion == "1.20.1") "forge" else "neoforge"))
+architectury.common(listOf(if (minecraftVersion == "1.20.1") "forge" else "neoforge", "fabric"))
 
 loom {
     silentMojangMappingsLicense()
@@ -102,9 +102,14 @@ val checkCommonBoundary = tasks.register("checkCommonBoundary") {
     dependsOn("stonecutterGenerate")
     inputs.files(commonJava)
     doLast {
-        val loaderApi = Regex("\\b(net\\.(minecraftforge|neoforged|fabricmc\\.loader)|dev\\.architectury\\.platform\\.(forge|neoforge|fabric))\\.")
+        val loaderApi = Regex("\\b(net\\.(minecraftforge|neoforged|fabricmc)|dev\\.architectury\\.platform\\.(forge|neoforge|fabric))\\.")
         val configSpec = Regex("\\b(net\\.minecraftforge\\.common\\.ForgeConfigSpec|net\\.neoforged\\.neoforge\\.common\\.ModConfigSpec)\\b")
-        val violations = commonJava.files.filter { loaderApi.containsMatchIn(it.readText().replace(configSpec, "")) }
+        val loaderExtensions = Regex("\\b(canReachRaw|onAddedToWorld|onRemovedFromWorld|onAddedToLevel|onRemovedFromLevel)\\b")
+        val loaderDescriptors = Regex("net/(minecraftforge|neoforged|fabricmc)/")
+        val violations = commonJava.files.filter {
+            val source = it.readText().replace(configSpec, "")
+            loaderApi.containsMatchIn(source) || loaderExtensions.containsMatchIn(source) || loaderDescriptors.containsMatchIn(source)
+        }
         check(violations.isEmpty()) { "Loader APIs in common: ${violations.joinToString()}" }
     }
 }

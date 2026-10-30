@@ -27,4 +27,3 @@ public final class AxiomataBootstrap {
         EnvExecutor.runInEnv(Env.CLIENT, () -> AxiomataUpdateNotifier::register);
     }
 }
-

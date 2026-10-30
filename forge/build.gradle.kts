@@ -131,10 +131,10 @@ tasks.named<ProcessResources>("processResources") {
         "mod_version" to modVersion,
         "mod_description" to modDescription,
         "mod_authors" to modAuthors,
-        
+
         "mod_license" to modLicense,
-        
-        
+
+
         "minecraft_range" to minecraftRange,
         "forge_range" to forgeRange,
         "loader_range" to loaderRange,

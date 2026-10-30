@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "id": "axiomata_fabric_tests",
+  "version": "${mod_version}",
+  "name": "Axiomata Fabric integration tests",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["me.mss1r.axiomata.tests.fabric.FabricRuntimeTests"],
+    "fabric-gametest": ["me.mss1r.axiomata.tests.fabric.FabricRuntimeTests"]
+  },
+  "depends": {"axiomata": "*", "fabric-gametest-api-v1": "*"}
+}

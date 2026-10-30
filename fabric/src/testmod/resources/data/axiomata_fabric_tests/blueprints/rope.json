@@ -1,0 +1,7 @@
+{
+  "formatVersion": 3,
+  "result": { "item": "axiomata:rope" },
+  "stages": [
+    { "section": "rope", "hits": 3, "materials": { "minecraft:string": 2 } }
+  ]
+}

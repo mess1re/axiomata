@@ -100,6 +100,7 @@ repositories {
 }
 
 dependencies {
+    testImplementation(project(path = commonPath, configuration = "namedElements")) { isTransitive = false }
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.4")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     minecraft("com.mojang:minecraft:$mcVersion")

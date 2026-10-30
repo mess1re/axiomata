@@ -1,0 +1,6 @@
+{
+  "texture": "minecraft:textures/item/string.png",
+  "resolution": 8,
+  "cells": 1,
+  "mask": "gAAAAAAAAAA="
+}

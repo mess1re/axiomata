@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "${mod_id}",
+  "version": "${mod_version}",
+  "name": "${mod_name}",
+  "description": "${mod_description}",
+  "authors": ["${mod_authors}"],
+  "contact": {
+    "homepage": "${mod_display_url}"
+  },
+  "license": "${mod_license}",
+  "icon": "axiomata.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["me.mss1r.axiomata.fabric.AxiomataFabric"],
+    "client": ["me.mss1r.axiomata.fabric.AxiomataFabricClient"]
+  },
+  "mixins": [
+    "${mod_id}.mixins.json",
+    "${mod_id}.fabric.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=${fabric_loader_version}",
+    "fabric-api": ">=${fabric_api_version}",
+    "minecraft": "${minecraft_range}",
+    "java": ">=${java_version}",
+    "architectury": ">=${architectury_version}",
+    "forgeconfigapiport": ">=${config_api_version}",
+    "common-protection-api": ">=1.0.0 <2.0.0"
+  }
+}

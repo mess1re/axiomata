@@ -1,48 +1,15 @@
 package me.mss1r.axiomata.update;
-
-import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.ClickEvent;
-import net.minecraft.network.chat.Component;
 import net.neoforged.fml.VersionChecker;
-
-import java.net.URI;
+import net.minecraft.network.chat.Component;
 import java.util.Optional;
 
-/** Consumes the loader's check once, without starting another request. */
+/** Preserves the native update-check API while sharing notice behavior across loaders. */
 public final class AxiomataUpdateNotice {
-    private boolean finished;
-
-    public boolean finished() {
-        return finished;
-    }
-
+    private final UpdateNoticeState state = new UpdateNoticeState();
+    public boolean finished() { return state.finished(); }
     public Optional<Component> take(VersionChecker.CheckResult result) {
-        if (finished || result.status() == VersionChecker.Status.PENDING) {
-            return Optional.empty();
-        }
-        finished = true;
-        if ((result.status() != VersionChecker.Status.OUTDATED
-                && result.status() != VersionChecker.Status.BETA_OUTDATED) || result.target() == null) {
-            return Optional.empty();
-        }
-
-        Component link = Component.translatable("message.axiomata.update.open")
-                .withStyle(style -> style.withColor(ChatFormatting.YELLOW).withUnderlined(true)
-                        .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, downloadUrl(result.url()))));
-        return Optional.of(Component.translatable("message.axiomata.update.available", result.target().toString())
-                .append(" ").append(link));
-    }
-
-    private static String downloadUrl(String url) {
-        if (url != null) {
-            try {
-                URI uri = URI.create(url);
-                if ("https".equalsIgnoreCase(uri.getScheme()) && uri.getHost() != null) {
-                    return url;
-                }
-            } catch (IllegalArgumentException ignored) {
-            }
-        }
-        return "https://www.curseforge.com/projects/1713796";
+        return state.take(result.status() == VersionChecker.Status.PENDING,
+                result.status() == VersionChecker.Status.OUTDATED || result.status() == VersionChecker.Status.BETA_OUTDATED,
+                result.target() == null ? null : result.target().toString(), result.url());
     }
 }

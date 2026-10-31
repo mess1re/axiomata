@@ -239,7 +239,7 @@ public abstract class ConstructionGeoRenderer<T extends Entity & GeoAnimatable &
         poseStack.pushPose();
         poseStack.translate(0.0D, stageSignHeight(entity), 0.0D);
         poseStack.mulPose(this.entityRenderDispatcher.cameraOrientation());
-        //? if forge {
+        //? if <1.21 {
         /*poseStack.scale(-0.025F, -0.025F, 0.025F);
         *///?} else {
         poseStack.scale(0.025F, -0.025F, 0.025F);

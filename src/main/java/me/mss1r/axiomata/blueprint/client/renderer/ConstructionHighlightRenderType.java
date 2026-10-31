@@ -13,6 +13,18 @@ import java.util.function.Function;
 public final class ConstructionHighlightRenderType extends RenderStateShard {
     private static ShaderInstance shader;
     private static final ShaderStateShard SHADER = new ShaderStateShard(() -> shader);
+    private static final Function<ResourceLocation, RenderType> PLANS = Util.memoize(texture ->
+            RenderType.create("axiomata:construction_plan", DefaultVertexFormat.NEW_ENTITY,
+                    VertexFormat.Mode.QUADS, 256, true, true,
+                    RenderType.CompositeState.builder()
+                            .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_SHADER)
+                            .setTextureState(new TextureStateShard(texture, false, false))
+                            .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+                            .setCullState(NO_CULL)
+                            .setLightmapState(LIGHTMAP)
+                            .setOverlayState(OVERLAY)
+                            .setWriteMaskState(COLOR_WRITE)
+                            .createCompositeState(true)));
 
     private static final Function<ResourceLocation, RenderType> TYPES = Util.memoize(texture ->
             RenderType.create(
@@ -39,6 +51,11 @@ public final class ConstructionHighlightRenderType extends RenderStateShard {
 
     public static RenderType of(ResourceLocation texture) {
         return TYPES.apply(texture);
+    }
+
+    /** Future geometry remains depth-tested, but cannot occlude other translucent plans or stage signs. */
+    public static RenderType plan(ResourceLocation texture) {
+        return PLANS.apply(texture);
     }
 
     public static void setShader(ShaderInstance shader) {

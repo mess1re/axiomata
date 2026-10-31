@@ -42,8 +42,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Draws an unfinished build from its construction markup: built cubes as they are, the section being worked on
- * pulsing and the sections still to come as a pale plan. Only a builder sees the plan; everyone can see the stage
- * sign and what stands. Requires GeckoLib; extend it in place of {@link GeoEntityRenderer}.
+ * pulsing and the sections still to come as a pale plan. Only a builder sees the plan and the stage sign; everyone
+ * else sees what stands. Requires GeckoLib; extend it in place of {@link GeoEntityRenderer}.
  */
 public abstract class ConstructionGeoRenderer<T extends Entity & GeoAnimatable & UnderConstruction>
         extends GeoEntityRenderer<T> {
@@ -108,7 +108,7 @@ public abstract class ConstructionGeoRenderer<T extends Entity & GeoAnimatable &
 
         try {
             super.render(entity, entityYaw, partialTick, poseStack, buffer, packedLight);
-            if (building) {
+            if (plan) {
                 renderStageSign(entity, poseStack, buffer, packedLight);
             }
         } finally {
@@ -239,7 +239,11 @@ public abstract class ConstructionGeoRenderer<T extends Entity & GeoAnimatable &
         poseStack.pushPose();
         poseStack.translate(0.0D, stageSignHeight(entity), 0.0D);
         poseStack.mulPose(this.entityRenderDispatcher.cameraOrientation());
-        poseStack.scale(-0.025F, -0.025F, 0.025F);
+        //? if forge {
+        /*poseStack.scale(-0.025F, -0.025F, 0.025F);
+        *///?} else {
+        poseStack.scale(0.025F, -0.025F, 0.025F);
+        //?}
         Font font = getFont();
         float x = -font.width(line) / 2.0F;
         font.drawInBatch(line, x, 0.0F, 0xFFE8DFC8, false, poseStack.last().pose(), buffer,

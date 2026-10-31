@@ -275,10 +275,20 @@ public final class StructureTerrainCollision {
                 StructureCollisionRegistry.structuresNear(structure, path, 0.01D).stream()
                         .filter(other -> !ignored.test(other))
                         .toList();
+        // Hybrid consumers keep their vanilla body as a real world constraint, including
+        // direct carry/depenetration moves which bypass Entity.move. Their solid model may
+        // start well above the wheels and cannot stand in for this box.
+        StructureTransform current = structure.collisionTransform();
+        // A horizontal precheck with a step allowance leaves native stepping to Entity.move.
+        AABB nativeBox = stepHeight >= 0 || structure.movesByGeometry() ? null : structure.getBoundingBox().move(
+                transform.x() - current.x(), transform.y() - current.y(), transform.z() - current.z());
         Vec3 allowed = wanted;
         // Recheck earlier constraints after sliding against another body.
         for (int pass = 0; pass < 4; pass++) {
             Vec3 before = allowed;
+            if (nativeBox != null) {
+                allowed = Entity.collideBoundingBox(structure, allowed, nativeBox, structure.level(), List.of());
+            }
             allowed =
                     StructureCollisionResolver.resolveStructureMovement(
                                     transform, groups, blocks, allowed)
@@ -454,6 +464,9 @@ public final class StructureTerrainCollision {
         double length = Math.sqrt(deepestLength);
         if (length > MAX_UNSTICK_STEP) {
             escape = escape.scale(MAX_UNSTICK_STEP / length);
+        }
+        if (!structure.movesByGeometry()) {
+            escape = Entity.collideBoundingBox(structure, escape, structure.getBoundingBox(), structure.level(), List.of());
         }
         structure.setPos(
                 structure.getX() + escape.x,

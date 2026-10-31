@@ -110,6 +110,38 @@ class StructureCarrySystemTest {
     }
 
     @Test
+    void directMovementCannotPushNativeWheelsIntoTheGroundBelowARaisedMechanism() {
+        TestEntity engine = new TestEntity(level, shape(new AABB(-.5, .53, -.5, .5, 2, .5))) {
+            @Override public boolean movesByGeometry() { return false; }
+        };
+        entities.add(engine);
+        engine.setPos(0, 0, 0);
+        when(level.getBlockCollisions(any(), any())).thenReturn(
+                List.of(Shapes.create(new AABB(-4, -1, -4, 4, 0, 4))));
+        Vec3 allowed = StructureTerrainCollision.clampMotion(engine, new Vec3(0, -.08, 0));
+        assertEquals(0, allowed.y, .001, "Direct geometry movement must retain the native wheel footing");
+        Vec3 fromRaisedPose = StructureTerrainCollision.clampMotionAt(engine,
+                new StructureTransform(0, 1, 0, 0), new Vec3(0, -2, 0));
+        assertEquals(-1, fromRaisedPose.y, .001, "Native clearance must use the proposed pose");
+        when(level.getBlockCollisions(any(), any())).thenReturn(List.of());
+        assertEquals(-.08, StructureTerrainCollision.clampMotion(engine, new Vec3(0, -.08, 0)).y, .001,
+                "Removing the ground must allow a native body to fall");
+    }
+
+    @Test
+    void aNativeStepIsNotBlockedByTheHorizontalModelPrecheck() {
+        TestEntity engine = new TestEntity(level, shape(new AABB(-.5, .53, -.5, .5, 2, .5))) {
+            @Override public boolean movesByGeometry() { return false; }
+        };
+        entities.add(engine);
+        engine.setPos(0, 0, 0);
+        when(level.getBlockCollisions(any(), any())).thenReturn(
+                List.of(Shapes.create(new AABB(1, 0, -2, 2, .5, 2))));
+        Vec3 allowed = StructureTerrainCollision.clampMovement(engine, new Vec3(2, 0, 0), .6, group -> false);
+        assertEquals(2, allowed.x, .001, "The body box is stepped by the following Entity.move, not its model precheck");
+    }
+
+    @Test
     void nativeWheelBoxDoesNotFallThroughADeckBelowItsRaisedMechanism() {
         TestEntity deck = entity(DECK, 0, 0, 0);
         TestEntity engine = new TestEntity(level, shape(new AABB(-.5, .53, -.5, .5, 2, .5))) {

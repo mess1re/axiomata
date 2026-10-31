@@ -25,7 +25,7 @@ import java.util.List;
 
 public final class BlueprintCommands {
     private static final DynamicCommandExceptionType UNKNOWN_BLUEPRINT = new DynamicCommandExceptionType(
-            id -> Component.translatable("commands.axiomata.blueprint.unknown", id)
+            id -> Component.translatable("commands.axiomata.blueprint.unknown", String.valueOf(id))
     );
 
     private BlueprintCommands() {
@@ -88,7 +88,7 @@ public final class BlueprintCommands {
         }
 
         context.getSource().sendSuccess(
-                () -> Component.translatable("commands.axiomata.blueprint.give.success", id, targets.size()),
+                () -> Component.translatable("commands.axiomata.blueprint.give.success", id.toString(), targets.size()),
                 true
         );
         return targets.size();

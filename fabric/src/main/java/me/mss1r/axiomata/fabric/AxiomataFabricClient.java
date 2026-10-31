@@ -22,7 +22,6 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.CoreShaderRegistrationCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.renderer.RenderType;
 
 public final class AxiomataFabricClient implements ClientModInitializer {
@@ -44,8 +43,8 @@ public final class AxiomataFabricClient implements ClientModInitializer {
         });
         WorldRenderEvents.START.register(context ->
                 me.mss1r.axiomata.blueprint.client.renderer.ConstructionStageSigns.beginFrame());
-        HudRenderCallback.EVENT.register((graphics, delta) ->
-                me.mss1r.axiomata.blueprint.client.renderer.ConstructionStageSigns.render(graphics));
+        WorldRenderEvents.LAST.register(context ->
+                me.mss1r.axiomata.blueprint.client.renderer.ConstructionStageSigns.render());
         WorldRenderEvents.AFTER_ENTITIES.register(context ->
                 StructureCollisionDebugDraw.renderCollision(context.matrixStack(), context.camera().getPosition()));
         WorldRenderEvents.AFTER_TRANSLUCENT.register(context -> {

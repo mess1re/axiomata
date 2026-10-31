@@ -2,23 +2,36 @@ package me.mss1r.axiomata.blueprint.client.renderer;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+//? if <1.21 {
+/*import com.mojang.blaze3d.vertex.BufferBuilder;
+*///?} else {
+import com.mojang.blaze3d.vertex.ByteBufferBuilder;
+//?}
 import me.mss1r.axiomata.blueprint.api.construction.UnderConstruction;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinitions;
 import me.mss1r.axiomata.blueprint.api.visual.BlueprintConstructionVisuals;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import org.joml.Matrix4f;
-import org.joml.Vector4f;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/** World-anchored progress labels rendered by the GUI, independently of entity shaders and buffers. */
+/** Depth-tested world labels drawn after entity geometry with their own buffers. */
 public final class ConstructionStageSigns {
     private record Sign(Entity entity, Matrix4f pose, Component text) {}
     private static final Map<Entity, Sign> PENDING = new LinkedHashMap<>();
+    //? if <1.21 {
+    /*private static final MultiBufferSource.BufferSource BUFFERS = MultiBufferSource.immediate(new BufferBuilder(4096));
+    *///?} else {
+    private static final MultiBufferSource.BufferSource BUFFERS = MultiBufferSource.immediate(new ByteBufferBuilder(4096));
+    //?}
 
     private ConstructionStageSigns() {}
 
@@ -36,59 +49,57 @@ public final class ConstructionStageSigns {
                 .append(BlueprintConstructionVisuals.stageName(status.blueprintId(), recipe.stages().get(stage).section()))
                 .append(Component.literal(String.format("  %d/%d  ·  %d/%d", status.hits(),
                         Math.max(1, status.stageHits()), stage + 1, recipe.stageCount())));
-        Matrix4f clip = new Matrix4f(RenderSystem.getProjectionMatrix())
-                .mul(RenderSystem.getModelViewMatrix()).mul(poses.last().pose())
+        // Save the view transform as well: the late world callback may run after it is reset.
+        Matrix4f pose = new Matrix4f(RenderSystem.getModelViewMatrix()).mul(poses.last().pose())
                 .translate(0, (float)height, 0)
                 .rotate(minecraft.getEntityRenderDispatcher().cameraOrientation());
         //? if <1.21 {
-        /*clip.scale(-0.025F, -0.025F, 0.025F);
+        /*pose.scale(-0.025F, -0.025F, 0.025F);
         *///?} else {
-        clip.scale(0.025F, -0.025F, 0.025F);
+        pose.scale(0.025F, -0.025F, 0.025F);
         //?}
-        Vector4f center = clip.transform(new Vector4f(0, 0, 0, 1));
-        Vector4f right = clip.transform(new Vector4f(1, 0, 0, 1));
-        Vector4f down = clip.transform(new Vector4f(0, 1, 0, 1));
-        if (center.w <= 0.05F || right.w <= 0 || down.w <= 0) return;
-        float halfWidth = minecraft.getWindow().getGuiScaledWidth() * 0.5F;
-        float halfHeight = minecraft.getWindow().getGuiScaledHeight() * 0.5F;
-        float x = center.x / center.w;
-        float y = center.y / center.w;
-        Matrix4f screen = new Matrix4f()
-                .m00((right.x / right.w - x) * halfWidth)
-                .m01(-(right.y / right.w - y) * halfHeight)
-                .m10((down.x / down.w - x) * halfWidth)
-                .m11(-(down.y / down.w - y) * halfHeight)
-                .m30((x + 1) * halfWidth).m31((1 - y) * halfHeight).m32(400);
-        PENDING.put(entity, new Sign(entity, screen, text));
+        PENDING.put(entity, new Sign(entity, pose, text));
     }
 
-    public static void render(GuiGraphics graphics) {
+    public static void render() {
         var minecraft = Minecraft.getInstance();
         try {
             if (PENDING.isEmpty() || minecraft.level == null || minecraft.player == null || minecraft.options.hideGui) return;
-            graphics.flush();
-            // Finish every backing rectangle before submitting any foreground glyphs.
+            Matrix4f inverseView = new Matrix4f(RenderSystem.getModelViewMatrix()).invert();
+            // Flush the backing rectangles first; keep them behind the glyph plane.
+            // Both passes test against the world's depth, including opaque entity geometry.
             for (int pass = 0; pass < 2; pass++) {
                 for (Sign sign : PENDING.values()) {
                     if (sign.entity.isRemoved() || sign.entity.level() != minecraft.level) continue;
-                    graphics.pose().pushPose();
-                    try {
-                        graphics.pose().last().pose().mul(sign.pose);
-                        int width = minecraft.font.width(sign.text);
-                        int x = -width / 2;
-                        if (pass == 0) graphics.fill(x - 1, -1, x + width + 1, minecraft.font.lineHeight, 0x40000000);
-                        else {
-                            graphics.pose().translate(0, 0, 1);
-                            graphics.drawString(minecraft.font, sign.text, x, 0, 0xFFE8DFC8, false);
-                        }
-                    } finally {
-                        graphics.pose().popPose();
+                    Matrix4f pose = new Matrix4f(inverseView);
+                    // Camera-space Z avoids the opposite billboard Z axes used by different versions.
+                    if (pass == 0) pose.translate(0, 0, -0.01F);
+                    pose.mul(sign.pose);
+                    float x = -minecraft.font.width(sign.text) / 2.0F;
+                    if (pass == 0) {
+                        VertexConsumer vertices = BUFFERS.getBuffer(RenderType.textBackground());
+                        float right = x + minecraft.font.width(sign.text) + 1;
+                        vertex(vertices, pose, x - 1, -1);
+                        vertex(vertices, pose, x - 1, minecraft.font.lineHeight);
+                        vertex(vertices, pose, right, minecraft.font.lineHeight);
+                        vertex(vertices, pose, right, -1);
+                    } else {
+                        minecraft.font.drawInBatch(sign.text, x, 0, 0xFFE8DFC8, false, pose, BUFFERS,
+                                Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
                     }
                 }
-                graphics.flush();
+                BUFFERS.endBatch();
             }
         } finally {
             PENDING.clear();
         }
+    }
+
+    private static void vertex(VertexConsumer vertices, Matrix4f pose, float x, float y) {
+        //? if <1.21 {
+        /*vertices.vertex(pose, x, y, 0).color(0, 0, 0, 64).uv2(LightTexture.FULL_BRIGHT).endVertex();
+        *///?} else {
+        vertices.addVertex(pose, x, y, 0).setColor(0, 0, 0, 64).setLight(LightTexture.FULL_BRIGHT);
+        //?}
     }
 }

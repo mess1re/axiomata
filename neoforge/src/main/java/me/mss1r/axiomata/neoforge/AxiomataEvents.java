@@ -48,7 +48,6 @@ public final class AxiomataEvents {
             modBus.addListener(me.mss1r.axiomata.blueprint.client.events.BlueprintClientModEvents::registerMenuScreens);
             modBus.addListener(me.mss1r.axiomata.blueprint.client.events.BlueprintClientModEvents::registerShaders);
             gameBus.addListener(Client::render);
-            gameBus.addListener(me.mss1r.axiomata.blueprint.client.events.BlueprintClientGameEvents::onRenderGui);
         }
         static void particles(RegisterParticleProvidersEvent event) {
             me.mss1r.axiomata.ballistics.client.ParticleProviders.register(event, BallisticsModule.PARTICLES);

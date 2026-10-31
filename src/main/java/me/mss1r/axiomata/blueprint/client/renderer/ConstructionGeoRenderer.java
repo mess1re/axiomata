@@ -69,7 +69,14 @@ public abstract class ConstructionGeoRenderer<T extends Entity & GeoAnimatable &
 
     /** Height of the stage sign above the entity's feet; raise it for a model that stands above its hitbox. */
     protected double stageSignHeight(T entity) {
-        return entity.getBbHeight() + 0.7D;
+        double height = entity.getBbHeight();
+        var bounds = BlueprintConstructionVisuals.bounds(getGeoModel().getModelResource(entity));
+        if (bounds != null) {
+            for (var section : bounds.sections()) {
+                height = Math.max(height, section.bounds().maxY() / 16.0D);
+            }
+        }
+        return height + 0.7D;
     }
 
     /** Whether the local player sees the plan: a construction hammer in hand, close enough to work. */
@@ -88,7 +95,7 @@ public abstract class ConstructionGeoRenderer<T extends Entity & GeoAnimatable &
         boolean plan = building && showsPlan(entity);
         bufferSource = buffer;
         builtType = building ? getRenderType(entity, getTextureLocation(entity), buffer, partialTick) : null;
-        ghostType = plan ? RenderType.entityTranslucent(getTextureLocation(entity)) : null;
+        ghostType = plan ? ConstructionHighlightRenderType.plan(getTextureLocation(entity)) : null;
         activeType = plan ? ConstructionHighlightRenderType.of(getTextureLocation(entity)) : null;
         BlueprintConstructionVisuals.State state = building
                 ? entity.constructionVisualState()

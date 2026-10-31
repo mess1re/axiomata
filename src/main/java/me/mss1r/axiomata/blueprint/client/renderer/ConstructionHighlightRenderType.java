@@ -33,6 +33,24 @@ public final class ConstructionHighlightRenderType extends RenderStateShard {
                             .createCompositeState(true)
             ));
 
+    private static final Function<ResourceLocation, RenderType> PLAN_TYPES = Util.memoize(texture ->
+            RenderType.create(
+                    "axiomata:construction_plan", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS,
+                    256, false, true, RenderType.CompositeState.builder()
+                            .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_SHADER)
+                            .setTextureState(new TextureStateShard(texture, false, false))
+                            .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+                            .setCullState(NO_CULL)
+                            .setLightmapState(LIGHTMAP)
+                            .setOverlayState(OVERLAY)
+                            .setWriteMaskState(COLOR_WRITE)
+                            .createCompositeState(false)));
+
+    /** Transparent unbuilt sections test world depth without hiding other geometry behind their empty space. */
+    public static RenderType plan(ResourceLocation texture) {
+        return PLAN_TYPES.apply(texture);
+    }
+
     private ConstructionHighlightRenderType() {
         super(null, null, null);
     }

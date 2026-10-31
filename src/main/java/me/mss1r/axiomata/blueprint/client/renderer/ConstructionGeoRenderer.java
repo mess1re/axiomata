@@ -93,7 +93,7 @@ public abstract class ConstructionGeoRenderer<T extends Entity & GeoAnimatable &
         boolean plan = building && showsPlan(entity);
         bufferSource = buffer;
         builtType = building ? getRenderType(entity, getTextureLocation(entity), buffer, partialTick) : null;
-        ghostType = plan ? ConstructionHighlightRenderType.plan(getTextureLocation(entity)) : null;
+        ghostType = plan ? RenderType.entityTranslucent(getTextureLocation(entity)) : null;
         activeType = plan ? ConstructionHighlightRenderType.of(getTextureLocation(entity)) : null;
         BlueprintConstructionVisuals.State state = building
                 ? entity.constructionVisualState()
@@ -246,10 +246,8 @@ public abstract class ConstructionGeoRenderer<T extends Entity & GeoAnimatable &
         //?}
         Font font = getFont();
         float x = -font.width(line) / 2.0F;
-        // A long engine can stand between the builder and its own progress sign.
-        // Treat the sign as builder UI so its glyphs remain readable as sections appear.
         font.drawInBatch(line, x, 0.0F, 0xFFE8DFC8, false, poseStack.last().pose(), buffer,
-                Font.DisplayMode.SEE_THROUGH, 0x60000000, 0xF000F0);
+                Font.DisplayMode.NORMAL, 0x40000000, packedLight);
         poseStack.popPose();
     }
 

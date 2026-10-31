@@ -42,8 +42,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Draws an unfinished build from its construction markup: built cubes as they are, the section being worked on
- * pulsing and the sections still to come as a pale plan. Only a builder sees the plan and the stage sign; everyone
- * else sees what stands. Requires GeckoLib; extend it in place of {@link GeoEntityRenderer}.
+ * pulsing and the sections still to come as a pale plan. Only a builder sees the plan; everyone can see the stage
+ * sign and what stands. Requires GeckoLib; extend it in place of {@link GeoEntityRenderer}.
  */
 public abstract class ConstructionGeoRenderer<T extends Entity & GeoAnimatable & UnderConstruction>
         extends GeoEntityRenderer<T> {
@@ -108,7 +108,7 @@ public abstract class ConstructionGeoRenderer<T extends Entity & GeoAnimatable &
 
         try {
             super.render(entity, entityYaw, partialTick, poseStack, buffer, packedLight);
-            if (plan) {
+            if (building) {
                 renderStageSign(entity, poseStack, buffer, packedLight);
             }
         } finally {

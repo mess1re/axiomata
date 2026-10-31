@@ -5,18 +5,13 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.logging.LogUtils;
 import me.mss1r.axiomata.ResourceIds;
 import me.mss1r.axiomata.blueprint.api.BlueprintTags;
-import me.mss1r.axiomata.blueprint.api.construction.ConstructionStatus;
 import me.mss1r.axiomata.blueprint.api.construction.UnderConstruction;
-import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition;
-import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinitions;
 import me.mss1r.axiomata.blueprint.api.visual.BlueprintConstructionVisuals;
 import me.mss1r.axiomata.structure.StructureSections;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -109,7 +104,7 @@ public abstract class ConstructionGeoRenderer<T extends Entity & GeoAnimatable &
         try {
             super.render(entity, entityYaw, partialTick, poseStack, buffer, packedLight);
             if (plan) {
-                renderStageSign(entity, poseStack, buffer, packedLight);
+                ConstructionStageSigns.submit(entity, stageSignHeight(entity), poseStack);
             }
         } finally {
             building = false;
@@ -220,35 +215,6 @@ public abstract class ConstructionGeoRenderer<T extends Entity & GeoAnimatable &
         int g = Math.round(Mth.clamp(green, 0.0F, 1.0F) * 255.0F);
         int b = Math.round(Mth.clamp(blue, 0.0F, 1.0F) * 255.0F);
         return a << 24 | r << 16 | g << 8 | b;
-    }
-
-    private void renderStageSign(T entity, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
-        ConstructionStatus status = entity.constructionStatus();
-        BlueprintDefinition recipe = BlueprintDefinitions.get(status.blueprintId());
-        if (recipe == null || recipe.stages().isEmpty()) {
-            return;
-        }
-        int stageIndex = Math.min(status.builtStages(), recipe.stageCount() - 1);
-        BlueprintDefinition.Stage stage = recipe.stages().get(stageIndex);
-
-        Component line = Component.empty()
-                .append(BlueprintConstructionVisuals.stageName(status.blueprintId(), stage.section()))
-                .append(Component.literal(String.format("  %d/%d  Р В Р’В Р вЂ™Р’В Р В Р вЂ Р В РІР‚С™Р Р†РІР‚С›РЎС›Р В Р’В Р Р†Р вЂљРІвЂћСћР В РІР‚в„ўР вЂ™Р’В·  %d/%d",
-                        status.hits(), Math.max(1, status.stageHits()), stageIndex + 1, recipe.stageCount())));
-
-        poseStack.pushPose();
-        poseStack.translate(0.0D, stageSignHeight(entity), 0.0D);
-        poseStack.mulPose(this.entityRenderDispatcher.cameraOrientation());
-        //? if <1.21 {
-        /*poseStack.scale(-0.025F, -0.025F, 0.025F);
-        *///?} else {
-        poseStack.scale(0.025F, -0.025F, 0.025F);
-        //?}
-        Font font = getFont();
-        float x = -font.width(line) / 2.0F;
-        font.drawInBatch(line, x, 0.0F, 0xFFE8DFC8, false, poseStack.last().pose(), buffer,
-                Font.DisplayMode.NORMAL, 0x40000000, packedLight);
-        poseStack.popPose();
     }
 
     private StructureSections.Section sectionOf(String bone, int cube) {

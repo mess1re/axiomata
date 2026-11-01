@@ -823,43 +823,34 @@ public final class StructureCollisionResolver {
             CollidableStructure second,
             List<CollisionGroup> secondGroups,
             double reach) {
-        StructureTransform firstTransform = first.collisionTransform();
-        StructureTransform secondTransform = second.collisionTransform();
-        Rotation3 firstLocalToWorld = firstTransform.worldToLocalRotation().transpose();
-
-        for (CollisionGroup secondGroup : secondGroups) {
-            for (CollisionPart secondPart : secondGroup.parts()) {
-                Rotation3 worldToSecondPart = worldToPart(secondTransform, secondGroup, secondPart);
-                AABB fixed = secondPart.box().inflate(Math.max(0.0D, reach));
-
-                for (CollisionGroup firstGroup : firstGroups) {
-                    for (CollisionPart firstPart : firstGroup.parts()) {
-                        Vec3 firstCenterWorld =
-                                firstTransform.toWorld(
-                                        firstGroup.fromPart(
-                                                firstPart, firstPart.box().getCenter()));
-                        Vec3 firstCenterInSecondPart =
-                                toPartSpace(
-                                        secondTransform, secondGroup, secondPart, firstCenterWorld);
-                        Rotation3 firstPartToSecondPart =
-                                worldToSecondPart
-                                        .multiply(firstLocalToWorld)
-                                        .multiply(
-                                                firstGroup
-                                                        .structureToPartRotation(firstPart)
-                                                        .transpose());
-                        OrientedBox moving =
-                                new OrientedBox(
-                                        firstCenterInSecondPart,
-                                        OrientedBox.halfExtentOf(firstPart.box()),
-                                        firstPartToSecondPart);
-                        BoxSeparation separation =
-                                OrientedBoxCollider.separate(fixed, moving, Vec3.ZERO);
-                        if (separation != null && separation.isOverlapping()) {
-                            return true;
-                        }
-                    }
-                }
+        PreparedGeometry moving = preparedGeometry(first.collisionTransform(), firstGroups);
+        StructureTransform fixedTransform = second.collisionTransform();
+        PreparedGeometry fixed = preparedGeometry(fixedTransform, secondGroups);
+        if (moving.bounds == null || fixed.bounds == null) return false;
+        double margin = Math.max(0.0D, reach);
+        // Reach expands the fixed box along its local axes. A rotated box can grow
+        // by more than reach along a world axis; sqrt(3) is a conservative bound.
+        double padding = margin * Math.sqrt(3.0D);
+        if (!moving.bounds.inflate(padding).intersects(fixed.bounds)) return false;
+        CollisionBoxIndex<FixedPart> index = fixed.parts.size() > 8 ? fixed.partIndex() : null;
+        for (FixedPart firstPart : moving.parts) {
+            AABB search = firstPart.bounds.inflate(padding);
+            List<FixedPart> candidates = index == null ? fixed.parts : index.query(search);
+            for (FixedPart secondPart : candidates) {
+                if (index == null && !secondPart.bounds.intersects(search)) continue;
+                Vec3 center =
+                        toPartSpace(
+                                fixedTransform, secondPart.group, secondPart.part,
+                                firstPart.worldCenter);
+                Rotation3 rotation =
+                        secondPart.worldToPart.multiply(firstPart.worldToPart.transpose());
+                OrientedBox box =
+                        new OrientedBox(
+                                center, OrientedBox.halfExtentOf(firstPart.part.box()), rotation);
+                BoxSeparation separation =
+                        OrientedBoxCollider.separate(
+                                secondPart.part.box().inflate(margin), box, Vec3.ZERO);
+                if (separation != null && separation.isOverlapping()) return true;
             }
         }
         return false;

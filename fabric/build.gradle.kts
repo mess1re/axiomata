@@ -190,17 +190,15 @@ publishing {
             version = if (jitpackBuild) project.version.toString() else System.getenv("VERSION") ?: project.version.toString()
             pom.withXml {
                 val dependencies = asNode().appendNode("dependencies")
-                val coordinates = listOf(
-                    "dev.architectury:architectury-fabric:$architecturyVersion",
-                    "net.fabricmc.fabric-api:fabric-api:$fabricApiVersion",
-                    project.property("deps.forge_config_api_port").toString()
-                ) + if (mcVersion == "1.20.1") listOf("com.jamieswhiteshirt:reach-entity-attributes:2.4.0") else emptyList()
-                for (coordinate in coordinates) {
-                    val parts = coordinate.split(':')
+                // Keep Maven consumers in sync with runtime mods, including bundled dependencies.
+                val runtimeMods = configurations.getByName("modImplementation").dependencies
+                    .withType<ExternalModuleDependency>()
+                    .filterNot { it.group == "net.fabricmc" && it.name == "fabric-loader" }
+                for (module in runtimeMods) {
                     val dependency = dependencies.appendNode("dependency")
-                    dependency.appendNode("groupId", parts[0])
-                    dependency.appendNode("artifactId", parts[1])
-                    dependency.appendNode("version", parts[2])
+                    dependency.appendNode("groupId", requireNotNull(module.group))
+                    dependency.appendNode("artifactId", module.name)
+                    dependency.appendNode("version", requireNotNull(module.version))
                     dependency.appendNode("scope", "runtime")
                 }
             }

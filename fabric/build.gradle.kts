@@ -88,6 +88,7 @@ configurations {
 repositories {
     maven("https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/") { content { includeGroupByRegex("software\\.bernie.*") } }
     maven("https://maven.nucleoid.xyz/") { content { includeGroup("eu.pb4") } }
+    maven("https://maven.jamieswhiteshirt.com/libs-release") { content { includeGroup("com.jamieswhiteshirt") } }
     mavenCentral()
     maven("https://maven.architectury.dev/") { name = "Architectury" }
     maven("https://maven.fabricmc.net/") { name = "Fabric" }
@@ -98,6 +99,10 @@ repositories {
 }
 
 dependencies {
+    if (mcVersion == "1.20.1") {
+        modImplementation("com.jamieswhiteshirt:reach-entity-attributes:2.4.0")
+        include("com.jamieswhiteshirt:reach-entity-attributes:2.4.0")
+    }
     minecraft("com.mojang:minecraft:$mcVersion")
     mappings(loom.officialMojangMappings())
     modImplementation("net.fabricmc:fabric-loader:$fabricLoaderVersion")
@@ -145,6 +150,9 @@ tasks.named<ProcessResources>("processResources") {
     inputs.properties(props)
     filesMatching(listOf("fabric.mod.json", "axiomata.fabric.mixins.json")) {
         expand(props)
+        if (name == "fabric.mod.json" && mcVersion != "1.20.1") {
+            filter { line -> if (line.contains("\"reach-entity-attributes\"")) "" else line }
+        }
         if (name == "axiomata.fabric.mixins.json" && mcVersion != "1.20.1") {
             filter { line -> if (line.contains("\"ServerStructureReachMixin\"")) "" else line }
         }
@@ -182,11 +190,12 @@ publishing {
             version = if (jitpackBuild) project.version.toString() else System.getenv("VERSION") ?: project.version.toString()
             pom.withXml {
                 val dependencies = asNode().appendNode("dependencies")
-                for (coordinate in listOf(
+                val coordinates = listOf(
                     "dev.architectury:architectury-fabric:$architecturyVersion",
                     "net.fabricmc.fabric-api:fabric-api:$fabricApiVersion",
                     project.property("deps.forge_config_api_port").toString()
-                )) {
+                ) + if (mcVersion == "1.20.1") listOf("com.jamieswhiteshirt:reach-entity-attributes:2.4.0") else emptyList()
+                for (coordinate in coordinates) {
                     val parts = coordinate.split(':')
                     val dependency = dependencies.appendNode("dependency")
                     dependency.appendNode("groupId", parts[0])

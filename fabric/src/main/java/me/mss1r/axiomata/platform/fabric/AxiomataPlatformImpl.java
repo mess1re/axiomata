@@ -29,14 +29,16 @@ public final class AxiomataPlatformImpl {
         //? if >=1.21 {
         return player.entityInteractionRange();
         //?} else {
-        /*return player.isCreative() ? 6.0D : 3.0D;
+        /*return com.jamieswhiteshirt.reachentityattributes.ReachEntityAttributes.getAttackRange(
+                player, player.isCreative() ? 6.0D : 3.0D);
         *///?}
     }
     public static double blockReach(Player player) {
         //? if >=1.21 {
         return player.blockInteractionRange();
         //?} else {
-        /*return player.isCreative() ? 5.0D : 4.5D;
+        /*return com.jamieswhiteshirt.reachentityattributes.ReachEntityAttributes.getReachDistance(
+                player, player.isCreative() ? 5.0D : 4.5D);
         *///?}
     }
     public static Entity logicalTarget(Entity target) { return target instanceof EnderDragonPart part ? part.parentMob : target; }

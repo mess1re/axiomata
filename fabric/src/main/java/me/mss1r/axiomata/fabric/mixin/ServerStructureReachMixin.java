@@ -25,7 +25,8 @@ public abstract class ServerStructureReachMixin {
         if (original >= ServerGamePacketListenerImpl.MAX_INTERACTION_DISTANCE
                 && target instanceof CollidableStructure structure
                 && StructureInteractionPicker.isWithinReach(player, structure,
-                    Math.sqrt(ServerGamePacketListenerImpl.MAX_INTERACTION_DISTANCE))) return 0.0D;
+                    Math.max(Math.sqrt(ServerGamePacketListenerImpl.MAX_INTERACTION_DISTANCE),
+                        me.mss1r.axiomata.platform.AxiomataPlatform.entityReach(player)))) return 0.0D;
         return original;
     }
     *///?}

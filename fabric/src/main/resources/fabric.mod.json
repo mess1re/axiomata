@@ -26,6 +26,7 @@
     "java": ">=${java_version}",
     "architectury": ">=${architectury_version}",
     "forgeconfigapiport": ">=${config_api_version}",
+    "reach-entity-attributes": ">=2.4.0",
     "common-protection-api": ">=1.0.0 <2.0.0"
   }
 }

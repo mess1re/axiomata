@@ -211,6 +211,66 @@ public final class FabricRuntimeTests implements ModInitializer, FabricGameTest 
         helper.succeed();
     }
 
+    @GameTest(template = EMPTY_STRUCTURE)
+    public void interactionRangesFollowAttributesAndGameMode(GameTestHelper helper) {
+        var actor = player(helper);
+        //? if <1.21 {
+        /*var entityRange = actor.getAttribute(com.jamieswhiteshirt.reachentityattributes.ReachEntityAttributes.ATTACK_RANGE);
+        var blockRange = actor.getAttribute(com.jamieswhiteshirt.reachentityattributes.ReachEntityAttributes.REACH);
+        *///?} else {
+        var entityRange = actor.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ENTITY_INTERACTION_RANGE);
+        var blockRange = actor.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.BLOCK_INTERACTION_RANGE);
+        //?}
+        helper.assertTrue(entityRange != null && blockRange != null, "Interaction attributes must exist");
+        for (var mode : List.of(net.minecraft.world.level.GameType.SURVIVAL, net.minecraft.world.level.GameType.CREATIVE)) {
+            actor.setGameMode(mode);
+            double entityBase = entityRange.getBaseValue(), blockBase = blockRange.getBaseValue();
+            double beforeEntity = AxiomataPlatform.entityReach(actor), beforeBlock = AxiomataPlatform.blockReach(actor);
+            try {
+                entityRange.setBaseValue(entityBase + 4);
+                blockRange.setBaseValue(blockBase + 2);
+                helper.assertTrue(Math.abs(AxiomataPlatform.entityReach(actor) - beforeEntity - 4) < 1E-6,
+                        "Entity interaction range ignored its attribute in " + mode);
+                helper.assertTrue(Math.abs(AxiomataPlatform.blockReach(actor) - beforeBlock - 2) < 1E-6,
+                        "Block interaction range ignored its attribute in " + mode);
+            } finally {
+                entityRange.setBaseValue(entityBase);
+                blockRange.setBaseValue(blockBase);
+            }
+            helper.assertTrue(Math.abs(AxiomataPlatform.entityReach(actor) - beforeEntity) < 1E-6,
+                    "Removing a reach bonus must take effect immediately");
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = EMPTY_STRUCTURE)
+    public void serverRechecksExtendedReachAtTheModelSurface(GameTestHelper helper) {
+        var target = frame(helper, 12, 2, 3);
+        target.groups = List.of(CollisionGroup.fixed("far_surface", new CollisionShape(Vec3.ZERO,
+                List.of(CollisionPart.axisAligned(new AABB(-6, 0, -1, -5, 2, 1))))));
+        StructureMotionSystem.tickStructure(target);
+        var actor = player(helper);
+        actor.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+        actor.setPos(target.position().add(-13, 0, 0));
+        actor.setYRot(-90); actor.setXRot(0);
+        //? if <1.21 {
+        /*var reach = actor.getAttribute(com.jamieswhiteshirt.reachentityattributes.ReachEntityAttributes.ATTACK_RANGE);
+        *///?} else {
+        var reach = actor.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ENTITY_INTERACTION_RANGE);
+        //?}
+        double base = reach.getBaseValue();
+        actor.connection.handleInteract(ServerboundInteractPacket.createInteractionPacket(target, false, InteractionHand.MAIN_HAND));
+        helper.assertTrue(target.interactions == 0, "Ordinary reach must not accept the distant surface");
+        try {
+            reach.setBaseValue(base + 6);
+            actor.connection.handleInteract(ServerboundInteractPacket.createInteractionPacket(target, false, InteractionHand.MAIN_HAND));
+            helper.assertTrue(target.interactions == 1, "Extended reach must work on real geometry, not only root hitboxes");
+        } finally { reach.setBaseValue(base); }
+        actor.connection.handleInteract(ServerboundInteractPacket.createInteractionPacket(target, false, InteractionHand.MAIN_HAND));
+        helper.assertTrue(target.interactions == 1, "Server must reject the next packet after the bonus is removed");
+        helper.succeed();
+    }
+
     public static final class Frame extends Entity implements CollidableStructure, ProjectilePassThroughControl {
         private StructureTransform previous;
         private boolean open;

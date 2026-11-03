@@ -24,7 +24,6 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
-import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
@@ -55,7 +54,6 @@ public abstract class BallisticProjectile extends ThrowableItemProjectile {
             SynchedEntityData.defineId(BallisticProjectile.class, EntityDataSerializers.VECTOR3);
 
     private boolean applyingPredictedPhysics;
-    private boolean hitEntityThisTick;
     private final Set<Integer> hitTargets = new HashSet<>();
     protected boolean inGround;
     protected int shakeTime;
@@ -183,14 +181,6 @@ public abstract class BallisticProjectile extends ThrowableItemProjectile {
     }
 
     @Override
-    protected void onHit(HitResult hitResult) {
-        if (hitResult.getType() == HitResult.Type.ENTITY) {
-            hitEntityThisTick = true;
-        }
-        super.onHit(hitResult);
-    }
-
-    @Override
     protected void onHitEntity(EntityHitResult entityHitResult) {
         super.onHitEntity(entityHitResult);
         if (entityHitResult.getEntity().level().isClientSide()) return;
@@ -206,10 +196,6 @@ public abstract class BallisticProjectile extends ThrowableItemProjectile {
 
     @Override
     public void tick() {
-        Vec3 previousPos = position();
-        Vec3 previousMovement = getDeltaMovement();
-        hitEntityThisTick = false;
-
         if (this.level().isClientSide && !shouldPredictMotionOnClient()) {
             this.xo = getX();
             this.yo = getY();
@@ -227,10 +213,6 @@ public abstract class BallisticProjectile extends ThrowableItemProjectile {
             }
         } finally {
             applyingPredictedPhysics = false;
-        }
-
-        if (!this.inGround && !this.isRemoved() && this.level() instanceof ServerLevel serverLevel) {
-            sweepMissedEntityHit(serverLevel, previousPos, position(), previousMovement);
         }
     }
 
@@ -347,30 +329,6 @@ public abstract class BallisticProjectile extends ThrowableItemProjectile {
 
     protected void markMotionDirty() {
         this.hasImpulse = true;
-    }
-
-    protected boolean sweepMissedEntityHit(ServerLevel serverLevel, Vec3 previousPos, Vec3 currentPos, Vec3 previousMovement) {
-        if (hitEntityThisTick || !shouldSupplementalEntitySweep()) {
-            return false;
-        }
-
-        EntityHitResult hit = ProjectileSweep.findFirstEntityHit(serverLevel, this, previousPos, currentPos,
-                previousMovement, this::canHitEntity, getSupplementalEntitySweepPadding());
-        if (hit == null) {
-            return false;
-        }
-
-        hitEntityThisTick = true;
-        onHitEntity(hit);
-        return true;
-    }
-
-    protected boolean shouldSupplementalEntitySweep() {
-        return true;
-    }
-
-    protected double getSupplementalEntitySweepPadding() {
-        return Math.max(0.35D, getBbWidth() * 0.5D);
     }
 
     @Override

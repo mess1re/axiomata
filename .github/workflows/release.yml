@@ -254,7 +254,7 @@ jobs:
             fi
 
             metadata=$(jq -n \
-              --arg name "Axiomata ${tag} вЂ” ${loader} ${minecraft_version}" \
+              --arg name "Axiomata ${tag} - ${loader} ${minecraft_version}" \
               --arg version_number "$version_number" \
               --arg changelog "$RELEASE_CHANGELOG" \
               --arg game_version "$minecraft_version" \

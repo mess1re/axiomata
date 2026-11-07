@@ -1,4 +1,7 @@
 {
   "homepage": "https://www.curseforge.com/projects/1713796",
-  "promos": {}
+  "promos": {
+    "1.20.1-latest": "0.1.0-beta.10",
+    "1.21.1-latest": "0.1.0-beta.10"
+  }
 }

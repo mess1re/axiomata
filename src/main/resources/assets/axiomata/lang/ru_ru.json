@@ -54,5 +54,17 @@
   "message.axiomata.construction.finished": "Готово",
   "message.axiomata.construction.cleared": "Стройка разобрана",
   "gui.axiomata.drawing_table.stages": "Этапов сборки: %s",
-  "message.axiomata.construction.wrong_part": "Ударьте по подсвеченной секции: %s"
+  "message.axiomata.construction.wrong_part": "Ударьте по подсвеченной секции: %s",
+  "death.attack.axiomata.physical_projectile": "%1$s погиб от удара",
+  "death.attack.axiomata.physical_projectile.player": "%1$s погиб от удара %2$s",
+  "death.attack.axiomata.physical_impact": "%1$s погиб от удара",
+  "death.attack.axiomata.physical_impact.player": "%1$s погиб от удара %2$s",
+  "death.attack.axiomata.physical_blast": "%1$s погиб от удара",
+  "death.attack.axiomata.physical_blast.player": "%1$s погиб от удара %2$s",
+  "death.attack.axiomata.bolt": "%1$s поражён снарядом",
+  "death.attack.axiomata.bolt.player": "%1$s поражён снарядом %2$s",
+  "death.attack.axiomata.solid_projectile": "%1$s поражён снарядом",
+  "death.attack.axiomata.solid_projectile.player": "%1$s поражён снарядом %2$s",
+  "death.attack.axiomata.light_projectile": "%1$s поражён снарядом",
+  "death.attack.axiomata.light_projectile.player": "%1$s поражён снарядом %2$s"
 }

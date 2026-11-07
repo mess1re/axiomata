@@ -356,7 +356,7 @@ public class DrawingTableScreen extends AbstractContainerScreen<DrawingTableMenu
     }
 
     private void renderStageCount(GuiGraphics guiGraphics, BlueprintDefinition recipe, int materials) {
-        if (recipe.stages().isEmpty()) {
+        if (!recipe.buildsInWorld() || recipe.stages().isEmpty()) {
             return;
         }
         int rows = (materials + DrawingTableLayout.MATERIALS_COLUMNS - 1) / DrawingTableLayout.MATERIALS_COLUMNS;

@@ -1,0 +1,13 @@
+{
+  "material": {
+    "density": 19300,
+    "strength": 80000000,
+    "drag": 19300,
+    "fractureEnergy": 1000000,
+    "surfaceEnergy": 5000,
+    "fragmentSize": 0.02,
+    "ejectionFraction": 0.15
+  },
+  "areaM2": 0.05,
+  "thicknessM": 0.002
+}

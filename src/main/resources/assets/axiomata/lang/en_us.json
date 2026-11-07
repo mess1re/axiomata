@@ -54,5 +54,17 @@
   "message.axiomata.construction.finished": "Finished",
   "message.axiomata.construction.cleared": "Construction cleared away",
   "gui.axiomata.drawing_table.stages": "%s stages",
-  "message.axiomata.construction.wrong_part": "Hit the highlighted section: %s"
+  "message.axiomata.construction.wrong_part": "Hit the highlighted section: %s",
+  "death.attack.axiomata.physical_projectile": "%1$s was struck down",
+  "death.attack.axiomata.physical_projectile.player": "%1$s was struck down by %2$s",
+  "death.attack.axiomata.physical_impact": "%1$s was struck down",
+  "death.attack.axiomata.physical_impact.player": "%1$s was struck down by %2$s",
+  "death.attack.axiomata.physical_blast": "%1$s was struck down",
+  "death.attack.axiomata.physical_blast.player": "%1$s was struck down by %2$s",
+  "death.attack.axiomata.bolt": "%1$s was struck by a projectile",
+  "death.attack.axiomata.bolt.player": "%1$s was struck by %2$s’s projectile",
+  "death.attack.axiomata.solid_projectile": "%1$s was struck by a projectile",
+  "death.attack.axiomata.solid_projectile.player": "%1$s was struck by %2$s’s projectile",
+  "death.attack.axiomata.light_projectile": "%1$s was struck by a projectile",
+  "death.attack.axiomata.light_projectile.player": "%1$s was struck by %2$s’s projectile"
 }

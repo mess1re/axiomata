@@ -19,13 +19,16 @@ public final class BallisticsCommon {
     private BallisticsCommon() {}
 
     public static void initialize() {
+        me.mss1r.axiomata.ballistics.profile.ImpactProfiles.initialize();
         PARTICLES.register();
         EFFECT_PARTICLES.register();
         TickEvent.SERVER_POST.register(server -> {
             for (var level : server.getAllLevels()) {
                 StructuralDamageSystem.tick(level);
+                FragmentFlight.tick(level);
             }
             DistantFlight.tick(server);
         });
+        dev.architectury.event.events.common.LifecycleEvent.SERVER_STOPPED.register(server -> FragmentFlight.clear());
     }
 }

@@ -37,6 +37,7 @@ public abstract class BallisticProjectile extends ThrowableItemProjectile {
     private static final double RENDER_DISTANCE = 160.0D;
 
     private static final String TAG_BASE_DAMAGE = "BaseDamage";
+    private static final String TAG_REFERENCE_SPEED = "ReferenceSpeedMps";
     private static final String TAG_IN_GROUND = "InGround";
     private static final String TAG_SHAKE_TIME = "ShakeTime";
     private static final String TAG_PHYSICS_PROFILE = "PhysicsProfile";
@@ -59,7 +60,8 @@ public abstract class BallisticProjectile extends ThrowableItemProjectile {
     private final Set<Integer> hitTargets = new HashSet<>();
     protected boolean inGround;
     protected int shakeTime;
-    private double baseDamage = 2.0D;
+    private double baseDamage = 2;
+    private double referenceSpeedMps;
     private SoundEvent hitSound = SoundEvents.ARROW_HIT;
     @Nullable
     private ResourceLocation physicsProfileId;
@@ -140,6 +142,7 @@ public abstract class BallisticProjectile extends ThrowableItemProjectile {
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putDouble(TAG_BASE_DAMAGE, baseDamage);
+        tag.putDouble(TAG_REFERENCE_SPEED, referenceSpeedMps);
         tag.putBoolean(TAG_IN_GROUND, inGround);
         tag.putInt(TAG_SHAKE_TIME, shakeTime);
         tag.putBoolean(blockAuthorityKey(), blockAuthorityEnabled);
@@ -154,9 +157,8 @@ public abstract class BallisticProjectile extends ThrowableItemProjectile {
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        if (tag.contains(TAG_BASE_DAMAGE)) {
-            baseDamage = tag.getDouble(TAG_BASE_DAMAGE);
-        }
+        if (tag.contains(TAG_BASE_DAMAGE)) setBaseDamage(tag.getDouble(TAG_BASE_DAMAGE));
+        if (tag.contains(TAG_REFERENCE_SPEED) && tag.getDouble(TAG_REFERENCE_SPEED) > 0) setReferenceSpeed(tag.getDouble(TAG_REFERENCE_SPEED));
         if (tag.contains(TAG_IN_GROUND)) {
             inGround = tag.getBoolean(TAG_IN_GROUND);
         }
@@ -196,12 +198,10 @@ public abstract class BallisticProjectile extends ThrowableItemProjectile {
         if (entityHitResult.getEntity().level().isClientSide()) return;
         Entity hitTarget = entityHitResult.getEntity();
         rememberHitTarget(hitTarget);
-        if (livingTarget(hitTarget) != null) {
-            damageTarget(hitTarget, (float) this.getBaseDamage());
-        }
-        setDeltaMovement(getDeltaMovement().scale(-0.9));
-        setBaseDamage(getBaseDamage() * 0.9);
-        if (getBaseDamage() <= 1) this.discard();
+        var impact = impactTarget(hitTarget, entityHitResult.getLocation());
+        if (impact != null && impact.physics().passedThrough()) {
+            continueThrough(impact.physics());
+        } else discard();
     }
 
     @Override
@@ -338,6 +338,7 @@ public abstract class BallisticProjectile extends ThrowableItemProjectile {
     public void setDeltaMovement(Vec3 deltaMovement) {
         super.setDeltaMovement(deltaMovement);
         if (!level().isClientSide && tickCount == 0) {
+            if (!(referenceSpeedMps > 0) && deltaMovement.lengthSqr() > 0) setReferenceSpeed(deltaMovement.length() * TICKS_PER_SECOND);
             entityData.set(LAUNCH_VELOCITY, deltaMovement.toVector3f());
         }
         if (!level().isClientSide && tickCount > 0 && !applyingPredictedPhysics) {
@@ -378,12 +379,20 @@ public abstract class BallisticProjectile extends ThrowableItemProjectile {
         super.onHitBlock(blockHitResult);
     }
 
-    public double getBaseDamage() {
-        return baseDamage;
+    public double getBaseDamage() { return baseDamage; }
+
+    public void setBaseDamage(double damage) {
+        if (!(damage >= 0) || !Double.isFinite(damage)) throw new IllegalArgumentException("damage must be finite and nonnegative");
+        baseDamage = damage;
     }
 
-    public void setBaseDamage(double baseDamage) {
-        this.baseDamage = baseDamage;
+    public double getReferenceSpeed() {
+        return getPhysicsProfile().directHit().referenceSpeed().orElse(referenceSpeedMps);
+    }
+
+    public void setReferenceSpeed(double speedMps) {
+        if (!(speedMps > 0) || !Double.isFinite(speedMps)) throw new IllegalArgumentException("reference speed must be finite and positive");
+        referenceSpeedMps = speedMps;
     }
 
     protected void setImpactSound(SoundEvent soundEvent) {
@@ -449,12 +458,11 @@ public abstract class BallisticProjectile extends ThrowableItemProjectile {
         ProjectilePhysicsProfile physics = getPhysicsProfile();
         double metresPerSecond = TICKS_PER_SECOND;
         ImpactResults.Drive drive = impacts().drive(level, physics, physics.diameterOf(this),
-                hit.getLocation(), hit.getBlockPos(), velocity.scale(metresPerSecond), breaker(), maxDistance);
+                hit.getLocation(), hit.getBlockPos(), velocity.scale(metresPerSecond), breaker(), maxDistance, ImpactSource.of(this));
         double kept = drive.speed() / metresPerSecond;
         if (drive.passedThrough()) {
             setPos(drive.position().x, drive.position().y, drive.position().z);
             setDeltaMovement(velocity.scale(kept / speed));
-            setBaseDamage(Math.max(1.0D, getBaseDamage() * kept / speed));
             hasImpulse = true;
         }
         craterMouth = drive.passedThrough() ? null : drive.mouth();
@@ -473,23 +481,39 @@ public abstract class BallisticProjectile extends ThrowableItemProjectile {
 
     /** Preserves the incoming direction when a delayed fuse bursts after the projectile has stopped. */
     protected void arrive(ServerLevel level, Vec3 at, double speed, Vec3 incoming) {
-        if (!blockAuthorityEnabled) {
-            return;
-        }
         ProjectilePhysicsProfile physics = getPhysicsProfile();
         Vec3 outward = incoming.lengthSqr() > 1.0E-8D
                 ? incoming.normalize().reverse()
                 : new Vec3(0.0D, 1.0D, 0.0D);
-        impacts().stop(level, craterMouth != null ? craterMouth : at, craterFace != null ? craterFace : outward,
-                outward.reverse(), physics, realSpeed(speed), physics.diameterOf(this), breaker());
+        if (blockAuthorityEnabled && craterMouth != null) impacts().stop(level, craterMouth, craterFace != null ? craterFace : outward,
+                outward.reverse(), physics, realSpeed(speed), physics.diameterOf(this), breaker(), ImpactSource.of(this));
         craterMouth = null;
         craterFace = null;
         double blastEnergy = payloadBlastEnergy(physics);
         ProjectilePhysicsProfile.Fire fire = payloadFire(physics);
         Player breaker = breaker();
-        impacts().blast(level, at, outward, blastEnergy, breaker);
-        impacts().ignite(level, at, fire, breaker);
-        if (blastEnergy > 0.0D || fire.radius() > 0.0D) {
+        if (blastEnergy > 0) {
+            var fragments = me.mss1r.axiomata.ballistics.impact.Fragmentation.release(
+                    physics.casingMass() / physics.material().density(), blastEnergy, physics.material().fragmentation());
+            FragmentFlight.emit(level, impacts(), ImpactSource.of(this), at, Vec3.ZERO, fragments,
+                    physics.material(), physics.fragmentBlock(), physics.hardness(), breaker);
+            double gasEnergy = fragments.remainingEnergyJ();
+            if (blockAuthorityEnabled) impacts().blast(level, at, outward, gasEnergy, breaker, ImpactSource.of(this));
+            ProjectileBlastResolver.applyBlast(level, at, ImpactSource.of(this), physics, speed);
+        }
+        if (blockAuthorityEnabled) impacts().ignite(level, at, fire, breaker);
+        if (fire.radius() > 0 && fire.burnSeconds() > 0) {
+            var source = ImpactSource.of(this);
+            for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class,
+                    new net.minecraft.world.phys.AABB(at, at).inflate(fire.radius()),
+                    entity -> entity.isAlive() && !entity.fireImmune() && source.mayHit().test(entity))) {
+                if (target.getBoundingBox().distanceToSqr(at) <= fire.radius() * fire.radius()
+                        && net.minecraft.world.level.Explosion.getSeenPercent(at, target) > 0) {
+                    target.setRemainingFireTicks(Math.max(target.getRemainingFireTicks(), fire.burnSeconds() * 20));
+                }
+            }
+        }
+        if (blockAuthorityEnabled && (blastEnergy > 0.0D || fire.radius() > 0.0D)) {
             onPayloadBurst(level, at, physics, responsiblePlayerId);
         }
     }
@@ -524,25 +548,49 @@ public abstract class BallisticProjectile extends ThrowableItemProjectile {
                 : null;
     }
 
-    protected boolean damageLivingTarget(LivingEntity target, float damage) {
-        return damageLivingTarget(target, damage, true);
-    }
-
-    protected boolean damageLivingTarget(LivingEntity target, float damage, boolean breakShield) {
-        return damageTarget(target, damage, breakShield);
-    }
-
     protected boolean damageTarget(Entity target, float damage) {
-        return damageTarget(target, damage, true);
+        return damageTargetFrom(target, damage, impactAttacker());
     }
 
-    protected boolean damageTarget(Entity target, float damage, boolean breakShield) {
-        Entity logical = ProjectileCombat.logicalTarget(target);
-        if (logical instanceof LivingEntity living && breakShield) {
-            ProjectileCombat.breakBlockingShield(living);
-        }
-        return target.hurt(damageSources().thrown(this, getOwner()), damage);
+    protected boolean damageTargetFrom(Entity target, float damage, @Nullable Entity attacker) {
+        return target.hurt(ProjectileCombat.source(level(), net.minecraft.resources.ResourceKey.create(
+                net.minecraft.core.registries.Registries.DAMAGE_TYPE, getPhysicsProfile().directHit().damageType()), this, attacker), damage);
     }
+
+    public record EntityImpact(ProjectilePhysics.Hit physics, boolean damageApplied) {}
+
+    @Nullable
+    protected EntityImpact impactTarget(Entity target, Vec3 at) {
+        LivingEntity living = livingTarget(target);
+        if (living == null || !mayHitTarget(target)) return null;
+        var profile = getPhysicsProfile();
+        var shot = me.mss1r.axiomata.ballistics.impact.LayeredImpact.Shot.circular(profile.mass(), profile.diameterOf(this));
+        var result = ProjectilePhysics.resolve(shot, getDeltaMovement().scale(TICKS_PER_SECOND), at, living, target);
+        double reference = getReferenceSpeed();
+        if (!(reference > 0)) reference = getDeltaMovement().length() * TICKS_PER_SECOND;
+        if (!(reference > 0)) return null;
+        float damage = (float) new me.mss1r.axiomata.ballistics.impact.DirectDamage(
+                profile.directHit().damage().orElse(baseDamage), reference).atSpeed(getDeltaMovement().length() * TICKS_PER_SECOND);
+        if (!(living instanceof StructuralImpactTarget))
+            damage = ProjectilePhysics.damageWithArmorPiercing(profile.directHit().armorPiercing(), damage, living);
+        ProjectileCombat.breakBlockingShield(living);
+        boolean applied = damage > 0 && damageTarget(target, damage);
+        if (living.isAlive()) {
+            living.setDeltaMovement(result.targetVelocityMps().scale(1 / TICKS_PER_SECOND));
+            living.hurtMarked = true;
+        }
+        return new EntityImpact(result, applied);
+    }
+
+    protected void continueThrough(ProjectilePhysics.Hit impact) {
+        Vec3 direction = getDeltaMovement().normalize();
+        setDeltaMovement(direction.scale(impact.exitSpeedMps() / TICKS_PER_SECOND));
+        setPos(impact.exitPosition().x, impact.exitPosition().y, impact.exitPosition().z);
+        hasImpulse = true;
+    }
+
+    @Nullable
+    protected Entity impactAttacker() { return getOwner(); }
 
     protected LivingEntity livingTarget(Entity target) {
         return ProjectileCombat.livingTarget(target);
@@ -556,9 +604,6 @@ public abstract class BallisticProjectile extends ThrowableItemProjectile {
         return hitTargets.contains(ProjectileCombat.targetId(target));
     }
 
-    protected int hitTargetCount() {
-        return hitTargets.size();
-    }
     protected abstract ProfileCatalog<ProjectilePhysicsProfile> profileCatalog();
 
     protected abstract ImpactResolver impacts();
@@ -583,10 +628,15 @@ public abstract class BallisticProjectile extends ThrowableItemProjectile {
     }
 
     protected boolean mayHitTarget(Entity target) {
+        return mayHitFrom(getOwner(), impactAttacker(), target);
+    }
+
+    protected boolean mayHitFrom(@Nullable Entity machine, @Nullable Entity attacker, Entity target) {
         Entity logical = ProjectileCombat.logicalTarget(target);
-        Entity owner = ProjectileCombat.logicalTarget(getOwner());
-        return logical != owner && (owner == null || !owner.isAlliedTo(logical)
-                || owner.getTeam() == null || owner.getTeam().isAllowFriendlyFire());
+        Entity owner = ProjectileCombat.logicalTarget(machine);
+        Entity actor = ProjectileCombat.logicalTarget(attacker);
+        return logical != owner && logical != actor && (actor == null || !actor.isAlliedTo(logical)
+                || actor.getTeam() == null || actor.getTeam().isAllowFriendlyFire());
     }
 
     protected void onPayloadBurst(ServerLevel level, Vec3 position,

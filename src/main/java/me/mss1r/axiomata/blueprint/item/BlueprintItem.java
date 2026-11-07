@@ -153,7 +153,15 @@ public class BlueprintItem extends Item {
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
-        if (!canOpenBlueprint(player, hand)) {
+        String recipeId = getRecipeId(stack);
+        BlueprintDefinition recipe = recipeId == null ? null : BlueprintDefinitions.get(recipeId);
+        if (recipe == null) {
+            if (!level.isClientSide) {
+                player.displayClientMessage(Component.translatable("gui.axiomata.invalid_recipe"), true);
+            }
+            return InteractionResultHolder.fail(stack);
+        }
+        if (!canUse(player, recipe, recipeId, hand)) {
             if (!level.isClientSide) {
                 player.displayClientMessage(Component.translatable("message.axiomata.need_construction_hammer"), true);
             }
@@ -161,16 +169,18 @@ public class BlueprintItem extends Item {
         }
 
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
-            openUseMenu(serverPlayer, String.valueOf(getRecipeId(stack)), stack);
+            openUseMenu(serverPlayer, recipeId, stack);
         }
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
     }
 
-    /** Opens the use menu for a drawn blueprint held in the off hand. */
+    /** Opens the menu for a held blueprint; world construction still requires an offhand blueprint and hammer. */
     public static void openUseMenu(ServerPlayer serverPlayer, String recipeId, ItemStack stack) {
         {
             BlueprintDefinition recipe = BlueprintDefinitions.get(recipeId);
-            if (recipe != null) {
+            InteractionHand hand = stack == serverPlayer.getMainHandItem()
+                    ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
+            if (recipe != null && canUse(serverPlayer, recipe, recipeId, hand)) {
                 MenuRegistry.openExtendedMenu(serverPlayer, new ExtendedMenuProvider() {
                     @Override
                     public Component getDisplayName() {
@@ -178,21 +188,22 @@ public class BlueprintItem extends Item {
                     }
                     @Override
                     public net.minecraft.world.inventory.AbstractContainerMenu createMenu(int containerId, net.minecraft.world.entity.player.Inventory inv, Player player) {
-                        return new me.mss1r.axiomata.blueprint.menu.BlueprintUseMenu(containerId, inv, recipe, stack, recipeId);
+                        return new me.mss1r.axiomata.blueprint.menu.BlueprintUseMenu(containerId, inv, recipe, stack, recipeId, hand);
                     }
                     @Override
                     public void saveExtraData(net.minecraft.network.FriendlyByteBuf buf) {
                         buf.writeUtf(recipeId);
+                        buf.writeEnum(hand);
                     }
                 });
             }
         }
     }
 
-    private boolean canOpenBlueprint(Player player, InteractionHand hand) {
-        return hand == InteractionHand.OFF_HAND
-                && player.getOffhandItem().getItem() == this
-                && player.getMainHandItem().is(BlueprintTags.CONSTRUCTION_HAMMERS);
+    public static boolean canUse(Player player, BlueprintDefinition recipe, String recipeId, InteractionHand hand) {
+        return recipeId != null && recipeId.equals(getRecipeId(player.getItemInHand(hand)))
+                && (!recipe.buildsInWorld() || (hand == InteractionHand.OFF_HAND
+                && player.getMainHandItem().is(BlueprintTags.CONSTRUCTION_HAMMERS)));
     }
 
     private static CompoundTag readTag(ItemStack stack) {

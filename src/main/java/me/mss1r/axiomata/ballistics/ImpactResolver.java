@@ -3,6 +3,8 @@ package me.mss1r.axiomata.ballistics;
 import me.mss1r.axiomata.ballistics.profile.ProjectilePhysicsProfile;
 import me.mss1r.axiomata.ballistics.profile.BlockMaterialProfile;
 import me.mss1r.axiomata.ballistics.profile.BlockMaterialCatalog;
+import me.mss1r.axiomata.ballistics.profile.ImpactMaterialProfile;
+import me.mss1r.axiomata.ballistics.impact.Fragmentation;
 import me.mss1r.axiomata.ballistics.particle.ParticleSet;
 import me.mss1r.axiomata.ballistics.damage.StructuralDamageSystem;
 import me.mss1r.axiomata.collision.OrientedBox;
@@ -16,14 +18,12 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.shapes.CollisionContext;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -192,13 +192,7 @@ public final class ImpactResolver implements ImpactResults {
             }
             Vec3 end = box.getCenter();
             Vec3 start = end.subtract(axis.scale(contact.halfExtent().z * 2.0D + 2.0D));
-            var hit = level.clip(new ClipContext(start, end, ClipContext.Block.COLLIDER,
-                    ClipContext.Fluid.NONE,
-                    //? if <1.21 {
-                    /*null));
-                    *///?} else {
-                    CollisionContext.empty()));
-                    //?}
+            var hit = BlockClip.colliders(level, start, end);
             if (hit.getType() != HitResult.Type.BLOCK || !hit.getBlockPos().equals(pos)) {
                 continue;
             }
@@ -273,6 +267,13 @@ public final class ImpactResolver implements ImpactResults {
     /** Limits channel traversal to this move's remaining distance, in blocks. A moving result may still be inside material. */
     public Drive drive(ServerLevel level, ProjectilePhysicsProfile physics, double diameter,
                        Vec3 entry, BlockPos firstBlock, Vec3 velocity, @Nullable Player breaker, double maxDistance) {
+        return drive(level, physics, diameter, entry, firstBlock, velocity, breaker, maxDistance, null);
+    }
+
+    public Drive drive(ServerLevel level, ProjectilePhysicsProfile physics, double diameter,
+                       Vec3 entry, BlockPos firstBlock, Vec3 velocity, @Nullable Player breaker, double maxDistance,
+                       @Nullable ImpactSource source) {
+        Ejecta ejecta = source == null ? null : new Ejecta();
         if (!Double.isFinite(maxDistance) || maxDistance < 0) throw new IllegalArgumentException("Invalid drive distance");
         double limit = Math.min(maxDistance, MAX_DRIVE_DISTANCE);
         double speed = velocity.length();
@@ -316,7 +317,7 @@ public final class ImpactResolver implements ImpactResults {
             double cost = material == null ? 0.0D
                     : material.breakEnergy() * (1.0D - StructuralDamageSystem.progress(level, pos, state));
             if (material == null || !canCut(physics, level, pos, state) || next < LEAST_FLIGHT_SPEED
-                    || !breakThrough(level, pos, state, contact, direction, breaker)) {
+                    || !breakThrough(level, pos, state, contact, direction, breaker, ejecta)) {
                 boolean denser = mouth == null || material == null || material.matter() > mouthMatter;
                 result = new Drive(false, contact, speed, pos, denser ? contact : mouth,
                         denser ? faceNormal(pos, contact) : mouthFace);
@@ -341,7 +342,9 @@ public final class ImpactResolver implements ImpactResults {
             result = new Drive(bounded || mouth != null, bounded ? entry.add(direction.scale(limit)) : exit, speed, previous == null ? firstBlock : previous,
                     mouth != null ? mouth : entry, mouthFace != null ? mouthFace : direction.reverse());
         }
-        crush(level, result.mouth(), result.face(), direction, spare, diameter, 0.0D, physics.hardness(), breaker);
+        crush(level, result.mouth(), result.face(), direction, spare, diameter, 0.0D, physics.hardness(), breaker, ejecta);
+        if (ejecta != null) ejecta.emit(level, source, result.mouth(), result.face(),
+                Math.max(0, physics.kineticEnergy(velocity.length()) - physics.kineticEnergy(result.speed())), breaker);
         return result;
     }
 
@@ -352,6 +355,13 @@ public final class ImpactResolver implements ImpactResults {
     public void stop(ServerLevel level, Vec3 center, Vec3 outward, Vec3 along,
                             ProjectilePhysicsProfile physics, double speed, double diameter,
                             @Nullable Player breaker) {
+        stop(level, center, outward, along, physics, speed, diameter, breaker, null);
+    }
+
+    public void stop(ServerLevel level, Vec3 center, Vec3 outward, Vec3 along,
+                     ProjectilePhysicsProfile physics, double speed, double diameter,
+                     @Nullable Player breaker, @Nullable ImpactSource source) {
+        Ejecta ejecta = source == null ? null : new Ejecta();
         Vec3 into = outward.lengthSqr() > 1.0E-8D ? outward.normalize().scale(-0.5D) : Vec3.ZERO;
         BlockPos struckPos = BlockPos.containing(center.add(into));
         BlockState struck = level.getBlockState(struckPos);
@@ -359,7 +369,8 @@ public final class ImpactResolver implements ImpactResults {
         double channel = material == null ? 0.0D : penetration(material, physics.mass(), diameter, speed);
         double energy = physics.kineticEnergy(speed) * craterYield(speed);
         crush(level, center, outward, along, energy * FRACTURE_SHARE * kept(physics.hardness(), struck), diameter,
-                channel, physics.hardness(), breaker);
+                channel, physics.hardness(), breaker, ejecta);
+        if (ejecta != null) ejecta.emit(level, source, center, outward, physics.kineticEnergy(speed), breaker);
     }
 
     /**
@@ -410,7 +421,14 @@ public final class ImpactResolver implements ImpactResults {
 
     /** Detonates a charge of {@code energy} joules at {@code center}, breaking blocks around it. */
     public void blast(ServerLevel level, Vec3 center, Vec3 outward, double energy, @Nullable Player breaker) {
-        crush(level, center, outward, null, energy * BLAST_SHARE, 0.0D, 0.0D, Double.POSITIVE_INFINITY, breaker);
+        blast(level, center, outward, energy, breaker, null);
+    }
+
+    public void blast(ServerLevel level, Vec3 center, Vec3 outward, double energy, @Nullable Player breaker,
+                      @Nullable ImpactSource source) {
+        Ejecta ejecta = source == null ? null : new Ejecta();
+        crush(level, center, outward, null, energy * BLAST_SHARE, 0.0D, 0.0D, Double.POSITIVE_INFINITY, breaker, ejecta);
+        if (ejecta != null) ejecta.emit(level, source, center, outward, energy * BLAST_SHARE, breaker);
     }
 
     /**
@@ -423,6 +441,11 @@ public final class ImpactResolver implements ImpactResults {
      */
     public void crush(ServerLevel level, Vec3 center, Vec3 outward, @Nullable Vec3 along, double energy,
                              double diameter, double channel, double hardness, @Nullable Player breaker) {
+        crush(level, center, outward, along, energy, diameter, channel, hardness, breaker, null);
+    }
+
+    private void crush(ServerLevel level, Vec3 center, Vec3 outward, @Nullable Vec3 along, double energy,
+                       double diameter, double channel, double hardness, @Nullable Player breaker, @Nullable Ejecta ejecta) {
         if (!(energy > 0.0D)) {
             return;
         }
@@ -485,7 +508,7 @@ public final class ImpactResolver implements ImpactResults {
             // Protected blocks still absorb their share of energy.
             budget -= cost;
             if (target.mayBreak()) {
-                breakOut(level, target.pos(), center, outward, debrisPower, breaker);
+                breakOut(level, target.pos(), center, outward, debrisPower, breaker, ejecta);
                 Vec3 at = Vec3.atCenterOf(target.pos());
                 broken.add(at);
                 if (axis != null) {
@@ -503,7 +526,7 @@ public final class ImpactResolver implements ImpactResults {
                 left = budget - crack * whole;
                 if (StructuralDamageSystem.applyImpact(level, stoppedAt.pos(), (float) crack, 1.0F)
                         == StructuralDamageSystem.ImpactResult.BREAK_BLOCK) {
-                    breakOut(level, stoppedAt.pos(), center, outward, debrisPower, breaker);
+                    breakOut(level, stoppedAt.pos(), center, outward, debrisPower, breaker, ejecta);
                 }
             }
         }
@@ -511,7 +534,7 @@ public final class ImpactResolver implements ImpactResults {
         Vec3 boreEnd = axis != null ? center.add(axis.scale(deepest)) : center;
         List<Target> ring = new ArrayList<>(targets.subList(Math.min(targets.size(), standing + 1), targets.size()));
         ring.addAll(around);
-        crackRing(level, ring, left + energy * RING_SHARE, center, boreEnd, broken, outward, debrisPower, breaker);
+        crackRing(level, ring, left + energy * RING_SHARE, center, boreEnd, broken, outward, debrisPower, breaker, ejecta);
         if (struck != null && !struck.isAir()) {
             throwFragments(level, center, outward, struck, broken.size(), energy / fracture);
         }
@@ -567,7 +590,7 @@ public final class ImpactResolver implements ImpactResults {
 
     /** Distributes remaining energy as cracks, weighted toward the channel and broken blocks. */
     private void crackRing(ServerLevel level, List<Target> ring, double energy, Vec3 from, Vec3 to,
-                                  List<Vec3> broke, Vec3 outward, float debrisPower, @Nullable Player breaker) {
+                                  List<Vec3> broke, Vec3 outward, float debrisPower, @Nullable Player breaker, @Nullable Ejecta ejecta) {
         List<Target> cracked = new ArrayList<>();
         List<Double> weights = new ArrayList<>();
         for (Target target : ring) {
@@ -606,7 +629,7 @@ public final class ImpactResolver implements ImpactResults {
             double crack = Math.min(MAX_CRACK_PER_BLOW, energy * weights.get(order[i]) / keptWeight / target.breakEnergy());
             if (StructuralDamageSystem.applyImpact(level, target.pos(), (float) crack, 1.0F)
                     == StructuralDamageSystem.ImpactResult.BREAK_BLOCK) {
-                breakOut(level, target.pos(), from, outward, debrisPower, breaker);
+                breakOut(level, target.pos(), from, outward, debrisPower, breaker, ejecta);
             }
         }
     }
@@ -619,23 +642,97 @@ public final class ImpactResolver implements ImpactResults {
     }
 
     private void breakOut(ServerLevel level, BlockPos pos, Vec3 center, Vec3 outward, float debrisPower,
-                                 @Nullable Player breaker) {
+                          @Nullable Player breaker, @Nullable Ejecta ejecta) {
+        BlockState state = level.getBlockState(pos);
+        Material material = material(level, pos, state);
         StructuralDamageSystem.applyImpact(level, pos, 1.0F, 1.0F);
-        if (!level.getBlockState(pos).isAir()
-                && !environment.debris().launchDestroyedBlock(level, pos, center, outward, debrisPower, breaker)) {
+        if (level.getBlockState(pos).isAir()) return;
+        if (ejecta != null && material != null) {
+            var plan = environment.debris().planDestroyedBlock(level, pos, center, outward, debrisPower);
+            if (environment.blocks().breakBlock(level, pos, breaker)) ejecta.add(pos, state, material, plan);
+        } else if (!environment.debris().launchDestroyedBlock(level, pos, center, outward, debrisPower, breaker)) {
             environment.blocks().breakBlock(level, pos, breaker);
         }
     }
 
-    /** Breaks a block in the projectile's path and ejects it from the hole if it can get out. */
     private boolean breakThrough(ServerLevel level, BlockPos pos, BlockState state, Vec3 contact,
-                                       Vec3 direction, @Nullable Player breaker) {
-        if (!environment.blocks().mayDamage(level, pos, state, breaker)) {
-            return false;
-        }
+                                 Vec3 direction, @Nullable Player breaker, @Nullable Ejecta ejecta) {
+        if (!environment.blocks().mayDamage(level, pos, state, breaker)) return false;
+        Material material = material(level, pos, state);
         StructuralDamageSystem.applyImpact(level, pos, 1.0F, 1.0F);
-        return environment.debris().launchDestroyedBlock(level, pos, contact, direction.reverse(), 2.0F, breaker)
-                || environment.blocks().breakBlock(level, pos, breaker);
+        if (ejecta != null && material != null) {
+            var plan = environment.debris().planDestroyedBlock(level, pos, contact, direction.reverse(), 2.0F);
+            boolean removed = environment.blocks().breakBlock(level, pos, breaker);
+            if (removed) ejecta.add(pos, state, material, plan);
+            return removed;
+        }
+        if (environment.debris().launchDestroyedBlock(level, pos, contact, direction.reverse(), 2.0F, breaker)) return true;
+        return environment.blocks().breakBlock(level, pos, breaker);
+    }
+
+    /** A narrow granular hit can pass through material without deleting a whole Minecraft block. */
+    Drive fragmentPassage(ServerLevel level, ProjectilePhysicsProfile physics, net.minecraft.world.phys.BlockHitResult hit,
+                          Vec3 end, Vec3 velocity, boolean mayDamage, @Nullable Player breaker, double weight) {
+        double speed = velocity.length();
+        Vec3 direction = velocity.normalize();
+        BlockPos pos = hit.getBlockPos();
+        BlockState state = level.getBlockState(pos);
+        Material material = cracked(level, pos, state);
+        double[] span = collisionSpan(level, pos, state, hit.getLocation(), direction);
+        if (material == null || span == null || !canCut(physics, level, pos, state))
+            return new Drive(false, hit.getLocation(), 0, pos, hit.getLocation(), direction.reverse());
+        double distance = Math.min(span[1], end.distanceTo(hit.getLocation()));
+        double next = speedThrough(material, physics.mass(), physics.diameter().orElseThrow(), speed, distance);
+        double work = Math.max(0, physics.kineticEnergy(speed) - physics.kineticEnergy(next)) * weight;
+        if (mayDamage && material.breakEnergy() > 0 && environment.blocks().mayDamage(level, pos, state, breaker)) {
+            float crack = (float) Math.min(1, work / material.breakEnergy());
+            if (crack > 0 && StructuralDamageSystem.applyImpact(level, pos, crack, 1) == StructuralDamageSystem.ImpactResult.BREAK_BLOCK)
+                environment.blocks().breakBlock(level, pos, breaker);
+        }
+        return new Drive(next > 0, hit.getLocation().add(direction.scale(distance + 1e-4)), next, pos,
+                hit.getLocation(), direction.reverse());
+    }
+
+    private static ImpactMaterialProfile secondaryMaterial(BlockState state) {
+        if (state.is(net.minecraft.tags.BlockTags.LOGS) || state.is(net.minecraft.tags.BlockTags.PLANKS)
+                || state.is(net.minecraft.tags.BlockTags.WOODEN_FENCES) || state.is(net.minecraft.tags.BlockTags.WOODEN_SLABS)
+                || state.is(net.minecraft.tags.BlockTags.WOODEN_STAIRS)) return ImpactMaterialProfile.WOOD;
+        if (state.is(Blocks.IRON_BLOCK) || state.is(Blocks.ANVIL) || state.is(Blocks.IRON_BARS)) return ImpactMaterialProfile.IRON;
+        if (state.is(net.minecraft.tags.BlockTags.TERRACOTTA)) return ImpactMaterialProfile.CLAY;
+        return ImpactMaterialProfile.STONE;
+    }
+
+    private record FreedMaterial(BlockPos pos, BlockState state, double volume, ImpactMaterialProfile material,
+                                 @Nullable DebrisPhysics.LaunchPlan coarse) {}
+
+    /** Physical fractions are allocated before the optional coarse entities are created. */
+    private final class Ejecta {
+        private final java.util.Map<BlockPos, FreedMaterial> freed = new java.util.LinkedHashMap<>();
+        void add(BlockPos pos, BlockState state, Material physical, @Nullable DebrisPhysics.LaunchPlan coarse) {
+            double volume = physical.volume() * physical.matter();
+            if (!(volume > 0)) return;
+            var calibrated = environment.materials().forState(state).flatMap(BlockMaterialProfile::impactMaterial)
+                    .orElseGet(() -> secondaryMaterial(state));
+            freed.putIfAbsent(pos.immutable(), new FreedMaterial(pos.immutable(), state, volume, calibrated, coarse));
+        }
+        void emit(ServerLevel level, ImpactSource source, Vec3 at, Vec3 outward, double lostKineticEnergy,
+                  @Nullable Player breaker) {
+            double totalMass = freed.values().stream().mapToDouble(part -> part.volume() * part.material().density()).sum();
+            if (!(totalMass > 0)) return;
+            for (var part : freed.values()) {
+                double share = part.volume() * part.material().density() / totalMass;
+                var split = me.mss1r.axiomata.ballistics.impact.SurfaceEjecta.release(part.volume(),
+                        Math.max(0, lostKineticEnergy) * share, part.material().fragmentation());
+                if (part.coarse() != null && split.coarseMassKg() > 0) {
+                    var coarse = part.coarse().limitEnergy(split.coarseMassKg(), split.coarseEnergyBudgetJ());
+                    environment.debris().emitPlanned(level, coarse, breaker);
+                }
+                Vec3 origin = Vec3.atCenterOf(part.pos()).add(outward.scale(.501));
+                FragmentFlight.emit(level, ImpactResolver.this, source, origin, outward, split.fine(), part.material(),
+                        net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(part.state().getBlock()),
+                        environment.materials().resistance(part.state()), breaker);
+            }
+        }
     }
 
     /** Fracture energy of the solid block nearest {@code center}; sets the crater radius. */

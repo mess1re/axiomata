@@ -1,0 +1,6 @@
+{
+  "message_id": "axiomata.physical_blast",
+  "scaling": "never",
+  "exhaustion": 0.1,
+  "effects": "hurt"
+}

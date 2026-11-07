@@ -119,5 +119,5 @@ tasks.withType<JavaCompile>().configureEach { dependsOn(checkCommonBoundary) }
 // Tests that instantiate entities need a bootstrapped game and mixin transformation.
 // They run against the assembled NeoForge jar in :test-runtime:test.
 sourceSets.test {
-    java.exclude("**/collision/**", "**/UnderConstructionInitializationTest.java")
+    java.exclude("**/collision/**", "**/UnderConstructionInitializationTest.java", "**/BlueprintItemUseTest.java")
 }

@@ -1,16 +1,29 @@
 # Changelog
 
-## Unreleased
+## 0.1.0-beta.10
 
 ### Added
 
-- Fabric builds for Minecraft 1.20.1 and 1.21.1, including configuration, entity data persistence,
-  model collisions, projectile openings, client rendering and block-protection adapters.
+- Fabric builds for Minecraft 1.20.1 and 1.21.1.
+- Item assembly from drawn blueprints.
 
 ### Changed
 
-- Stonecutter selects Minecraft versions in the shared module; Architectury packages the shared
-  code for Forge, NeoForge and Fabric. Native loader extensions are isolated in their adapters.
+- Reworked projectile impacts, armour and secondary fragments, with separate physical and HP damage settings and target-specific structure damage profiles.
+- New smoke animations and variants.
+- Improved construction progress display and reduced collision-query work for large models.
+
+### Fixed
+
+- Hybrid-server compatibility issues on Mohist and Arclight.
+- Construction state synchronization on NeoForge.
+- Projectile reference-speed overrides from physics profiles.
+- Player support on moving structures and native entity collisions during structure movement.
+- Interaction reach attributes and published runtime dependencies on Fabric.
+
+### Compatibility
+
+- Projectile profile fields changed: use `directHit` and material properties in place of the former `entity` and `shock` settings. Add-ons using the ballistics API or custom profiles need updating.
 
 ## 0.1.0-beta.9
 

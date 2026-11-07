@@ -1,17 +1,31 @@
 package me.mss1r.axiomata.ballistics.client.particle;
 
+import java.util.List;
+import java.util.stream.IntStream;
+import me.mss1r.axiomata.Axiomata;
+import me.mss1r.axiomata.ResourceIds;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.client.particle.TextureSheetParticle;
+import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.NotNull;
 
 public final class SmokeParticle extends TextureSheetParticle {
+    private static final int FRAME_COUNT = 8;
+    private static final List<ResourceLocation> DEFAULT_FRAMES = frameIds("smoke_");
+    private static final List<List<ResourceLocation>> VARIANTS = List.of(
+            List.of(), frameIds("smoke/a_"), frameIds("smoke/c_"));
+
     private final SpriteSet sprites;
+    private final List<ResourceLocation> variantFrames;
+    private int lastFrame = -1;
     private float baseSize;
     private final float baseAlpha;
     private final float phase;
@@ -52,6 +66,7 @@ public final class SmokeParticle extends TextureSheetParticle {
         this.zd = zd + (this.random.nextDouble() - 0.5D) * 0.012D;
         this.quadSize = this.baseSize * 0.82F;
         this.alpha = this.baseAlpha;
+        this.variantFrames = this.chooseVariant();
         this.updateSprite(this.animationOffset);
     }
 
@@ -95,8 +110,42 @@ public final class SmokeParticle extends TextureSheetParticle {
     }
 
     private void updateSprite(float progress) {
-        int frame = Mth.clamp((int) Math.floor(progress * 8.0F), 0, 7);
-        this.setSprite(this.sprites.get(frame, 7));
+        int frame = Mth.clamp((int) Math.floor(progress * FRAME_COUNT), 0, FRAME_COUNT - 1);
+        if (frame == this.lastFrame) return;
+        this.lastFrame = frame;
+        if (!this.variantFrames.isEmpty()) {
+            var id = this.variantFrames.get(frame);
+            if (Minecraft.getInstance().getTextureManager().getTexture(this.spriteAtlasLocation()) instanceof TextureAtlas atlas) {
+                this.setSprite(atlas.getSprite(id));
+                return;
+            }
+        }
+        this.setSprite(this.sprites.get(frame, FRAME_COUNT - 1));
+    }
+
+    private List<ResourceLocation> chooseVariant() {
+        var variant = VARIANTS.get(this.random.nextInt(VARIANTS.size()));
+        if (variant.isEmpty()) return variant;
+
+        // Custom sprite sets still play their own animation.
+        for (int frame = 0; frame < FRAME_COUNT; frame++) {
+            if (!DEFAULT_FRAMES.get(frame).equals(this.sprites.get(frame, FRAME_COUNT - 1).contents().name())) return List.of();
+        }
+        if (Minecraft.getInstance().getTextureManager().getTexture(this.spriteAtlasLocation()) instanceof TextureAtlas atlas
+                && variant.stream().allMatch(id -> id.equals(atlas.getSprite(id).contents().name()))) {
+            return variant;
+        }
+        return List.of();
+    }
+
+    private ResourceLocation spriteAtlasLocation() {
+        return this.sprites.get(0, FRAME_COUNT - 1).atlasLocation();
+    }
+
+    private static List<ResourceLocation> frameIds(String prefix) {
+        return IntStream.range(0, FRAME_COUNT)
+                .mapToObj(frame -> ResourceIds.id(Axiomata.MOD_ID, prefix + frame))
+                .toList();
     }
 
     @Override

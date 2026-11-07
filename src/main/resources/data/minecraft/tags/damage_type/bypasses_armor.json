@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values": [
+    "axiomata:physical_projectile",
+    "axiomata:physical_impact"
+  ]
+}

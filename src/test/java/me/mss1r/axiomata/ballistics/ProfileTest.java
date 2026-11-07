@@ -22,14 +22,14 @@ class ProfileTest {
                 JsonParser.parseString("{\"mass\": 2, \"diameter\": 0.025}")).result().orElseThrow();
         assertTrue(profile.validationError().isEmpty());
         assertEquals(19600, profile.kineticEnergy(140));
-        assertEquals(ProjectilePhysicsProfile.DEFAULT.entity(), profile.entity());
+        assertEquals(ProjectilePhysicsProfile.DEFAULT.material(), profile.material());
         assertTrue(profile.airDrag(0.025) > 0);
     }
 
     @Test
     void rejectsNonPhysicalValues() {
         for (String json : new String[] {"{\"mass\": 0}", "{\"diameter\": -1}",
-                "{\"dragCoefficient\": -1}", "{\"entity\": {\"armorPiercing\": 1.1}}"}) {
+                "{\"dragCoefficient\": -1}", "{\"fire\": {\"chance\": 1.1}}"}) {
             var profile = ProjectilePhysicsProfile.CODEC.parse(JsonOps.INSTANCE,
                     JsonParser.parseString(json)).result().orElseThrow();
             assertTrue(profile.validationError().isPresent(), json);

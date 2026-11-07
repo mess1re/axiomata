@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "axiomata:physical_projectile",
+    "axiomata:bolt",
+    "axiomata:solid_projectile",
+    "axiomata:light_projectile"
+  ]
+}

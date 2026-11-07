@@ -6,7 +6,7 @@ import me.mss1r.axiomata.blueprint.api.construction.ConstructionTarget;
 import dev.architectury.networking.NetworkManager;
 import me.mss1r.axiomata.ResourceIds;
 import me.mss1r.axiomata.blueprint.api.BlueprintPermissions;
-import me.mss1r.axiomata.blueprint.api.BlueprintTags;
+import me.mss1r.axiomata.blueprint.menu.BlueprintUseMenu;
 import me.mss1r.axiomata.blueprint.internal.construction.ConstructionPlacementHelper;
 import me.mss1r.axiomata.blueprint.api.construction.MaterialAllocation;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition;
@@ -19,7 +19,6 @@ import me.mss1r.axiomata.blueprint.item.BlueprintItem;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 //? if <1.21 {
 /*import me.mss1r.axiomata.platform.AxiomataPlatform;
@@ -31,7 +30,6 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import me.mss1r.axiomata.blueprint.BlueprintCommon;
 //?}
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -66,6 +64,10 @@ public record C2SUseBlueprintPacket(String recipeId) implements CustomPacketPayl
             if (!(context.getPlayer() instanceof ServerPlayer player)) {
                 return;
             }
+            if (!(player.containerMenu instanceof BlueprintUseMenu menu)
+                    || !packet.recipeId.equals(menu.getRecipeId()) || !menu.stillValid(player)) {
+                return;
+            }
 
             BlueprintDefinition recipe = BlueprintDefinitions.get(packet.recipeId);
             if (recipe == null) {
@@ -78,12 +80,11 @@ public record C2SUseBlueprintPacket(String recipeId) implements CustomPacketPayl
                 return;
             }
 
-            if (!hasConstructionTools(player, packet.recipeId)) {
-                player.displayClientMessage(Component.translatable("message.axiomata.need_construction_hammer"), false);
+            if (!BlueprintItem.canUse(player, recipe, packet.recipeId, menu.getHand())) {
                 return;
             }
 
-            ItemStack blueprint = player.getOffhandItem();
+            ItemStack blueprint = player.getItemInHand(menu.getHand());
             if (blueprint.isEmpty()) {
                 player.displayClientMessage(Component.translatable("gui.axiomata.invalid_recipe"), false);
                 return;
@@ -97,7 +98,8 @@ public record C2SUseBlueprintPacket(String recipeId) implements CustomPacketPayl
 
             boolean buildsInWorld = recipe.buildsInWorld();
             List<Material> needed = buildsInWorld ? List.of() : recipe.totals();
-            Map<Material, Integer> missing = MaterialAllocation.shortfall(carried(player.getInventory()), needed);
+            List<ItemStack> materials = menu.materialStacks(player);
+            Map<Material, Integer> missing = MaterialAllocation.shortfall(materials, needed);
             if (!missing.isEmpty()) {
                 player.displayClientMessage(Component.translatable("gui.axiomata.not_enough"), false);
                 missing.forEach((material, count) -> player.displayClientMessage(
@@ -142,11 +144,13 @@ public record C2SUseBlueprintPacket(String recipeId) implements CustomPacketPayl
                 }
             }
 
-            MaterialAllocation.take(carried(player.getInventory()), needed);
+            MaterialAllocation.take(materials, needed);
 
             if (!player.getAbilities().instabuild) {
                 blueprint.shrink(1);
             }
+            // Complete the menu transaction before callbacks or another queued use packet can run.
+            player.closeContainer();
 
             BlueprintEvents.USED.invoker().used(new BlueprintUsedEvent(
                     player, packet.recipeId, recipe, result, buildsInWorld, machine));
@@ -159,25 +163,14 @@ public record C2SUseBlueprintPacket(String recipeId) implements CustomPacketPayl
                         ),
                         false
                 );
-            } else if (!player.getInventory().add(result.copy())) {
-                player.drop(result.copy(), false);
+            } else {
+                ItemStack remaining = result.copy();
+                player.getInventory().add(remaining);
+                if (!remaining.isEmpty()) {
+                    player.drop(remaining, false);
+                }
             }
         });
     }
 
-    /** Main inventory plus off hand. */
-    private static List<ItemStack> carried(Inventory inventory) {
-        List<ItemStack> stacks = new ArrayList<>(inventory.items);
-        stacks.addAll(inventory.offhand);
-        return stacks;
-    }
-
-    private static boolean hasConstructionTools(ServerPlayer player, String recipeId) {
-        return player.getMainHandItem().is(BlueprintTags.CONSTRUCTION_HAMMERS)
-                && isBlueprintForRecipe(player.getOffhandItem(), recipeId);
-    }
-
-    private static boolean isBlueprintForRecipe(ItemStack stack, String recipeId) {
-        return recipeId.equals(BlueprintItem.getRecipeId(stack));
-    }
 }

@@ -340,11 +340,7 @@ public class LoadingController {
     }
 
     private static String progressBar(int doneTicks, int totalTicks) {
-        int width = 10;
-        int done = Math.max(0, doneTicks);
-        int total = Math.max(1, totalTicks);
-        int filled = Math.max(0, Math.min(width, Math.round(done * width / (float) total)));
-        return "[" + "#".repeat(filled) + "-".repeat(width - filled) + "]";
+        return LoadingProgress.bar(doneTicks, totalTicks);
     }
 
 }

@@ -10,7 +10,7 @@ import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.inventory.MenuType;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.InteractionHand;
 
 public class BlueprintMenus {
     public static final DeferredRegister<MenuType<?>> MENUS = DeferredRegister.create(BlueprintCommon.MOD_ID, Registries.MENU);
@@ -22,9 +22,8 @@ public class BlueprintMenus {
             () -> MenuRegistry.ofExtended((id, inv, data) -> {
                 String recipeId = data.readUtf();
                 BlueprintDefinition recipe = BlueprintDefinitions.get(recipeId);
-                ItemStack blueprint = inv.player.getMainHandItem().getItem() == BlueprintItems.BLUEPRINT.get()
-                        ? inv.player.getMainHandItem() : inv.player.getOffhandItem();
-                return new BlueprintUseMenu(id, inv, recipe, blueprint, recipeId);
+                InteractionHand hand = data.readEnum(InteractionHand.class);
+                return new BlueprintUseMenu(id, inv, recipe, inv.player.getItemInHand(hand), recipeId, hand);
             }));
 
     public static void register() {

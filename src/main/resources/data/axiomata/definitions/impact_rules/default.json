@@ -1,0 +1,17 @@
+{
+  "secondaryReferenceEnergyJ": 400,
+  "secondaryReferenceDamageHp": 20,
+  "secondaryDamageExponent": 0.5,
+  "bodyReferenceMassKg": 70,
+  "bodyReferenceBoxVolumeM3": 0.648,
+  "fallbackArmorThicknessPerPointM": 0.0003,
+  "bodyMaterial": {
+    "density": 1000,
+    "strength": 300000,
+    "drag": 1000,
+    "fractureEnergy": 300000,
+    "surfaceEnergy": 10000,
+    "fragmentSize": 0.05,
+    "ejectionFraction": 0
+  }
+}

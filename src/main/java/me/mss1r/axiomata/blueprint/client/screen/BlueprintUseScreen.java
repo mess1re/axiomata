@@ -1,6 +1,7 @@
 package me.mss1r.axiomata.blueprint.client.screen;
 
 import me.mss1r.axiomata.blueprint.api.construction.ConstructionTarget;
+import me.mss1r.axiomata.blueprint.api.construction.MaterialAllocation;
 import me.mss1r.axiomata.blueprint.client.PlacementTargetHelper;
 import me.mss1r.axiomata.blueprint.internal.construction.ConstructionPlacementHelper;
 import me.mss1r.axiomata.blueprint.api.definition.BlueprintDefinition;
@@ -208,7 +209,10 @@ public class BlueprintUseScreen extends AbstractContainerScreen<BlueprintUseMenu
 
     private void updateActionButtonState() {
         if (this.actionButton != null) {
-            this.actionButton.active = recipe == null || !recipe.buildsInWorld() || getPreviewState() == PreviewState.READY;
+            this.actionButton.active = recipe != null && this.minecraft != null && this.minecraft.player != null
+                    && menu.stillValid(this.minecraft.player)
+                    && (recipe.buildsInWorld() ? getPreviewState() == PreviewState.READY
+                    : MaterialAllocation.shortfall(menu.materialStacks(this.minecraft.player), recipe.totals()).isEmpty());
         }
     }
 

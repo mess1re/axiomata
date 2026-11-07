@@ -103,18 +103,37 @@ public final class DebrisPhysics {
      */
     public boolean launchDestroyedBlock(ServerLevel level, BlockPos pos, Vec3 center, Vec3 outward,
                                                float blastPower, @Nullable Player breaker) {
-        BlockState state = level.getBlockState(pos);
-        if (!enabled.getAsBoolean() || !canBecomeDebris(level, pos, state)) {
-            return false;
-        }
+        if (!enabled.getAsBoolean()) return false;
+        return launchPlanned(level, planDestroyedBlock(level, pos, center, outward, blastPower), breaker, true);
+    }
 
+    public record LaunchPlan(BlockPos pos, BlockState state, Vec3 from, Vec3 motion, float power) {
+        public LaunchPlan limitEnergy(double massKg, double budgetJ) {
+            double energy = .5 * massKg * motion.lengthSqr() * 400;
+            double scale = energy > budgetJ && energy > 0 ? Math.sqrt(Math.max(0, budgetJ) / energy) : 1;
+            return new LaunchPlan(pos, state, from, motion.scale(scale), power);
+        }
+    }
+
+    /** Does not remove the block or claim an entity slot. Physical inputs are independent of that quota. */
+    @Nullable
+    public LaunchPlan planDestroyedBlock(ServerLevel level, BlockPos pos, Vec3 center, Vec3 outward, float blastPower) {
+        BlockState state = level.getBlockState(pos);
+        if (!canBecomeDebris(level, pos, state)) return null;
         float power = Math.max(2.0F, blastPower);
         Vec3 motion = ejectaMotion(level, center, pos, outward, power);
         Vec3 from = craterMouth(level, center, pos, outward);
-        if (!canEscape(level, pos, from, motion) || !claimDebrisSlot(level)) {
-            return false;
-        }
-        spawnDebris(level, power, pos, state, from, motion, breaker);
+        return canEscape(level, pos, from, motion) ? new LaunchPlan(pos.immutable(), state, from, motion, power) : null;
+    }
+
+    /** Represents bulk already removed from the world and allocated its physical mass and energy. */
+    public boolean emitPlanned(ServerLevel level, @Nullable LaunchPlan plan, @Nullable Player breaker) {
+        return launchPlanned(level, plan, breaker, false);
+    }
+
+    private boolean launchPlanned(ServerLevel level, @Nullable LaunchPlan plan, @Nullable Player breaker, boolean removeSource) {
+        if (plan == null || !enabled.getAsBoolean() || !claimDebrisSlot(level)) return false;
+        spawnDebris(level, plan.power(), plan.pos(), plan.state(), plan.from(), plan.motion(), breaker, removeSource);
         return true;
     }
 
@@ -162,6 +181,11 @@ public final class DebrisPhysics {
 
     private void spawnDebris(ServerLevel level, float blastPower, BlockPos pos, BlockState state,
                                     Vec3 from, Vec3 motion, @Nullable Player breaker) {
+        spawnDebris(level, blastPower, pos, state, from, motion, breaker, true);
+    }
+
+    private void spawnDebris(ServerLevel level, float blastPower, BlockPos pos, BlockState state,
+                                    Vec3 from, Vec3 motion, @Nullable Player breaker, boolean removeSource) {
         // Fully set up before being added, so it first appears at its launch point.
         FallingBlockEntity debris = EntityType.FALLING_BLOCK.create(level);
         if (debris == null) {
@@ -183,7 +207,7 @@ public final class DebrisPhysics {
         debris.dropItem = false;
         debris.setHurtsEntities(Math.max(1.0F, blastPower * 0.45F), Math.max(3, Mth.ceil(blastPower * 2.0F)));
         debris.setDeltaMovement(motion);
-        level.setBlock(pos, state.getFluidState().createLegacyBlock(), 3);
+        if (removeSource) level.setBlock(pos, state.getFluidState().createLegacyBlock(), 3);
         level.addFreshEntity(debris);
     }
 

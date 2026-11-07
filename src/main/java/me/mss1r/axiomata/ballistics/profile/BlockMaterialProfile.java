@@ -13,7 +13,13 @@ import java.util.Optional;
 /** Material values for a whole solid block; its collision shape and porosity still apply. */
 public record BlockMaterialProfile(Optional<ResourceLocation> block, Optional<ResourceLocation> tag, int priority,
                                    Optional<Double> strength, Optional<Double> drag,
-                                   Optional<Double> fractureEnergy, Optional<Double> projectileResistance) {
+                                   Optional<Double> fractureEnergy, Optional<Double> projectileResistance,
+                                   Optional<ImpactMaterialProfile> impactMaterial) {
+    public BlockMaterialProfile(Optional<ResourceLocation> block, Optional<ResourceLocation> tag, int priority,
+                                Optional<Double> strength, Optional<Double> drag, Optional<Double> fractureEnergy,
+                                Optional<Double> projectileResistance) {
+        this(block, tag, priority, strength, drag, fractureEnergy, projectileResistance, Optional.empty());
+    }
     /** Block tag ID, with or without the leading {@code #}. */
     private static final Codec<ResourceLocation> TAG_ID = Codec.STRING.comapFlatMap(text -> {
         ResourceLocation id = ResourceLocation.tryParse(text.startsWith("#") ? text.substring(1) : text);
@@ -26,7 +32,8 @@ public record BlockMaterialProfile(Optional<ResourceLocation> block, Optional<Re
             Codec.DOUBLE.optionalFieldOf("strength").forGetter(BlockMaterialProfile::strength),
             Codec.DOUBLE.optionalFieldOf("drag").forGetter(BlockMaterialProfile::drag),
             Codec.DOUBLE.optionalFieldOf("fractureEnergy").forGetter(BlockMaterialProfile::fractureEnergy),
-            Codec.DOUBLE.optionalFieldOf("projectileResistance").forGetter(BlockMaterialProfile::projectileResistance)
+            Codec.DOUBLE.optionalFieldOf("projectileResistance").forGetter(BlockMaterialProfile::projectileResistance),
+            ImpactMaterialProfile.CODEC.optionalFieldOf("impactMaterial").forGetter(BlockMaterialProfile::impactMaterial)
     ).apply(instance, BlockMaterialProfile::new));
 
     public Optional<String> validationError() {
@@ -36,7 +43,7 @@ public record BlockMaterialProfile(Optional<ResourceLocation> block, Optional<Re
         if (block.isPresent() && !BuiltInRegistries.BLOCK.containsKey(block.get())) {
             return Optional.of("unknown block " + block.get());
         }
-        if (strength.isEmpty() && drag.isEmpty() && fractureEnergy.isEmpty() && projectileResistance.isEmpty()) {
+        if (strength.isEmpty() && drag.isEmpty() && fractureEnergy.isEmpty() && projectileResistance.isEmpty() && impactMaterial.isEmpty()) {
             return Optional.of("set at least one material value");
         }
         var names = List.of("strength", "drag", "fractureEnergy");
@@ -49,6 +56,8 @@ public record BlockMaterialProfile(Optional<ResourceLocation> block, Optional<Re
                 }
             }
         }
-        return projectileResistance.flatMap(value -> ProfileValidation.nonNegative("projectileResistance", value));
+        var materialError = impactMaterial.flatMap(ImpactMaterialProfile::validationError);
+        return materialError.isPresent() ? materialError
+                : projectileResistance.flatMap(value -> ProfileValidation.nonNegative("projectileResistance", value));
     }
 }

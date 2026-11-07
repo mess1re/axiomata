@@ -17,6 +17,9 @@ on:
         description: Normalize the selected Modrinth release titles
         type: boolean
         default: false
+      modrinth_titles:
+        description: Optional JSON map of selected version IDs to exact titles (title-only update)
+        type: string
       dry_run:
         description: Check the targets without changing their changelogs
         type: boolean
@@ -38,6 +41,7 @@ jobs:
       MODRINTH_VERSIONS: ${{ inputs.modrinth_versions }}
       CURSEFORGE_FILES: ${{ inputs.curseforge_files }}
       UPDATE_NAMES: ${{ inputs.update_names }}
+      MODRINTH_TITLES: ${{ inputs.modrinth_titles }}
       MOD_NAME: Axiomata
       DRY_RUN: ${{ inputs.dry_run }}
       MODRINTH_PROJECT_ID: VHAvNpmA
@@ -64,20 +68,28 @@ jobs:
           update_names = os.environ['UPDATE_NAMES'] == 'true'
           mr_ids = [s.strip() for s in os.environ['MODRINTH_VERSIONS'].split(',') if s.strip()]
           cf_ids = [s.strip() for s in os.environ['CURSEFORGE_FILES'].split(',') if s.strip()]
+          titles = json.loads(os.environ.get('MODRINTH_TITLES') or '{}')
           if not mr_ids and not cf_ids:
               raise ValueError('No existing versions were selected')
           if any(not re.fullmatch(r'[A-Za-z0-9]{8}', s) for s in mr_ids):
               raise ValueError('Invalid Modrinth version ID')
           if any(not re.fullmatch(r'[0-9]+', s) for s in cf_ids):
               raise ValueError('Invalid CurseForge file ID')
+          if titles and (set(titles) != set(mr_ids) or cf_ids):
+              raise ValueError('Title-only updates must name exactly the selected Modrinth versions')
+          for title in titles.values():
+              if not isinstance(title, str) or not title.startswith(os.environ['MOD_NAME'] + ' ' + tag + ' - ') or len(title) > 128:
+                  raise ValueError('Title does not match the selected project and release')
 
-          def request(url, headers, method='GET', body=None):
+          def request(url, headers, method='GET', body=None, allow_missing=False):
               req = Request(url, data=body, headers=headers, method=method)
               try:
                   with urlopen(req, timeout=30) as response:
                       data = response.read()
                       return json.loads(data) if data else None
               except HTTPError as error:
+                  if allow_missing and error.code == 404:
+                      return None
                   detail = error.read(4096).decode('utf-8', errors='replace')
                   for name in ('MODRINTH_TOKEN', 'CURSEFORGE_TOKEN'):
                       token = os.environ.get(name)
@@ -92,7 +104,12 @@ jobs:
           targets = []
           for version_id in mr_ids:
               url = 'https://api.modrinth.com/v2/version/' + version_id
-              version = request(url, mr_headers)
+              version = request(url, mr_headers, allow_missing=bool(titles))
+              if version is None:
+                  # A write-scoped token can rename a known version without read access.
+                  targets.append((url, {'id': version_id}))
+                  print('Selected explicit title target', version_id)
+                  continue
               if version['project_id'] != os.environ['MODRINTH_PROJECT_ID']:
                   raise ValueError('Version belongs to another project: ' + version_id)
               if version['version_number'] != tag and not version['version_number'].startswith(tag + '+'):
@@ -103,15 +120,17 @@ jobs:
               print('Selected Modrinth', version_id, version['version_number'])
 
           for url, before in targets:
-              changes = {'changelog': notes}
-              if update_names:
+              changes = {'name': titles[before['id']]} if titles else {'changelog': notes}
+              if update_names and not titles:
                   loader = {'forge': 'Forge', 'neoforge': 'NeoForge', 'fabric': 'Fabric'}[before['loaders'][0]]
                   changes['name'] = f"{os.environ['MOD_NAME']} {tag} - {loader} {before['game_versions'][0]}"
               if not dry_run:
                   request(url, mr_headers, 'PATCH', json.dumps(changes).encode())
-                  after = request(url, mr_headers)
-                  assert all(after[key] == value for key, value in changes.items())
-                  assert after['files'] == before['files'], 'Version files changed'
+                  after = request(url, mr_headers, allow_missing=bool(titles))
+                  if after is not None:
+                      assert all(after[key] == value for key, value in changes.items())
+                      if 'files' in before:
+                          assert after['files'] == before['files'], 'Version files changed'
               print('Checked' if dry_run else 'Updated', 'Modrinth', before['id'])
 
           for file_id in cf_ids:
